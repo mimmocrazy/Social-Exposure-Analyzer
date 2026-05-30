@@ -72,3 +72,30 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 1. Registra questa interazione in `AI_JOURNAL.md`, copiando il testo ESATTO di questo prompt come pattuito.
 > 2. Forniscimi i comandi Git per il commit.
 - **Spiegazione Tecnica:** Creato il modello dati `ProfileAnalysis` sfruttando SQLModel. L'uso di SQLModel permette di avere sia i modelli validati da Pydantic che la persistenza SQLAlchemy in un'unica classe, riducendo drasticamente il codice e migliorando la leggibilità. Creato il file `database.py` con un SQLite engine per lo sviluppo e l'implementazione del pattern di Dependency Injection per le sessioni del database (`get_session`).
+
+---
+
+### Data: 2026-05-30
+- **Task Eseguito:** Creazione endpoint principale di ingestion (Fase 1).
+- **File Modificati:** `/backend/schemas.py`, `/backend/api/routers/analyze.py`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Modello scalato. Procediamo con il setup di FastAPI, l'endpoint di ingestion e una pulizia della directory.
+> 
+> **NUOVA REGOLA DI SISTEMA PERSISTENTE (Da applicare SEMPRE da ora in poi):**
+> Non voglio più doverti ripetere le istruzioni di chiusura. Da questo momento, al termine di *ogni* singola interazione o sviluppo di feature, DEVI eseguire in totale autonomia questa routine di chiusura:
+> 1. Spunta autonomamente i TODO completati in `ARCHITECTURE.md`.
+> 2. Registra l'interazione in `AI_JOURNAL.md`, copiando il testo ESATTO del mio prompt.
+> 3. Forniscimi i comandi Git mirati (solo per i file effettivamente modificati/creati) per un commit atomico.
+> 
+> Prima di scrivere il codice, fai ordine nel workspace:
+> 1. Crea una cartella `/docs` e spostaci dentro `TRACCIA.pdf` e qualsiasi altro file di appunti o log spurio generato finora. Mantieni nella root SOLO `AI_JOURNAL.md`, `ARCHITECTURE.md`, il `.gitignore` e le eventuali cartelle del codice.
+> 
+> Esegui ora il task "Creazione endpoint principale di ingestion" (Fase 1). Implementa questa struttura:
+> 1. Crea `/backend/schemas.py`: definisci il Pydantic model `AnalyzeRequest` (deve contenere `target_url` con validazione stringa/HttpUrl).
+> 2. Crea `/backend/api/routers/analyze.py`: implementa l'endpoint POST `/api/v1/analyze`. L'endpoint deve:
+>    - Ricevere `AnalyzeRequest` e la sessione DB via dependency injection.
+>    - Creare un record `ProfileAnalysis` nel database con status "PENDING" e `target_url`.
+>    - Affidare a un `BackgroundTask` nativo di FastAPI una funzione dummy asincrona (es. `mock_scraping_task`) che usa `asyncio.sleep(3)` per simulare l'elaborazione, per poi aggiornare lo status del record a "COMPLETED" nel DB.
+>    - Restituire immediatamente al client un JSON con l'ID del record e un messaggio di presa in carico.
+> 3. Crea `/backend/main.py`: istanzia l'applicazione FastAPI, configura il middleware CORS (aperto per il dev) e includi il router appena creato.
+- **Spiegazione Tecnica:** Eseguita pulizia workspace spostando `TRACCIA.pdf` in `/docs`. Sviluppato il core endpoint dell'applicazione con FastAPI. L'uso dei `BackgroundTasks` nativi ha permesso di delegare la funzione asincrona (`mock_scraping_task`) che aggiorna lo status del record nel DB tramite una nuova Session, evitando di bloccare il return immediato all'utente. Configurata la base di FastAPI in `main.py` includendo lifespan events per la migrazione DB (creation), CORS policy aperta per il frontend in dev e routing dell'endpoint `/analyze`. TODO in `ARCHITECTURE.md` aggiornati.

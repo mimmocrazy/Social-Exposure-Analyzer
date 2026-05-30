@@ -23,9 +23,9 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 ## 2. Roadmap e Micro-Tasks
 
 ### Fase 1: Backend Foundation
-- [ ] Inizializzazione progetto FastAPI e struttura directory.
-- [ ] Configurazione Database e modelli ORM.
-- [ ] Creazione endpoint principale di ingestion (`/api/v1/analyze`).
+- [x] Inizializzazione progetto FastAPI e struttura directory.
+- [x] Configurazione Database e modelli ORM.
+- [x] Creazione endpoint principale di ingestion (`/api/v1/analyze`).
 - [ ] Setup sistema di logging centralizzato e gestione errori.
 
 ### Fase 2: Tests - Backend Foundation
