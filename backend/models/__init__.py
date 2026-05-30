@@ -10,9 +10,10 @@ class AnalysisStatus(str, Enum):
     FAILED = "FAILED"
 
 class RiskLevel(str, Enum):
-    Basso = "Basso"
-    Medio = "Medio"
-    Alto = "Alto"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
 
 class ProfileAnalysis(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)

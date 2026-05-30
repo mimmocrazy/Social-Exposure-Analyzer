@@ -36,15 +36,48 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
         # Avvio pipeline Scraping asincrona
         raw_data = await gather_profile_metadata(urls_to_scrape)
         
-        # Aggiornamento Database con i dati raw
+        # Simulazione Aggregazione Testo (Scraping + OCR)
+        combined_text = ""
+        # TODO reale: scaricare immagini profilo e passarle a ocr.py
+        # es: combined_text += extract_text_from_image(img_path)
+        
+        for profile in raw_data:
+            if profile.get("title"): combined_text += profile["title"] + " "
+            if profile.get("bio"): combined_text += profile["bio"] + " "
+            
+        # Limite di sicurezza Anti-DoS per l'analisi NLP
+        if len(combined_text) > 10000:
+            logger.warning(f"DoS Prevention: Testo troncato da {len(combined_text)} a 10000 caratteri prima dell'NLP.")
+            combined_text = combined_text[:10000]
+            
+        # Estrazione PII (NLP Pipeline)
+        from backend.services.nlp import extract_pii
+        pii_results = extract_pii(combined_text)
+        pii_dicts = [pii.model_dump() for pii in pii_results]
+        
+        # Risk Engine Analysis (Gemini Pro)
+        from backend.services.risk_engine import calculate_risk
+        risk_report = await calculate_risk(pii_dicts)
+        
+        # Aggiornamento Database con i dati raw, PII e Risk Score
         with Session(engine) as session:
             analysis = session.get(ProfileAnalysis, analysis_id)
             if analysis:
                 analysis.raw_data_dump = {"profiles": raw_data}
+                analysis.pii_extracted = pii_dicts
+                
+                # Mapping campi Risk Engine sul DB Model
+                analysis.risk_score = risk_report.score
+                analysis.risk_level = risk_report.level.value
+                analysis.llm_report = risk_report.model_dump_json()
+                
+                # Se abbiamo analizzato immagini, setta flag
+                # analysis.has_images_analyzed = True
+                
                 analysis.status = AnalysisStatus.COMPLETED
                 session.add(analysis)
                 session.commit()
-                logger.info(f"Task asincrono di OSINT concluso per {analysis_id}")
+                logger.info(f"Task asincrono di OSINT e Risk Engine concluso per {analysis_id}")
                 
     except Exception as e:
         logger.error(f"Fallimento durante l'orchestrazione asincrona {analysis_id}: {e}")
