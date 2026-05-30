@@ -36,14 +36,18 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 
 ### Fase 3: AI & NLP Core Integration
 - [x] Sviluppo modulo Discovery (Sherlock Adapter) e Scraping (Search Dorking).
-- [ ] Sviluppo modulo **NLP** (Estrazione PII con Presidio/spaCy).
-- [ ] Sviluppo modulo **OCR** (Analisi immagini con Tesseract/EasyOCR).
-- [ ] Sviluppo modulo **Risk Engine** (Prompting Gemini Pro per Risk Score e Report).
+- [x] Sviluppo modulo **NLP** (Estrazione PII con Presidio/spaCy).
+- [x] Sviluppo modulo **OCR** (Analisi immagini con Tesseract/EasyOCR).
+- [x] Sviluppo modulo **Risk Engine** (Prompting Gemini Pro per Risk Score e Report).
 
 ### Fase 4: Tests - AI & Core
 - [ ] Mock testing per il servizio di scraping locale.
 - [ ] Integration testing per l'estrazione PII e OCR.
 - [ ] Mock testing per le risposte di Gemini Pro.
+
+### Fase 5: Scalabilità & Deployment
+- [x] Load Testing e Scalabilità (Locust, System Design).
+- [ ] Setup Azure App Service (Configurazione env, deploy).
 
 ### Fase 5: Frontend Development
 - [ ] Setup framework frontend.

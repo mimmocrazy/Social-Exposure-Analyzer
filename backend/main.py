@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
@@ -49,6 +50,21 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
+
+@app.middleware("http")
+async def limit_upload_size(request: Request, call_next):
+    """
+    Autonomus Optimization: Middleware globale anti-DoS per prevenire
+    l'ingestion di payload massivi direttamente all'ingresso dell'API.
+    Se la richiesta supera i 10.000 byte, viene rigettata con 413.
+    """
+    if request.headers.get("content-length"):
+        if int(request.headers["content-length"]) > 10000:
+            return JSONResponse(
+                status_code=413, 
+                content={"detail": "Payload Too Large. Max size is 10000 bytes."}
+            )
+    return await call_next(request)
 
 # Configurazione CORS per sviluppo (da restrittivizzare in produzione Azure)
 app.add_middleware(

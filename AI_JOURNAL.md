@@ -4,7 +4,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30
+### Data: 2026-05-30 (Ore 09:00)
 - **Task Eseguito:** Inizializzazione struttura di progetto e documentazione architetturale.
 - **File Modificati:** `.gitignore`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -45,7 +45,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30
+### Data: 2026-05-30 (Ore 10:00)
 - **Task Eseguito:** Configurazione Database e modelli ORM (Fase 1).
 - **File Modificati:** `/backend/models.py`, `/backend/database.py`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -75,7 +75,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30
+### Data: 2026-05-30 (Ore 10:50)
 - **Task Eseguito:** Creazione endpoint principale di ingestion (Fase 1).
 - **File Modificati:** `/backend/schemas.py`, `/backend/api/routers/analyze.py`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -102,7 +102,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30
+### Data: 2026-05-30 (Ore 12:00)
 - **Task Eseguito:** Setup sistema di logging centralizzato e gestione errori (Fase 1).
 - **File Modificati:** `/backend/core/logger.py`, `/backend/api/exceptions.py`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -132,7 +132,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30
+### Data: 2026-05-30 (Ore 12:50)
 - **Task Eseguito:** Setup Ambiente di Test e Primo Unit Test (Fase 2).
 - **File Modificati:** `/pytest.ini`, `/tests/conftest.py`, `/tests/test_analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -255,3 +255,88 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 2. Registra l'operazione in `AI_JOURNAL.md` (Data e Ora: 15:50, testo del prompt).
 > 3. Fornisci i comandi Git per il commit, incluso il nuovo report.
 - **Spiegazione Tecnica:** Analisi retroattiva e Security Review condotta sull'intera base di codice. Riscritto il file `docs/SECURITY_REPORT.md` implementando la tabella matriciale richiesta per tracciare rigorosamente lo stato delle OWASP Top 10 su ciascun file core. Identificate e già mitigate logicamente le principali falle (A01, A03, A05, A10). In `main.py` è stato iniettato un nuovo HTTP Middleware protettivo per impostare in automatico gli header di sicurezza standard (`nosniff`, `X-Frame-Options` e `XSS-Protection`), consolidando concretamente l'approccio Security-First a livello infrastrutturale.
+
+---
+
+### Data: 2026-05-30 (Ore 16:00)
+- **Task Eseguito:** Sviluppo Modulo NLP e OCR (Estrazione PII).
+- **File Modificati:** `/backend/services/nlp.py`, `/backend/services/ocr.py`, `/backend/api/routers/analyze.py`, `/backend/core/logger.py`, `tests/test_nlp.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Esegui il micro-task: "Sviluppo Modulo NLP e OCR (Estrazione PII)".
+> Nome Progetto: Social Exposure Analyzer.
+> 
+> 1. **Modulo NLP (`/backend/services/nlp.py`):**
+>    - Utilizza `spaCy` (modello `it_core_news_lg` o `en_core_web_trf`).
+>    - Implementa `extract_pii(text: str) -> List[Entity]`, dove `Entity` è un modello Pydantic con `label`, `value`, `confidence_score`.
+>    - Filtro deduplicazione: mantieni solo l'entità con `confidence_score` maggiore.
+>    - Filtro soglia: scarta entità con `confidence_score < 0.85`.
+> 
+> 2. **Modulo OCR (`/backend/services/ocr.py`):**
+>    - Implementa `extract_text_from_image(image_path: str) -> str`.
+>    - Utilizza `EasyOCR`. Gestione errori: se l'immagine è illeggibile, logga un avviso critico nel SECURITY_REPORT.md (A04: Insecure Design/Potenziale Evasione).
+>    - Cancella l'immagine temporanea dopo l'elaborazione.
+> 
+> 3. **Integrazione e Sicurezza:**
+>    - Aggiorna `backend/api/routers/analyze.py`: Pipeline sequenziale Scraper -> OCR -> NLP.
+>    - PII Masking: Integra un filtro `loguru` per mascherare PII (email/telefono) nei log.
+>    - Limite DoS: Imposta un limite di 10.000 caratteri per il testo processato dall'NLP.
+> 
+> 4. **Testing:**
+>    - Crea `tests/test_nlp.py`. Scrivi unit test che validino: 
+>      a) Il corretto filtraggio delle entità sotto soglia (0.85).
+>      b) La corretta deduplicazione dei risultati.
+> 
+> Routine di Chiusura:
+> 1. Spunta il task "[x] Sviluppo modulo NLP" e "[x] Sviluppo modulo OCR" in `ARCHITECTURE.md`.
+> 2. Aggiorna `docs/SECURITY_REPORT.md`: aggiungi mitigazioni DoS e PII Masking.
+> 3. Registra l'operazione in `AI_JOURNAL.md` (Data e Ora: 16:00, testo del prompt).
+> 4. Fornisci i comandi Git per il commit.
+- **Spiegazione Tecnica:** Sviluppati i servizi cardine della Fase 3. Implementato il modulo NLP basato su `spaCy` (con fallback locale) dotato di meccanismi robusti di thresholding (soglia `0.85`) e deduplicazione per massimizzare la precisione delle PII estratte. L'integrazione di `EasyOCR` completa il data gathering visivo prevedendo una gestione sicura dei file temporanei e allarmi su OWASP A04 (Insecure Design) in caso di anomalie. Lato sicurezza attiva, è stato blindato il logger di sistema per anonimizzare on-the-fly telefoni ed email catturati (`PII Masking`), ed è stato istituito un limite rigido di buffer a 10.000 caratteri pre-NLP per evitare saturazioni computazionali e layer 7 DoS attack tramite payload massivi. Scritta la suite unitaria per validare matematicamente le logiche di entity scoring.
+
+---
+
+### Data: 2026-05-30 (Ore 16:30)
+- **Task Eseguito:** Sviluppo Modulo Risk Engine (Fase 4).
+- **File Modificati:** `backend/models/__init__.py`, `backend/models/risk.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Esegui il micro-task: "Sviluppo Modulo Risk Engine".
+> Nome Progetto: Social Exposure Analyzer.
+> 
+> 1. **Allineamento e Definizione Modelli (`/backend/models/risk.py` e `/backend/models.py`):**
+>    - Aggiorna l'Enum `RiskLevel` in `models.py` con i valori: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
+>    - Crea un modello Pydantic `RiskReport` in `/backend/models/risk.py` con i campi specificati.
+> 
+> 2. **Modulo Risk Engine (`/backend/services/risk_engine.py`):**
+>    - Utilizza il client `google-genai` per interagire con Gemini Pro.
+>    - Usa la funzione di **Structured Output** (passando `response_schema=RiskReport`) per costringere l'LLM a restituire il JSON esatto.
+>    - System Prompt: Istruisci l'LLM ad analizzare le PII fornite e impostare `insufficient_data=True` se scarse.
+> 
+> 3. **Aggiornamento API (`/backend/api/routers/analyze.py`):**
+>    - Inserisci il `Risk Engine` alla fine della pipeline asincrona (dopo l'NLP).
+>    - Persistenza: Aggiorna il record `ProfileAnalysis` mappando i dati e salvando il report.
+> 
+> 4. **Security Audit (OWASP A09: Data Leakage):**
+>    - Documenta in `docs/SECURITY_REPORT.md` la prevenzione dell'esposizione di variabili d'ambiente.
+- **Spiegazione Tecnica:** Sviluppato il cuore analitico dell'applicativo (Risk Engine). Si è optato per la SDK ufficiale `google-genai` sfruttando la funzionalità di *Structured Outputs*: iniettando il modello Pydantic `RiskReport` direttamente nella configurazione di generazione, si costringe l'LLM a bypassare le classiche allucinazioni formattative e a restituire un JSON matematicamente parsabile. Il Database (SQLModel) è stato rifattorizzato spostando `models.py` in un package dedicato per isolare meglio i domini di business. A livello di sicurezza, il payload è stato sterilizzato inviando a Gemini esclusivamente il dump delle PII estratte, proteggendo il server da Data Leakage verso third-party (OWASP A09).
+
+---
+
+### Data: 2026-05-30 (Ore 16:45)
+- **Task Eseguito:** Setup Load Testing e Analisi di Scalabilità.
+- **File Modificati:** `tests/locustfile.py`, `tests/test_dos.py`, `backend/main.py`, `backend/schemas.py`, `docs/SYSTEM_DESIGN.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Esegui il micro-task: "Setup Load Testing e Analisi di Scalabilità".
+> Nome Progetto: Social Exposure Analyzer.
+> 
+> 1. **Setup Load Testing (`/tests/load_test.py`):**
+>    - Implementa un `locustfile.py` per testare l'endpoint `/api/v1/analyze`.
+> 
+> 2. **Validazione DoS Prevention:**
+>    - Esegui un test specifico inviando un payload superiore a 10.000 caratteri. Verifica che il sistema risponda con errore 400 o 413.
+> 
+> 3. **Documentazione Architettura Distribuita (`docs/SYSTEM_DESIGN.md`):**
+>    - Descrivi l'architettura event-driven e la roadmap cloud per Azure.
+> 
+> 4. **Direttiva di Revisione Continua (Autonomus Optimization):**
+>    - Analizza e ottimizza autonomamente eventuali limiti del codice.
+- **Spiegazione Tecnica (Autonomus Optimization):** Avvalendomi della nuova direttiva, ho eseguito due **Autonomous Optimizations** architetturali. 1) Ho inserito un Global Middleware HTTP anti-DoS in `main.py` per intercettare i Payload > 10.000 byte restituendo un secco HTTP 413 "Payload Too Large" alla porta d'ingresso dell'app; questo blocca l'attacco prim'ancora di avviare il parsing Pydantic o allocare memoria. 2) Ho corretto il modello `AnalyzeRequest` in `schemas.py`: il campo `target_url` era vincolato al tipo `HttpUrl`, il che precludeva brutalmente l'ingresso di username per lo scraping (Fase 3), fallendo con un 422; l'ho sostituito con una stringa a lunghezza massima definita (`max_length=2000`). Stesa infine l'infrastruttura di stress test con `Locust` e il manifesto della Cloud Roadmap nel `SYSTEM_DESIGN.md`.
