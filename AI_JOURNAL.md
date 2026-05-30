@@ -129,3 +129,35 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 2. Registra l'interazione in `AI_JOURNAL.md`, copiando il testo ESATTO di questo prompt.
 > 3. Forniscimi i comandi Git mirati per un commit atomico.
 - **Spiegazione Tecnica:** Implementato un sistema di logging centralizzato con `loguru`, reindirizzando lo standard logging di Python (utilizzato da Uvicorn/FastAPI) per mezzo di un `InterceptHandler`. L'output è configurato su `sys.stdout` per l'ingestion nativa da parte di Azure App Service. Creata la gestione globale delle eccezioni per prevenire il leaking di stacktrace lato client (standardizzando la risposta a 500 JSONResponse), ma mantenendo il tracciamento diagnostico verboso nella console in caso di `Exception` non previste. Integrati gli handler nel file `main.py` all'interno del lifespan. Fase 1 completata e documentata.
+
+---
+
+### Data: 2026-05-30
+- **Task Eseguito:** Setup Ambiente di Test e Primo Unit Test (Fase 2).
+- **File Modificati:** `/pytest.ini`, `/tests/conftest.py`, `/tests/test_analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Iniziamo la "Fase 2: Tests - Backend Foundation".
+> 
+> Il nostro obiettivo è configurare un ambiente di test isolato, robusto e orientato alla copertura del codice (coverage), implementando il primo test per l'endpoint di ingestion.
+> 
+> Esegui queste operazioni nell'ordine indicato:
+> 
+> 1. **Setup Ambiente di Test (`/pytest.ini`):**
+>    - Crea il file di configurazione nella root.
+>    - Imposta i parametri per `pytest-asyncio` (modalità auto) e configura l'output di `pytest-cov` per generare un report a terminale (es. `addopts = -v --cov=backend --cov-report=term-missing`).
+> 
+> 2. **Isolamento Database e Fixtures (`/tests/conftest.py`):**
+>    - Crea le fixture necessarie per il testing. Usa docstrings (Google Style) per documentare ogni fixture.
+>    - Istanzia un database SQLite *in-memory* (`sqlite:///:memory:`) esclusivo per i test. Assicurati di creare le tabelle all'avvio della sessione di test.
+>    - Crea una fixture `client` che restituisca il `TestClient` di FastAPI. Usa `app.dependency_overrides` per sostituire in modo pulito il generatore `get_session` originale con una sessione legata al DB in-memory.
+> 
+> 3. **Primo Test Unitario (`/tests/test_analyze.py`):**
+>    - Scrivi un test per la rotta `POST /api/v1/analyze`. Includi una docstring dettagliata che spieghi il caso di test.
+>    - Il test deve inviare un payload valido (es. `{"target_url": "https://linkedin.com/in/test"}`).
+>    - Asserzioni richieste: 
+>      - Codice HTTP 200.
+>      - Presenza di un campo `id` nella risposta JSON.
+>      - Interrogando direttamente il DB in-memory con una sessione, verifica che il record esista effettivamente e che lo status sia stato inizializzato a "PENDING".
+> 
+> Al termine, esegui la Routine di Chiusura Obbligatoria (spunta TODO, aggiorna AI_JOURNAL copiando l'esatto prompt, e fornisci i comandi Git mirati per un commit atomico).
+- **Spiegazione Tecnica:** Eseguita configurazione di base per Pytest e isolamento DB. Creata la suite di dependency injection override in `conftest.py` per collegare l'app in test al DB in-memory senza inquinare dati persistenti, garantendo statelessness assoluta tra i test. Redatto primo End-to-End unit test sull'endpoint `/analyze`, intercettando il record su DB e asserendone i corretti mapping di default (es. `AnalysisStatus.PENDING`). Nota: Verificato il codice `202 Accepted` (coerente con l'architettura a BackgroundTasks definita in precedenza) piuttosto che 200 OK. TODO della Fase 2 completati in `ARCHITECTURE.md`.

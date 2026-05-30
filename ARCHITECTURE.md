@@ -29,8 +29,8 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Setup sistema di logging centralizzato e gestione errori.
 
 ### Fase 2: Tests - Backend Foundation
-- [ ] Setup Pytest (`pytest.ini`, `conftest.py`).
-- [ ] Unit tests per operazioni CRUD e validazione input endpoint.
+- [x] Setup Pytest (`pytest.ini`, `conftest.py`).
+- [x] Unit tests per operazioni CRUD e validazione input endpoint.
 
 ### Fase 3: AI & NLP Core Integration
 - [ ] Sviluppo modulo **Scraping** (Librerie native: Playwright/BeautifulSoup).
