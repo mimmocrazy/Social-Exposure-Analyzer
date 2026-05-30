@@ -435,7 +435,23 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ### Data: 2026-05-30 (Ore 18:00)
 - **Task Eseguito:** Fase 6: Azure Deployment & Documentazione Finale.
-- **File Modificati:** scripts/deploy_azure.sh, .github/workflows/azure-deploy.yml, startup.sh, docs/FINAL_REPORT.md, ARCHITECTURE.md
+- **File Modificati:** `scripts/deploy_azure.sh`, `.github/workflows/azure-deploy.yml`, `startup.sh`, `docs/FINAL_REPORT.md`, `ARCHITECTURE.md`
 - **Sintesi Prompt:**
-> Completare la Fase 6. Creare gli script di automazione per Azure CLI, il workflow GitHub Actions per CD, lo script di startup.sh specifico per container Linux su App Service e redigere la Relazione Finale con Trasparenza AI richiesta per la valutazione.
-- **Spiegazione Tecnica:** Ultima fase completata con successo. Per garantire standard di livello enterprise per la valutazione, ho generato script di Infrastructure-as-Code (Azure CLI) che creano nativamente l'ambiente cloud. Inoltre, il file startup.sh risolve l'iniezione dinamica della porta che App Service passa ai container Linux via variabile PORT. Il FINAL_REPORT.md incapsula tutta la sintesi tecnica del progetto, le giustificazioni OWASP e il riferimento alla tracciabilità totale di questo file (AI Journal) come prova di Uso Consapevole e Trasparente dell'Intelligenza Artificiale.
+> Esegui il micro-task conclusivo: "Fase 6: Azure Deployment & Documentazione Finale".
+> Il sistema ha superato il Validation Gate. Dobbiamo preparare il pacchetto cloud-ready.
+> 
+> 1. **Infrastructure as Code (Azure CLI):**
+>    - Crea `scripts/deploy_azure.sh` per generare dinamicamente Resource Group, App Service Plan Linux (Tier B1) e Web App. Includi il mapping automatico della `GEMINI_API_KEY`.
+> 
+> 2. **Continuous Deployment (GitHub Actions):**
+>    - Crea `.github/workflows/azure-deploy.yml`. Configura l'esecuzione della Master Test Suite per fermare il rilascio in caso di fallimento, e il deploy successivo su Azure Web Apps tramite Publish Profile.
+> 
+> 3. **Startup Script:**
+>    - Crea `startup.sh` per recepire dinamicamente il `$PORT` di Azure, scaricare il modello spaCy `it_core_news_lg` on-the-fly e avviare Uvicorn in sicurezza.
+> 
+> 4. **Relazione Finale e Trasparenza AI:**
+>    - Scrivi `docs/FINAL_REPORT.md` (formato OWASP/Cloud).
+>    - Inserisci un capitolo specifico sulla **Trasparenza AI** che referenzi obbligatoriamente questo `AI_JOURNAL.md` per dimostrare il ruolo decisionale e il tracciamento del modello generativo nel SDLC.
+> 
+> Routine di Chiusura: Spunta in ARCHITECTURE, aggiorna AI_JOURNAL e prepara il branch per il commit finale.
+- **Spiegazione Tecnica:** Ultima fase completata con successo. Per garantire standard di livello enterprise per la valutazione, ho generato script di Infrastructure-as-Code (Azure CLI) che creano nativamente l'ambiente cloud. Inoltre, il file `startup.sh` risolve l'iniezione dinamica della porta che App Service passa ai container Linux via variabile `$PORT`. Il `FINAL_REPORT.md` incapsula tutta la sintesi tecnica del progetto, le giustificazioni OWASP e il riferimento alla tracciabilità totale di questo file (AI Journal) come prova di "Uso Consapevole e Trasparente dell'Intelligenza Artificiale".
