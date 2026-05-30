@@ -42,3 +42,33 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 4.  **Primo Commit:** Forniscimi i comandi Git per fare la primissima commit (`chore: init project structure e documentation`).
 > 5.  **Brainstorming Finale Proattivo:** Ponimi le prime questioni tecniche bloccanti per iniziare il Backend. Proponi opzioni strategiche e dimmi quale secondo te ha più senso. Attendi le mie istruzioni.
 - **Spiegazione Tecnica:** Creata la baseline architetturale ottimizzata per il deploy su Azure App Service. Stabilito un `.gitignore` blindato per prevenire leak di secret. Redatto `ARCHITECTURE.md` con separazione netta dei moduli per massimizzare la modularità e la leggibilità del codice, facilitando la futura valutazione del progetto.
+
+---
+
+### Data: 2026-05-30
+- **Task Eseguito:** Configurazione Database e modelli ORM (Fase 1).
+- **File Modificati:** `/backend/models.py`, `/backend/database.py`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Confermo l'Opzione B per le scelte architetturali: SQLModel e BackgroundTasks. Procediamo con il primo sviluppo.
+> 
+> Esegui il task "Configurazione Database e modelli ORM" (Fase 1).
+> Crea il file `/backend/models.py` implementando il modello SQLModel `ProfileAnalysis` con questi esatti campi per gestire sia i dati che lo stato del background task:
+> - `id`: UUID (Primary Key, default uuid4).
+> - `target_url`: String (index=True).
+> - `platform`: String (es. "instagram", "linkedin", nullable).
+> - `status`: String (default "PENDING", Enum o vincolato a PENDING, COMPLETED, FAILED).
+> - `scan_date`: DateTime (default timezone UTC).
+> - `raw_data_dump`: JSON (nullable, popolato a scraping finito).
+> - `pii_extracted`: JSON (nullable, popolato a NLP concluso).
+> - `has_images_analyzed`: Boolean (default False).
+> - `risk_score`: Integer (0-100, nullable).
+> - `risk_level`: String ("Basso", "Medio", "Alto", nullable).
+> - `llm_report`: Text/String (nullable).
+> - `error_message`: Text/String (nullable, popolato se status va in FAILED).
+> 
+> Crea il file `/backend/database.py` impostando l'engine per SQLite locale (es. `sqlite:///./sera_database.db`) e la funzione generatore `get_session`.
+> 
+> Al termine:
+> 1. Registra questa interazione in `AI_JOURNAL.md`, copiando il testo ESATTO di questo prompt come pattuito.
+> 2. Forniscimi i comandi Git per il commit.
+- **Spiegazione Tecnica:** Creato il modello dati `ProfileAnalysis` sfruttando SQLModel. L'uso di SQLModel permette di avere sia i modelli validati da Pydantic che la persistenza SQLAlchemy in un'unica classe, riducendo drasticamente il codice e migliorando la leggibilità. Creato il file `database.py` con un SQLite engine per lo sviluppo e l'implementazione del pattern di Dependency Injection per le sessioni del database (`get_session`).
