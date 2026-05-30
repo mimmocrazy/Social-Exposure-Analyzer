@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlmodel import Session
 from backend.schemas import AnalyzeRequest
 from backend.models import ProfileAnalysis, AnalysisStatus
-from backend.database import get_session, engine
+from backend.database import get_session
+import backend.database
 from backend.core.logger import logger
 from backend.services.discovery import SherlockAdapter
 from backend.services.scraper import gather_profile_metadata
@@ -17,6 +18,9 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
     Orchestra l'esecuzione di Discovery (se username) e Scraping dei metadati.
     Aggiorna lo stato del database al completamento.
     """
+    if isinstance(analysis_id, str):
+        analysis_id = uuid.UUID(analysis_id)
+        
     try:
         urls_to_scrape = []
         
@@ -60,7 +64,7 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
         risk_report = await calculate_risk(pii_dicts)
         
         # Aggiornamento Database con i dati raw, PII e Risk Score
-        with Session(engine) as session:
+        with Session(backend.database.engine) as session:
             analysis = session.get(ProfileAnalysis, analysis_id)
             if analysis:
                 analysis.raw_data_dump = {"profiles": raw_data}
@@ -81,7 +85,7 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
                 
     except Exception as e:
         logger.error(f"Fallimento durante l'orchestrazione asincrona {analysis_id}: {e}")
-        with Session(engine) as session:
+        with Session(backend.database.engine) as session:
             analysis = session.get(ProfileAnalysis, analysis_id)
             if analysis:
                 analysis.status = AnalysisStatus.FAILED

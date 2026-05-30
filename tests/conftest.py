@@ -16,6 +16,10 @@ engine = create_engine(
     poolclass=StaticPool
 )
 
+# Applica l'engine in-memory globalmente così i BackgroundTasks che importano `engine` da backend.database usano quello di test
+import backend.database
+backend.database.engine = engine
+
 @pytest.fixture(name="session")
 def session_fixture():
     """

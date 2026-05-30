@@ -105,5 +105,5 @@ secrets.json
 .env.production.local
 
 # Local DB and Reports
-sera_database.db
+social_exposure_analyzer.db
 reports/
