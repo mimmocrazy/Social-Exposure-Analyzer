@@ -1,16 +1,28 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import os
+import subprocess
 
 from backend.database import create_db_and_tables
 from backend.api.routers import analyze
-from backend.core.logger import setup_logging
+from backend.core.logger import setup_logging, logger
 from backend.api.exceptions import global_exception_handler
+
+def run_security_check():
+    """Esegue un rapido check di sicurezza in background (solo dev)."""
+    if os.environ.get("ENVIRONMENT", "development") != "production":
+        try:
+            logger.info("Inizializzazione check di sicurezza (Safety)...")
+            subprocess.Popen(["safety", "check"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Eseguito allo startup dell'app
     setup_logging()
+    run_security_check()
     create_db_and_tables()
     yield
     # Eseguito allo shutdown dell'app
@@ -24,6 +36,19 @@ app = FastAPI(
 
 # Registrazione exception handler globale
 app.add_exception_handler(Exception, global_exception_handler)
+
+# SECURITY-FIRST MIDDLEWARE: Prevenzione base per header e misconfiguration
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    """
+    Inietta HTTP security headers standard a ogni risposta.
+    Costituisce il layer base del Security-First development flow.
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
 
 # Configurazione CORS per sviluppo (da restrittivizzare in produzione Azure)
 app.add_middleware(

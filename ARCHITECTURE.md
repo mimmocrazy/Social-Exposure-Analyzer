@@ -27,13 +27,15 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Configurazione Database e modelli ORM.
 - [x] Creazione endpoint principale di ingestion (`/api/v1/analyze`).
 - [x] Setup sistema di logging centralizzato e gestione errori.
+- [x] Continuous Security Audit (SAST/SCA & Report Update).
+- [x] Continuous Security Audit (Manuale).
 
 ### Fase 2: Tests - Backend Foundation
 - [x] Setup Pytest (`pytest.ini`, `conftest.py`).
 - [x] Unit tests per operazioni CRUD e validazione input endpoint.
 
 ### Fase 3: AI & NLP Core Integration
-- [ ] Sviluppo modulo **Scraping** (Librerie native: Playwright/BeautifulSoup).
+- [x] Sviluppo modulo Discovery (Sherlock Adapter) e Scraping (Search Dorking).
 - [ ] Sviluppo modulo **NLP** (Estrazione PII con Presidio/spaCy).
 - [ ] Sviluppo modulo **OCR** (Analisi immagini con Tesseract/EasyOCR).
 - [ ] Sviluppo modulo **Risk Engine** (Prompting Gemini Pro per Risk Score e Report).

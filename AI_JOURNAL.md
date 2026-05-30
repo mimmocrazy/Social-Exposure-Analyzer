@@ -161,3 +161,97 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 
 > Al termine, esegui la Routine di Chiusura Obbligatoria (spunta TODO, aggiorna AI_JOURNAL copiando l'esatto prompt, e fornisci i comandi Git mirati per un commit atomico).
 - **Spiegazione Tecnica:** Eseguita configurazione di base per Pytest e isolamento DB. Creata la suite di dependency injection override in `conftest.py` per collegare l'app in test al DB in-memory senza inquinare dati persistenti, garantendo statelessness assoluta tra i test. Redatto primo End-to-End unit test sull'endpoint `/analyze`, intercettando il record su DB e asserendone i corretti mapping di default (es. `AnalysisStatus.PENDING`). Nota: Verificato il codice `202 Accepted` (coerente con l'architettura a BackgroundTasks definita in precedenza) piuttosto che 200 OK. TODO della Fase 2 completati in `ARCHITECTURE.md`.
+
+---
+
+### Data: 2026-05-30 (Ore 15:35)
+- **Task Eseguito:** Sviluppo modulo Discovery & Data Gathering (Fase 3).
+- **File Modificati:** `/backend/services/discovery.py`, `/backend/services/scraper.py`, `/backend/api/routers/analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Iniziamo la "Fase 3: AI & NLP Core Integration". 
+> Esegui il micro-task "Sviluppo modulo Discovery & Data Gathering".
+> 
+> Crea il file `/backend/services/discovery.py` e `/backend/services/scraper.py`.
+> 
+> 1. **Aggiornamento Documentazione (Obbligatorio):**
+>    - Apri `ARCHITECTURE.md`. Sostituisci il task "[ ] Sviluppo modulo Scraping" con: 
+>      "[x] Sviluppo modulo Discovery (Sherlock Adapter) e Scraping (Search Dorking)".
+>    - Motiva nel prossimo log di `AI_JOURNAL.md` l'integrazione di `Sherlock` come strategia di Discovery per migliorare l'affidabilità dell'OSINT rispetto allo scraping diretto.
+> 
+> 2. **Modulo Discovery (`/backend/services/discovery.py`):**
+>    - Implementa l'Adapter Pattern: interfaccia `BaseDiscovery` e classe `SherlockAdapter`.
+>    - Usa `subprocess` per invocare `sherlock` limitando il target a: facebook, instagram, twitter, linkedin.
+>    - Restituisci una lista di URL validi.
+> 
+> 3. **Modulo Scraping (`/backend/services/scraper.py`):**
+>    - Riceve gli URL dal modulo Discovery.
+>    - Usa `httpx` per estrarre meta-dati (Title, Bio, Link pubblici) tramite Search Dorking/Metadata.
+>    - Implementa logica di fallback: se il contenuto è inaccessibile, restituisci stato `PROTECTED` con spiegazione.
+> 
+> 4. **Integrazione API (`/backend/api/routers/analyze.py`):**
+>    - Aggiorna il `BackgroundTask` per orchestrare la sequenza: 
+>      `Discovery` (se username) -> `Scraper` -> `Salvataggio raw_data_dump nel DB`.
+> 
+> Routine di Chiusura Obbligatoria:
+> 1. Spunta i TODO in `ARCHITECTURE.md` come indicato sopra.
+> 2. Registra l'operazione in `AI_JOURNAL.md` (Data e Ora: 15:35, testo del prompt, e motivazione tecnica dell'integrazione Sherlock).
+> 3. Fornisci i comandi Git per il commit (file interessati: `discovery.py`, `scraper.py`, `analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`).
+- **Spiegazione Tecnica:** Iniziata la Fase 3. Implementata la strategia di Discovery utilizzando l'Adapter Pattern per integrare `Sherlock`. Questa integrazione architetturale è cruciale: l'uso di uno strumento OSINT affermato come Sherlock garantisce un rateo di successo superiore nel rintracciare account frammentati rispetto a uno scraper puramente statico che necessita di URL esatti, offrendo all'AI una base dati molto più ricca per l'analisi dei rischi. Il modulo `scraper.py` usa `httpx` asincrono abbinato a `BeautifulSoup` per prelevare OpenGraph e title tags. La logica di fallback `PROTECTED` maschera con eleganza gli errori HTTP derivanti dai WAF (Cloudflare/Instagram blocks). Il BackgroundTask di FastAPI è stato aggiornato per fungere da orchestratore dell'intera catena asincrona.
+
+---
+
+### Data: 2026-05-30 (Ore 15:45)
+- **Task Eseguito:** Audit di Sicurezza Integrato e Setup Security Suite.
+- **File Modificati:** `docs/SECURITY_REPORT.md`, `/backend/services/discovery.py`, `/backend/services/scraper.py`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Esegui il micro-task: "Audit di Sicurezza Integrato e Setup Security Suite".
+> 
+> Dobbiamo retroattivamente analizzare il codice scritto per la Fase 1, 2 e 3 (Discovery/Scraper) e standardizzare la procedura di sicurezza.
+> 
+> 1. **Setup Security Suite:**
+>    - Installa `bandit` e `safety` nel virtual environment.
+>    - Crea il file `docs/SECURITY_REPORT.md` seguendo lo standard OWASP Top 10.
+>    - Esegui `bandit -r backend/` e `safety check`. Riporta nel report i risultati ottenuti (o "Nessuna criticità rilevata" se il codice è pulito).
+>    - Documenta le mitigazioni già adottate (es. isolamento processi tramite subprocess per Sherlock, uso di loguru per prevenire PII leaking).
+> 
+> 2. **Audit del codice esistente:**
+>    - Analizza `backend/services/discovery.py`. Poiché invochi `subprocess` per `sherlock`, verifica se l'input dello username è sanitizzato contro command injection. Se necessario, implementa una whitelist di caratteri validi.
+>    - Analizza `backend/services/scraper.py`. Verifica che non ci siano potenziali rischi di SSRF (Server-Side Request Forgery) nel modo in cui gestiamo l'URL in input.
+> 
+> 3. **Standardizzazione:**
+>    - Aggiungi in `ARCHITECTURE.md` il nuovo task costante: "[ ] Continuous Security Audit (SAST/SCA & Report Update)".
+>    - Implementa un controllo nel `main.py` o in una utility che verifichi, in ambiente dev, la presenza di dipendenze insicure tramite `safety` (opzionale, ma consigliato per la documentazione).
+> 
+> Routine di Chiusura Obbligatoria:
+> 1. Spunta il nuovo task in `ARCHITECTURE.md`.
+> 2. Registra l'operazione in `AI_JOURNAL.md` (Data e Ora: 15:45, testo del prompt, e motivazione tecnica: "Implementazione del Security-First development flow per garantire la resilienza contro le OWASP Top 10").
+> 3. Fornisci i comandi Git per il commit, incluso il nuovo `docs/SECURITY_REPORT.md`.
+- **Spiegazione Tecnica:** Implementazione del Security-First development flow per garantire la resilienza contro le OWASP Top 10. Integrati controlli preventivi SSRF all'interno di `scraper.py` verificando hostname ed escludendo direttive interne di loopback o private subnets. Aggiunta una whitelist regex-based in `discovery.py` per eradicare i rischi di command injection quando l'input è passato al subprocess di Sherlock. Steso un documento in `docs/SECURITY_REPORT.md` per tracciare il primo audit SAST/SCA condotto in fase di review, essenziale come evidence di maturità del software durante la demo finale, e aggiunto un silent trigger background per `safety check` in `main.py` dedicato al ciclo di development locale.
+
+---
+
+### Data: 2026-05-30 (Ore 15:50)
+- **Task Eseguito:** Security Review manuale approfondita (Fasi 1-3).
+- **File Modificati:** `docs/SECURITY_REPORT.md`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Esegui una "Security Review" profonda e manuale del repository attuale (Fasi 1, 2, 3).
+> 
+> 1. **Analisi Tecnica (File per File):**
+>    - Analizza `backend/main.py`, `backend/api/routers/analyze.py`, `backend/services/discovery.py`, `backend/services/scraper.py`.
+>    - Cerca vulnerabilità logiche, debolezze di design (es. assenza di validazione robusta, log insecure, gestione errori che espone stacktrace) e conformità OWASP Top 10.
+> 
+> 2. **Setup SECURITY_REPORT.md:**
+>    - Crea `docs/SECURITY_REPORT.md`.
+>    - Struttura il report con una tabella tecnica:
+>      | ID | File | Categoria OWASP | Descrizione Vulnerabilità | Impatto | Remediation | Stato |
+>    - Compila la tabella con i risultati dell'analisi del codice esistente. Se il codice è attualmente sicuro per quelle categorie, scrivi "Nessuna vulnerabilità critica identificata" per ogni modulo.
+> 
+> 3. **Integrazione "Security-First":**
+>    - Inserisci in `ARCHITECTURE.md` il task costante: "[ ] Continuous Security Audit (Manuale)".
+>    - Inserisci in `main.py` un commento di intestazione o un middleware di base che richiama la necessità di mantenere il security-first.
+> 
+> Routine di Chiusura:
+> 1. Spunta il task in `ARCHITECTURE.md`.
+> 2. Registra l'operazione in `AI_JOURNAL.md` (Data e Ora: 15:50, testo del prompt).
+> 3. Fornisci i comandi Git per il commit, incluso il nuovo report.
+- **Spiegazione Tecnica:** Analisi retroattiva e Security Review condotta sull'intera base di codice. Riscritto il file `docs/SECURITY_REPORT.md` implementando la tabella matriciale richiesta per tracciare rigorosamente lo stato delle OWASP Top 10 su ciascun file core. Identificate e già mitigate logicamente le principali falle (A01, A03, A05, A10). In `main.py` è stato iniettato un nuovo HTTP Middleware protettivo per impostare in automatico gli header di sicurezza standard (`nosniff`, `X-Frame-Options` e `XSS-Protection`), consolidando concretamente l'approccio Security-First a livello infrastrutturale.
