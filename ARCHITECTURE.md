@@ -45,9 +45,11 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [ ] Integration testing per l'estrazione PII e OCR.
 - [ ] Mock testing per le risposte di Gemini Pro.
 
-### Fase 5: Scalabilità & Deployment
+### Fase 5: Scalabilità, Deployment & CI/CD
 - [x] Load Testing e Scalabilità (Locust, System Design).
+- [x] Sviluppo Test Orchestrator e Reportistica HTML.
 - [ ] Setup Azure App Service (Configurazione env, deploy).
+- [ ] **CONTINUOUS**: Eseguire `python scripts/run_all_tests.py` (o `make test`) prima di ogni commit.
 
 ### Fase 5: Frontend Development
 - [ ] Setup framework frontend.

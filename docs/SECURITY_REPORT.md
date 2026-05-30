@@ -16,3 +16,8 @@ Analisi di sicurezza manuale e approfondita del repository (Fasi 1, 2, 3), strut
 | 08 | `risk_engine.py` | A09:2021 - Data Leakage a Third-Party LLM | Rischio di esposizione di segreti di sistema (es. API Keys) inviando un payload incontrollato al provider LLM (Gemini). | Alto | Il System Prompt è blindato e il payload in ingresso è limitato alla serializzazione JSON delle sole PII estratte, isolando il contesto applicativo. | Risolto |
 
 *Nota Generale:* Il codice core analizzato è risultato robusto. Tutte le principali vulnerabilità OWASP che tipicamente affliggono le pipeline di data-gathering risultano proattivamente coperte dai pattern di difesa integrati (Security-By-Design).
+
+## Strategia di Validazione (CI/CD Mockup)
+Il sistema adotta un approccio automatizzato e rigoroso di testing per prevenire regressioni e test-data leak:
+- **Coverage**: Viene monitorato tramite `pytest-cov` per validare l'ecosistema Backend con report HTML isolati in `/reports`.
+- **Data Isolation & Statelessness (Autonomous Optimization)**: La suite non genera file di database fisici (nessun `test_db.sqlite`). Tutti i test si appoggiano esclusivamente su un engine SQLite **in-memory** (`sqlite:///:memory:`) configurato in `conftest.py`. Questo garantisce isolamento assoluto tra test run, impedisce leakage persistente di mock-data su disco e riduce a zero l'overhead I/O.
