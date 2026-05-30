@@ -406,13 +406,25 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Task Eseguito:** Fase 5: Frontend Development e Integrazione.
 - **File Modificati:** `backend/api/routers/analyze.py`, `/frontend/*` (Vite Scaffold, `tailwind.config.js`, `api.js`, `App.jsx`, `index.css`), `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
-> Esegui il micro-task: "Fase 5: Frontend Development".
-> Obiettivo: Realizzare una Dashboard "Apple-style" moderna, reattiva e performante.
-> 1. Setup Frontend (Vite + Tailwind, Framer, Tremor, React Query).
-> 2. UI Design (SearchForm, Dashboard con score e animazioni).
-> 3. Integrazione Backend (api.js con polling su analyze endpoint).
-> 4. Documentazione (XSS Protection in SECURITY_REPORT.md).
-> 5. Ricorda la "solita revisione prima di procedere".
+> Esegui il micro-task: "Fase 5: Frontend Development e Integrazione".
+> Il backend è solido e protetto. Ora passiamo alla UI. Obiettivo: realizzare una Dashboard "Apple-style" che impressioni per reattività ed estetica.
+> 
+> 1. **Setup Architettura Frontend:**
+>    - Crea uno scaffold React con Vite.
+>    - Configura `Tailwind CSS` e `@tremor/react` per grafici analitici premium. Adotta una palette cromatica Dark Mode / Glassmorphism.
+> 
+> 2. **Sviluppo Componenti UI:**
+>    - Implementa la vista principale con un `SearchForm` per l'inserimento dell'URL o Username.
+>    - Crea la Dashboard Risultati che mostri il `Risk Score`, le `PII` estratte e il `Report AI` generato da Gemini.
+> 
+> 3. **Integrazione Asincrona (Polling):**
+>    - Il backend sfrutta i Background Tasks. Il frontend NON deve bloccarsi. Implementa in `api.js` un meccanismo di polling asincrono che interroghi l'endpoint `GET /api/v1/analyze/{id}` finché lo stato non diventi `COMPLETED`. Gestisci coerentemente gli stati di caricamento nella UI.
+> 
+> 4. **Sicurezza Frontend:**
+>    - Implementa protezioni contro XSS nella renderizzazione del report LLM.
+>    - Aggiorna `docs/SECURITY_REPORT.md` evidenziando le difese XSS adottate.
+> 
+> Routine di Chiusura: Esegui la revisione continua, spunta in `ARCHITECTURE.md` e aggiorna `AI_JOURNAL.md` (ore 17:15) simulando fedelmente questo prompt.
 - **Spiegazione Tecnica (Autonomus Optimization):** Applicando la *Revisione Continua*, ho identificato e colmato una lacuna architetturale bloccante nel Backend: l'assenza dell'endpoint `GET /api/v1/analyze/{id}` indispensabile per permettere a React Query di effettuare il polling asincrono. Successivamente, ho installato e configurato l'ecosistema React forzando compatibilmente `tailwindcss@3` per abilitare i grafici di `@tremor/react`. L'interfaccia adotta un dark theme premium, con glassmorphism per un "Apple-style" raffinato e state management robusto per mostrare i caricamenti e proteggere contro attacchi XSS.
 
 ---
@@ -421,14 +433,25 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Task Eseguito:** Master Test Orchestrator e Validation Gate.
 - **File Modificati:** `tests/test_integration.py`, `scripts/full_system_check.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
-> Esegui il micro-task: "Master Test Orchestrator e Validation Gate".
+> Esegui il micro-task: "Fase 5.5: Master Test Orchestrator e Validation Gate".
+> Prima di affrontare l'infrastruttura Cloud (Azure), dobbiamo garantire che l'intero sistema sia in uno stato "verde". Costruiremo un Validation Gate assoluto.
 > 
-> 1. **Orchestrare la Suite di Test:** Crea `scripts/full_system_check.py` che esegua Backend Coverage (`pytest tests/`), API Contract (ingestion + polling) e Performance Gate (DoS).
-> 2. **Reporting Visuale:** Stampa un "Dashboard Report" colorato e termina con `exit(1)` su fallimento.
-> 3. **Integrazione "Frontend Check":** Aggiungi funzione per validare la build di React (`npm run build`).
-> 4. **Documentazione di Qualità:** Aggiorna `SECURITY_REPORT.md` descrivendo la Master Test Suite come ultimo baluardo pre-deploy Azure.
+> 1. **Test di Integrazione End-to-End:**
+>    - Sviluppa `tests/test_integration.py` per testare l'intero flusso reale: sottomissione richiesta -> attesa elaborazione in background -> polling status -> recupero risultato finale.
 > 
-> Routine di Chiusura: Spunta in ARCHITECTURE e aggiorna AI_JOURNAL (17:30).
+> 2. **Master Orchestrator (`scripts/full_system_check.py`):**
+>    - Crea uno script Python orchestratore che funga da CI Pipeline locale. 
+>    - Deve eseguire in sequenza: 
+>      A) Backend Unit & Coverage (`pytest tests/`).
+>      B) API Contract & Integration (flusso ingestion + polling).
+>      C) Performance & Security Gate (Anti-DoS limits).
+>      D) Frontend Compilation Check (`npm run build` della folder React).
+>    - Ogni step deve stampare un esito chiaro (SUCCESS/FAILED). Se anche uno solo fallisce, lo script deve terminare immediatamente con `exit(1)`.
+> 
+> 3. **Documentazione QA:**
+>    - Aggiorna `docs/SECURITY_REPORT.md` descrivendo la Master Test Suite come meccanismo preventivo (Quality Assurance Gate) per impedire il deploy in produzione di codice compromesso.
+> 
+> Routine di Chiusura: Spunta in `ARCHITECTURE.md`, aggiorna `AI_JOURNAL.md` (ore 17:30) copiando esattamente questo prompt, e prepara il branch per il deploy.
 - **Spiegazione Tecnica (Autonomus Optimization):** Applicando la *Revisione Continua*, ho architettato un Test di Integrazione nativo (`tests/test_integration.py`) invece di iniettare chiamate web estranee nello script, capitalizzando sull'uso del `TestClient` di FastAPI per un'esecuzione deterministica senza il bisogno di binding su porte di rete. Ho poi sviluppato il Master Gate in Python per intercettare asincronamente i codici di uscita di 4 cluster indipendenti: Unit, Integration, Security (Anti-DoS) e compilazione Frontend React. Questo meccanismo costituisce il baluardo finale che blocca istantaneamente pipeline compromesse (`exit(1)`) prima di raggiungere l'infrastruttura Cloud.
 
 ---
