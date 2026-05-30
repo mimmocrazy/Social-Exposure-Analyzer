@@ -52,10 +52,10 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [ ] **CONTINUOUS**: Eseguire `python scripts/run_all_tests.py` (o `make test`) prima di ogni commit.
 
 ### Fase 5: Frontend Development
-- [ ] Setup framework frontend.
-- [ ] Sviluppo UI di input (URL social).
-- [ ] Sviluppo Dashboard Risultati (Risk Score, PII esposte, Report AI).
-- [ ] Integrazione API Frontend-Backend.
+- [x] Setup framework frontend (Vite, Tailwind, Tremor).
+- [x] Sviluppo UI di input (SearchForm).
+- [x] Sviluppo Dashboard Risultati (Risk Score, PII esposte, Report AI).
+- [x] Integrazione API Frontend-Backend (Polling).
 
 ### Fase 6: Azure Deployment & Documentazione
 - [ ] Configurazione variabili d'ambiente per Azure.

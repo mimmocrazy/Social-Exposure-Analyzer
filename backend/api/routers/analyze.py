@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 import re
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlmodel import Session
 from backend.schemas import AnalyzeRequest
 from backend.models import ProfileAnalysis, AnalysisStatus
@@ -112,4 +112,37 @@ def analyze_profile(
     return {
         "message": "Richiesta OSINT presa in carico",
         "analysis_id": analysis.id
+    }
+
+@router.get("/analyze/{analysis_id}")
+def get_analysis_status(
+    analysis_id: uuid.UUID,
+    session: Session = Depends(get_session)
+):
+    """
+    Endpoint per il polling del Frontend.
+    Restituisce lo stato corrente dell'analisi e, se COMPLETED, i risultati.
+    """
+    analysis = session.get(ProfileAnalysis, analysis_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analisi non trovata")
+        
+    import json
+    llm_report_parsed = None
+    if analysis.llm_report:
+        try:
+            llm_report_parsed = json.loads(analysis.llm_report)
+        except:
+            llm_report_parsed = analysis.llm_report
+
+    return {
+        "id": analysis.id,
+        "target_url": analysis.target_url,
+        "status": analysis.status,
+        "scan_date": analysis.scan_date,
+        "risk_score": analysis.risk_score,
+        "risk_level": analysis.risk_level,
+        "pii_extracted": analysis.pii_extracted,
+        "llm_report": llm_report_parsed,
+        "error_message": analysis.error_message
     }

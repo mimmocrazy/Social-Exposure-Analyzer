@@ -302,21 +302,34 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > Esegui il micro-task: "Sviluppo Modulo Risk Engine".
 > Nome Progetto: Social Exposure Analyzer.
 > 
-> 1. **Allineamento e Definizione Modelli (`/backend/models/risk.py` e `/backend/models.py`):**
->    - Aggiorna l'Enum `RiskLevel` in `models.py` con i valori: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
->    - Crea un modello Pydantic `RiskReport` in `/backend/models/risk.py` con i campi specificati.
+> 1. **Definizione Modello Dati (`/backend/models/risk.py`):**
+>    - Crea un modello Pydantic `RiskReport` con i seguenti campi:
+>      - `score`: int (0-100)
+>      - `level`: str (enum: Low, Medium, High, Critical)
+>      - `threat_vectors`: List[str]
+>      - `mitigation_advice`: str
+>      - `insufficient_data`: bool
 > 
 > 2. **Modulo Risk Engine (`/backend/services/risk_engine.py`):**
->    - Utilizza il client `google-genai` per interagire con Gemini Pro.
->    - Usa la funzione di **Structured Output** (passando `response_schema=RiskReport`) per costringere l'LLM a restituire il JSON esatto.
->    - System Prompt: Istruisci l'LLM ad analizzare le PII fornite e impostare `insufficient_data=True` se scarse.
+>    - Implementa il client per Gemini Pro.
+>    - Istruisci l'LLM tramite System Prompt a: 
+>      - Analizzare le PII (fornite come JSON).
+>      - Assegnare un punteggio basato sulla visibilità e sul tipo di PII (es. email + telefono = rischio alto).
+>      - Vietare allucinazioni: se il dato manca, imposta `insufficient_data=True` e abbassa lo score.
+>    - Il metodo `calculate_risk(extracted_pii: ExtractedPII) -> RiskReport` deve essere asincrono.
 > 
 > 3. **Aggiornamento API (`/backend/api/routers/analyze.py`):**
->    - Inserisci il `Risk Engine` alla fine della pipeline asincrona (dopo l'NLP).
->    - Persistenza: Aggiorna il record `ProfileAnalysis` mappando i dati e salvando il report.
+>    - Completa la pipeline: Scraper -> OCR -> NLP -> Risk Engine.
+>    - Persistenza: Salva il `RiskReport` nel DB collegandolo al profilo utente, mantenendo lo storico degli audit passati.
 > 
-> 4. **Security Audit (OWASP A09: Data Leakage):**
->    - Documenta in `docs/SECURITY_REPORT.md` la prevenzione dell'esposizione di variabili d'ambiente.
+> 4. **Security Audit (OWASP A03:2021):**
+>    - Assicurati che i dati inviati al prompt di Gemini non includano segreti o credenziali di sistema. 
+>    - Documenta nel `docs/SECURITY_REPORT.md` come il modulo garantisce l'anonimizzazione dei dati di sistema inviati al provider AI.
+> 
+> Routine di Chiusura:
+> 1. Spunta il task "[x] Sviluppo modulo Risk Engine" in `ARCHITECTURE.md`.
+> 2. Aggiorna `AI_JOURNAL.md` con l'orario 16:30 e il log dell'operazione.
+> 3. Fornisci i comandi Git per il commit.
 - **Spiegazione Tecnica:** Sviluppato il cuore analitico dell'applicativo (Risk Engine). Si è optato per la SDK ufficiale `google-genai` sfruttando la funzionalità di *Structured Outputs*: iniettando il modello Pydantic `RiskReport` direttamente nella configurazione di generazione, si costringe l'LLM a bypassare le classiche allucinazioni formattative e a restituire un JSON matematicamente parsabile. Il Database (SQLModel) è stato rifattorizzato spostando `models.py` in un package dedicato per isolare meglio i domini di business. A livello di sicurezza, il payload è stato sterilizzato inviando a Gemini esclusivamente il dump delle PII estratte, proteggendo il server da Data Leakage verso third-party (OWASP A09).
 
 ---
@@ -330,15 +343,28 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 
 > 1. **Setup Load Testing (`/tests/load_test.py`):**
 >    - Implementa un `locustfile.py` per testare l'endpoint `/api/v1/analyze`.
+>    - Definisci uno scenario di test che simuli:
+>      - 10 utenti simultanei.
+>      - Spikes di richieste per testare la risposta sotto carico.
+>    - Obiettivo: monitorare i tempi di latenza (P95 e P99) e verificare la stabilità dell'applicazione sotto stress.
 > 
 > 2. **Validazione DoS Prevention:**
->    - Esegui un test specifico inviando un payload superiore a 10.000 caratteri. Verifica che il sistema risponda con errore 400 o 413.
+>    - Esegui un test specifico inviando un payload (input string) superiore a 10.000 caratteri.
+>    - Verifica che il sistema risponda con un errore 400 (Bad Request) o 413, confermando che il filtro di protezione rispetta il limite stabilito.
 > 
 > 3. **Documentazione Architettura Distribuita (`docs/SYSTEM_DESIGN.md`):**
->    - Descrivi l'architettura event-driven e la roadmap cloud per Azure.
+>    - Crea questo file. Descrivi l'architettura come event-driven:
+>      - Disaccoppiamento API/Worker tramite `BackgroundTasks`.
+>      - Strategia di scalabilità orizzontale (Azure App Service Auto-scaling).
+>      - Roadmap per migrazione da SQLite a Azure SQL/CosmosDB e Service Bus.
 > 
-> 4. **Direttiva di Revisione Continua (Autonomus Optimization):**
->    - Analizza e ottimizza autonomamente eventuali limiti del codice.
+> 4. **Direttiva di Revisione Continua:**
+>    - Ogni volta che ricevi un prompt da "Prompt Generator", analizzalo criticamente. Se identifichi ottimizzazioni (es. logica più pulita, gestione errori migliore, sicurezza extra), applicale autonomamente, documentando la modifica nel `AI_JOURNAL.md` sotto la voce "Autonomus Optimization".
+> 
+> Routine di Chiusura:
+> 1. Spunta il task "[x] Load Testing e Scalabilità" in `ARCHITECTURE.md`.
+> 2. Aggiorna `AI_JOURNAL.md` con l'orario 16:45 e il testo del prompt.
+> 3. Fornisci i comandi Git per il commit.
 - **Spiegazione Tecnica (Autonomus Optimization):** Avvalendomi della nuova direttiva, ho eseguito due **Autonomous Optimizations** architetturali. 1) Ho inserito un Global Middleware HTTP anti-DoS in `main.py` per intercettare i Payload > 10.000 byte restituendo un secco HTTP 413 "Payload Too Large" alla porta d'ingresso dell'app; questo blocca l'attacco prim'ancora di avviare il parsing Pydantic o allocare memoria. 2) Ho corretto il modello `AnalyzeRequest` in `schemas.py`: il campo `target_url` era vincolato al tipo `HttpUrl`, il che precludeva brutalmente l'ingresso di username per lo scraping (Fase 3), fallendo con un 422; l'ho sostituito con una stringa a lunghezza massima definita (`max_length=2000`). Stesa infine l'infrastruttura di stress test con `Locust` e il manifesto della Cloud Roadmap nel `SYSTEM_DESIGN.md`.
 
 ---
@@ -349,8 +375,42 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Sintesi Prompt:**
 > Esegui il micro-task: "Implementazione Test Orchestrator e Reportistica".
 > 
-> 1. **Setup Environment:** Installa pytest suite, crea `Makefile`.
-> 2. **Orchestratore di Test:** Crea `scripts/run_all_tests.py`.
-> 3. **Integrazione CI/CD Mockup:** Aggiorna la validazione nel Security Report e il Check in Architecture.
-> 4. **Revisione Continua (Autonomus Optimization):** Esegui i test autonomamente in futuro per validare le nuove feature e la non-regressione.
+> 1. **Setup Environment:**
+>    - Installa `pytest`, `pytest-cov`, `pytest-html`, `pytest-sugar`.
+>    - Crea un file `Makefile` nella root che contenga il comando `make test`: questo deve eseguire `pytest` con coverage report e generare il file `reports/test_report.html`.
+> 
+> 2. **Orchestratore di Test (`scripts/run_all_tests.py`):**
+>    - Crea uno script Python che automatizzi l'esecuzione:
+>      - Configura il path del DB per i test (usare un file `test_db.sqlite` separato).
+>      - Esegue l'intera suite (`tests/` + `tests/load_test.py` + `tests/test_dos.py`).
+>      - Gestisce gli exit code: stampa in verde "SUCCESSO" o in rosso "FALLITO" a fine esecuzione.
+> 
+> 3. **Integrazione CI/CD Mockup:**
+>    - Aggiorna `docs/SECURITY_REPORT.md` descrivendo la "Strategia di Validazione": l'uso di pytest-cov per garantire l'80% di copertura e l'isolamento dei dati tramite DB separato.
+>    - Aggiungi un task in `ARCHITECTURE.md`: "[ ] Eseguire `make test` prima di ogni commit".
+> 
+> 4. **Direttiva di Revisione Continua (Autonomous Optimization):**
+>    - Da ora in avanti, prima di ogni nuova implementazione, esegui automaticamente il test suite esistente. Se le nuove modifiche rompono test pre-esistenti, interrompi il processo e segnala la regressione nel `AI_JOURNAL.md`.
+> 
+> Routine di Chiusura:
+> 1. Spunta il task in `ARCHITECTURE.md`.
+> 2. Aggiorna `AI_JOURNAL.md` con l'orario 17:00 e il testo del prompt.
+> 3. Fornisci i comandi Git per il commit.
+> 
+> dimostrami che stai esaminando il prompt e che (SOLO SE NECESSARIO) lo modifichi e lo migliori
 - **Spiegazione Tecnica (Autonomus Optimization):** Sulla base dell'analisi architetturale, ho ottimizzato profondamente la pipeline di CI/CD Mockup. Invece di far generare e sporcare il file system con un `test_db.sqlite` fisico come richiesto, l'orchestratore sfrutta implicitamente l'isolamento *in-memory* di SQLite pre-esistente configurato nel `conftest.py`, che è più veloce e totalmente stateless. Inoltre, ho escluso esplicitamente lo script asincrono `locustfile.py` dall'esecuzione automatizzata di `pytest`, evitando crash incompatibili. Lo script Python elabora ora la suite con colori ANSI e coverage outputtando il tutto in `/reports/test_report.html`, invocabile universalmente su Windows/Linux tramite `make test` o direttamente via script.
+
+---
+
+### Data: 2026-05-30 (Ore 17:15)
+- **Task Eseguito:** Fase 5: Frontend Development e Integrazione.
+- **File Modificati:** `backend/api/routers/analyze.py`, `/frontend/*` (Vite Scaffold, `tailwind.config.js`, `api.js`, `App.jsx`, `index.css`), `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Esegui il micro-task: "Fase 5: Frontend Development".
+> Obiettivo: Realizzare una Dashboard "Apple-style" moderna, reattiva e performante.
+> 1. Setup Frontend (Vite + Tailwind, Framer, Tremor, React Query).
+> 2. UI Design (SearchForm, Dashboard con score e animazioni).
+> 3. Integrazione Backend (api.js con polling su analyze endpoint).
+> 4. Documentazione (XSS Protection in SECURITY_REPORT.md).
+> 5. Ricorda la "solita revisione prima di procedere".
+- **Spiegazione Tecnica (Autonomus Optimization):** Applicando la *Revisione Continua*, ho identificato e colmato una lacuna architetturale bloccante nel Backend: l'assenza dell'endpoint `GET /api/v1/analyze/{id}` indispensabile per permettere a React Query di effettuare il polling asincrono. Successivamente, ho installato e configurato l'ecosistema React forzando compatibilmente `tailwindcss@3` per abilitare i grafici di `@tremor/react`. L'interfaccia adotta un dark theme premium, con glassmorphism per un "Apple-style" raffinato e state management robusto per mostrare i caricamenti e proteggere contro attacchi XSS.

@@ -21,3 +21,8 @@ Analisi di sicurezza manuale e approfondita del repository (Fasi 1, 2, 3), strut
 Il sistema adotta un approccio automatizzato e rigoroso di testing per prevenire regressioni e test-data leak:
 - **Coverage**: Viene monitorato tramite `pytest-cov` per validare l'ecosistema Backend con report HTML isolati in `/reports`.
 - **Data Isolation & Statelessness (Autonomous Optimization)**: La suite non genera file di database fisici (nessun `test_db.sqlite`). Tutti i test si appoggiano esclusivamente su un engine SQLite **in-memory** (`sqlite:///:memory:`) configurato in `conftest.py`. Questo garantisce isolamento assoluto tra test run, impedisce leakage persistente di mock-data su disco e riduce a zero l'overhead I/O.
+
+## Frontend Security (OWASP A03:2021 & A07:2021)
+La Dashboard Frontend implementata in React integra difese essenziali contro Cross-Site Scripting (XSS) e problematiche di stato:
+- **XSS Protection**: Il rendering di React per la `Dashboard` gestisce automaticamente il text-escaping per le PII (Personally Identifiable Information) estratte e per il `mitigation_advice` generato dal LLM, prevenendo l'iniezione di script malevoli via UI.
+- **Secure State Handling**: Il polling dei dati tramite `@tanstack/react-query` gestisce elegantemente i caricamenti e fallimenti asincroni, prevenendo la renderizzazione di stati incoerenti o UI corrotte che potrebbero mascherare errori backend critici.
