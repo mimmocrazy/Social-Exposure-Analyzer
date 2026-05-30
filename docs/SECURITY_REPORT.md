@@ -26,3 +26,10 @@ Il sistema adotta un approccio automatizzato e rigoroso di testing per prevenire
 La Dashboard Frontend implementata in React integra difese essenziali contro Cross-Site Scripting (XSS) e problematiche di stato:
 - **XSS Protection**: Il rendering di React per la `Dashboard` gestisce automaticamente il text-escaping per le PII (Personally Identifiable Information) estratte e per il `mitigation_advice` generato dal LLM, prevenendo l'iniezione di script malevoli via UI.
 - **Secure State Handling**: Il polling dei dati tramite `@tanstack/react-query` gestisce elegantemente i caricamenti e fallimenti asincroni, prevenendo la renderizzazione di stati incoerenti o UI corrotte che potrebbero mascherare errori backend critici.
+
+## Master Test Suite (Validation Gate)
+In aggiunta alle pipeline di unit testing standard, è stato introdotto il **Master Test Orchestrator** (`scripts/full_system_check.py`). Questo script agisce in architettura "Shift-Left" come l'ultimo baluardo di sicurezza prima del rilascio in cloud (Azure). Interrompe forzatamente (con `exit(1)`) qualsiasi processo di CI/CD se rileva:
+- Fallimenti nella business logic (Backend Status).
+- Rotture o malformazioni del contratto JSON API (API Contract).
+- Vulnerabilità prestazionali o elusioni delle policy sui payload (Performance Gate / Anti-DoS).
+- Corruzione della compilazione degli asset React o dipendenze rotte (Frontend Build).

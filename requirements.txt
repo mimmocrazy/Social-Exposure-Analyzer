@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+pydantic
+loguru
+google-genai
+spacy
+easyocr
+httpx
+pytest
+pytest-cov
+pytest-html
+pytest-sugar
+pytest-asyncio
+locust

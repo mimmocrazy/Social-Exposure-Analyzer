@@ -57,6 +57,9 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Sviluppo Dashboard Risultati (Risk Score, PII esposte, Report AI).
 - [x] Integrazione API Frontend-Backend (Polling).
 
+### Fase 5.5: Master Test Orchestrator
+- [x] Setup Master Test Suite (Validation Gate API, DoS, Frontend).
+
 ### Fase 6: Azure Deployment & Documentazione
 - [ ] Configurazione variabili d'ambiente per Azure.
 - [ ] Deploy su Azure App Service.
