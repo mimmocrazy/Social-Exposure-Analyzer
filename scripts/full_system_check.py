@@ -39,12 +39,16 @@ def check_and_install_dependencies():
         import fastapi
         import pytest
         import sqlmodel
+        import bs4
+        import google.genai
+        import easyocr
+        import spacy
     except ImportError:
-        print(f"{YELLOW}⚠️ L'ambiente WSL risulta vuoto (mancano FastAPI e altre librerie).{RESET}")
+        print(f"{YELLOW}⚠️ L'ambiente WSL risulta incompleto (mancano alcune librerie).{RESET}")
         print(f"{YELLOW}⏳ Ricostruzione totale dell'ambiente da requirements.txt in corso... (Potrebbe volerci 1-2 minuti){RESET}")
         
-        # Installa tutto il necessario
-        cmd = [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
+        # Installa tutto il necessario bypassando la compilazione pyc (risolve il noto bug pip su WSL/Python 3.13)
+        cmd = [sys.executable, "-m", "pip", "install", "--no-compile", "-r", "requirements.txt"]
         subprocess.run(cmd, check=True)
         
         # Esegue il download del modello linguistico per il modulo NLP (spaCy)
