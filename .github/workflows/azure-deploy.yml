@@ -1,0 +1,82 @@
+name: Build and deploy Python app to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Create and start virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          
+      - name: Install dependencies
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
+          
+      - name: Run Master Test Orchestrator
+        run: |
+          source venv/bin/activate
+          # Disabilitiamo temporaneamente il build frontend in CI puro per risparmiare tempo (eseguiremo solo il Backend validation)
+          # python scripts/full_system_check.py 
+          pytest tests/ -v
+          
+      # Opzionale: build del frontend React e impacchettamento
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+          
+      - name: Upload artifact for deployment jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: |
+            . 
+            !venv/
+            !node_modules/
+            !frontend/node_modules/
+            !*.sqlite
+            !sera_database.db
+            !social_exposure_analyzer.db
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+          path: .
+          
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: 'app-social-exposure' # Cambia con il nome della tua Web App
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}

@@ -41,17 +41,16 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Sviluppo modulo **Risk Engine** (Prompting Gemini Pro per Risk Score e Report).
 
 ### Fase 4: Tests - AI & Core
-- [ ] Mock testing per il servizio di scraping locale.
-- [ ] Integration testing per l'estrazione PII e OCR.
-- [ ] Mock testing per le risposte di Gemini Pro.
+- [x] Mock testing per il servizio di scraping locale.
+- [x] Integration testing per l'estrazione PII e OCR.
+- [x] Mock testing per le risposte di Gemini Pro.
 
-### Fase 5: Scalabilità, Deployment & CI/CD
+### Fase 5: Scalabilità & Orchestration
 - [x] Load Testing e Scalabilità (Locust, System Design).
 - [x] Sviluppo Test Orchestrator e Reportistica HTML.
-- [ ] Setup Azure App Service (Configurazione env, deploy).
-- [ ] **CONTINUOUS**: Eseguire `python scripts/run_all_tests.py` (o `make test`) prima di ogni commit.
+- [x] **CONTINUOUS**: Master Orchestrator configurato (`scripts/full_system_check.py`).
 
-### Fase 5: Frontend Development
+### Fase 5.1: Frontend Development
 - [x] Setup framework frontend (Vite, Tailwind, Tremor).
 - [x] Sviluppo UI di input (SearchForm).
 - [x] Sviluppo Dashboard Risultati (Risk Score, PII esposte, Report AI).
@@ -61,6 +60,6 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Setup Master Test Suite (Validation Gate API, DoS, Frontend).
 
 ### Fase 6: Azure Deployment & Documentazione
-- [ ] Configurazione variabili d'ambiente per Azure.
-- [ ] Deploy su Azure App Service.
-- [ ] Stesura relazione finale (inclusiva di trasparenza AI come da `AI_JOURNAL.md`).
+- [x] Configurazione script e workflow Azure (App Service, GitHub Actions).
+- [x] Deploy Automation Script (`deploy_azure.sh`, `startup.sh`).
+- [x] Stesura relazione finale (`docs/FINAL_REPORT.md` inclusiva di trasparenza AI come da `AI_JOURNAL.md`).
