@@ -1,9 +1,4 @@
-from fastapi.testclient import TestClient
-from backend.main import app
-
-client = TestClient(app)
-
-def test_api_contract_flow():
+def test_api_contract_flow(client):
     """
     Testa il contratto API completo: Ingestion -> Polling.
     Autonomus Optimization: Utilizzato il TestClient di FastAPI per testare 

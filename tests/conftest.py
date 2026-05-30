@@ -4,10 +4,17 @@ from sqlmodel import SQLModel, create_engine, Session
 
 from backend.main import app
 from backend.database import get_session
+import backend.models # Necessario affinché SQLModel registri le tabelle prima di create_all
+
+from sqlalchemy.pool import StaticPool
 
 # Database SQLite in-memory isolato per i test
 sqlite_url = "sqlite:///:memory:"
-engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
+engine = create_engine(
+    sqlite_url, 
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool
+)
 
 @pytest.fixture(name="session")
 def session_fixture():

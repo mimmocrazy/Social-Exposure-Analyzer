@@ -5,9 +5,14 @@ from google.genai import types
 from backend.models.risk import RiskReport
 from backend.core.logger import logger
 
-# Inizializza il client usando google-genai. 
-# Richiede la variabile d'ambiente GEMINI_API_KEY
-client = genai.Client()
+# Inizializza il client usando google-genai in modo lazy (evita crash su pytest se manca la chiave API locale)
+_client = None
+
+def get_client():
+    global _client
+    if _client is None:
+        _client = genai.Client()
+    return _client
 
 async def calculate_risk(pii_data: list) -> RiskReport:
     """
@@ -33,6 +38,7 @@ async def calculate_risk(pii_data: list) -> RiskReport:
         logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output)...")
         # In contesto asincrono, possiamo sfruttare l'SDK se supporta aio o eseguirlo in thread.
         # Utilizziamo la sintassi sincrona standard dell'SDK all'interno del context asincrono
+        client = get_client()
         response = client.models.generate_content(
             model='gemini-2.5-pro',
             contents=payload_str,
