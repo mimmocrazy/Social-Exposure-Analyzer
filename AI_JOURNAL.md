@@ -99,3 +99,33 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 >    - Restituire immediatamente al client un JSON con l'ID del record e un messaggio di presa in carico.
 > 3. Crea `/backend/main.py`: istanzia l'applicazione FastAPI, configura il middleware CORS (aperto per il dev) e includi il router appena creato.
 - **Spiegazione Tecnica:** Eseguita pulizia workspace spostando `TRACCIA.pdf` in `/docs`. Sviluppato il core endpoint dell'applicazione con FastAPI. L'uso dei `BackgroundTasks` nativi ha permesso di delegare la funzione asincrona (`mock_scraping_task`) che aggiorna lo status del record nel DB tramite una nuova Session, evitando di bloccare il return immediato all'utente. Configurata la base di FastAPI in `main.py` includendo lifespan events per la migrazione DB (creation), CORS policy aperta per il frontend in dev e routing dell'endpoint `/analyze`. TODO in `ARCHITECTURE.md` aggiornati.
+
+---
+
+### Data: 2026-05-30
+- **Task Eseguito:** Setup sistema di logging centralizzato e gestione errori (Fase 1).
+- **File Modificati:** `/backend/core/logger.py`, `/backend/api/exceptions.py`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Modello scalato. Procediamo con il task "Setup sistema di logging centralizzato e gestione errori", che chiuderà definitivamente la Fase 1.
+> 
+> Implementa un'architettura di logging e error handling robusta, ottimizzata per il cloud (Azure) utilizzando la libreria `loguru`:
+> 
+> 1. **Logging Centralizzato (`/backend/core/logger.py`):**
+>    - Sostituisci il logger standard di Python con `loguru`.
+>    - Configura l'output esclusivamente su `sys.stdout` (Azure App Service intercetterà direttamente questo stream).
+>    - Implementa una classe `InterceptHandler` (ereditata da `logging.Handler`) per intercettare i log nativi di `uvicorn` e `fastapi` e reindirizzarli a `loguru`, garantendo un formato e un livello di log unificato per tutta l'app.
+> 
+> 2. **Gestione Errori Globale (`/backend/api/exceptions.py`):**
+>    - Crea un exception handler globale per FastAPI.
+>    - Intercetta le eccezioni non gestite (`Exception`) e restituisci una `JSONResponse` standardizzata (es. `{"status": "error", "message": "Internal Server Error"}`). 
+>    - L'obiettivo è nascondere lo stacktrace al client per motivi di sicurezza, ma loggare l'errore completo (usando `logger.exception`) nel terminale per il debug.
+> 
+> 3. **Integrazione Core (`/backend/main.py`):**
+>    - Registra il logger custom all'avvio dell'app.
+>    - Registra l'exception handler globale sull'istanza di FastAPI.
+> 
+> Al termine, esegui la tua Routine di Chiusura Obbligatoria:
+> 1. Spunta il task in `ARCHITECTURE.md`.
+> 2. Registra l'interazione in `AI_JOURNAL.md`, copiando il testo ESATTO di questo prompt.
+> 3. Forniscimi i comandi Git mirati per un commit atomico.
+- **Spiegazione Tecnica:** Implementato un sistema di logging centralizzato con `loguru`, reindirizzando lo standard logging di Python (utilizzato da Uvicorn/FastAPI) per mezzo di un `InterceptHandler`. L'output è configurato su `sys.stdout` per l'ingestion nativa da parte di Azure App Service. Creata la gestione globale delle eccezioni per prevenire il leaking di stacktrace lato client (standardizzando la risposta a 500 JSONResponse), ma mantenendo il tracciamento diagnostico verboso nella console in caso di `Exception` non previste. Integrati gli handler nel file `main.py` all'interno del lifespan. Fase 1 completata e documentata.

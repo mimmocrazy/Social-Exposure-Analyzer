@@ -4,10 +4,13 @@ from contextlib import asynccontextmanager
 
 from backend.database import create_db_and_tables
 from backend.api.routers import analyze
+from backend.core.logger import setup_logging
+from backend.api.exceptions import global_exception_handler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Eseguito allo startup dell'app
+    setup_logging()
     create_db_and_tables()
     yield
     # Eseguito allo shutdown dell'app
@@ -18,6 +21,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Registrazione exception handler globale
+app.add_exception_handler(Exception, global_exception_handler)
 
 # Configurazione CORS per sviluppo (da restrittivizzare in produzione Azure)
 app.add_middleware(
