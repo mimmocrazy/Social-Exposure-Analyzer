@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 import os
 import subprocess
 
-from backend.database import create_db_and_tables
 from backend.api.routers import analyze, auth
 from backend.core.logger import setup_logging, logger
 from backend.api.exceptions import global_exception_handler
