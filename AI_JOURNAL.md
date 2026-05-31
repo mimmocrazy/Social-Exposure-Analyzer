@@ -528,3 +528,14 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 
 > Esegui le modifiche, valida la pipeline e aggiorna rigorosamente l'AI Journal con la giustificazione tecnica di questa scelta architetturale.
 - **Spiegazione Tecnica:** Eseguita modifica architetturale massiva per elevare le performance del Social Exposure Analyzer. L'approccio statistico NLP (SpaCy) è stato dismesso a causa della scarsa resilienza sui testi grezzi non strutturati dei social. Centralizzando il riconoscimento PII e il risk assessment su Google Gemini 2.5 Flash, sfruttando la validazione formale di Structured Outputs (Pydantic), il sistema ora correla semanticamente le entità e analizza i leak recuperati dalla nuova deep search tramite DuckDuckGo.
+
+---
+
+### Data: 2026-05-31 (Ore 12:45)
+- **Task Eseguito:** Redesign UX/UI Dashboard (Apple-Style Glassmorphism).
+- **File Modificati:** rontend/src/App.jsx, rontend/src/index.css
+- **Sintesi Prompt:**
+> LHO FATTA SU un creator italiano e gia si e ottenuto qualcosa ma sinceramente non e quello che volevo, la dashboard e veramente brutta non mi piace per nulla voglio una visualizzazione dei risultati migliore.
+> 
+> Abbandona i grafici standard di Tremor. Implementa una dashboard premium in stile 'Apple Glassmorphism'. Sostituisci il grafico lineare con un anello circolare (Radial Progress) animato per il Risk Score. Separa le PII in singole 'card' di vetro con icone dedicate (Email, Telefono, IP, etc.) e applica animazioni a cascata (staggering) per l'entrata degli elementi usando Framer Motion. 
+- **Spiegazione Tecnica:** Riprogettato interamente il componente Dashboard per soddisfare i requisiti estetici. Dismesso il BarChart di Tremor in favore di un componente SVG custom animato per evitare difetti di rendering (black box glitch). L'interfaccia ora sfrutta classi CSS custom per un glassmorphism profondo (ackdrop-blur-xl) e ombre sfumate. Tutti i componenti (Risultati, PII, Audit) godono di *staggering animation* governate da ramer-motion per garantire un'esperienza fluida e nativa degna di presentazioni Enterprise.
