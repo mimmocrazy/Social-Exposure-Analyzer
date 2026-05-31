@@ -11,9 +11,12 @@ async def run_holehe(email: str) -> List[str]:
     """
     logger.info(f"Avvio ricerca OSINT Holehe per l'email: {email}")
     import sys
+    import os
     try:
+        holehe_bin = os.path.join(os.path.dirname(sys.executable), "holehe")
+        
         process = await asyncio.create_subprocess_exec(
-            sys.executable, "-m", "holehe", email, "--only-used", "--no-color", "--no-clear",
+            holehe_bin, email, "--only-used", "--no-color", "--no-clear",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )

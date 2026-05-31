@@ -24,10 +24,11 @@ async def calculate_risk(raw_text: str) -> RiskReport:
     Ti fornirò un testo raw aggregato da scraping web e ricerche OSINT.
     
     ATTENZIONE - GESTIONE ALLUCINAZIONI E PROFILI PRIVATI:
-    Se nel testo trovi il tag "[WARNING: PROFILO PRIVATO O INACCESSIBILE. NON INVENTARE DATI.]" o noti che i dati sono palesemente vuoti o limitati a form di login:
-    - DEVI impostare `insufficient_data=True`.
-    - NON DEVI in alcun modo inventare o dedurre PII fittizie. Lascia `pii_extracted` vuoto.
-    - Specifica nei `mitigation_advice` e nelle `mitigation_sections` che il profilo ha esposizione nulla in quanto adeguatamente protetto da impostazioni di privacy (il rischio è BASSO).
+    Se nel testo trovi il tag "[WARNING: PROFILO PRIVATO O INACCESSIBILE. NON INVENTARE DATI.]", significa che il social principale ha bloccato l'accesso.
+    In questo caso:
+    - NON DEVI inventare PII fittizie per il social bloccato.
+    - TUTTAVIA, DEVI COMUNQUE estrarre le PII e calcolare il rischio se sono presenti risultati validi provenienti da altri moduli OSINT (es. DuckDuckGo, Holehe) nello stesso testo.
+    - Imposta `insufficient_data=True` SOLO SE anche gli altri moduli OSINT non hanno prodotto alcun dato rilevante. Se trovi un'email da Holehe o articoli da DuckDuckGo, il profilo NON ha esposizione nulla.
     
     Il tuo compito in un singolo passaggio sui dati effettivamente trovati:
     1. Analizza il testo fornito.
