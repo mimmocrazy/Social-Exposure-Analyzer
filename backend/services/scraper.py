@@ -42,9 +42,9 @@ async def gather_profile_metadata(
                     if user_data:
                         deep_bio = f"Full Name: {user_data.get('full_name')} | Followers: {user_data.get('edge_followed_by', {}).get('count')} | Bio: {user_data.get('biography')} | Business Email: {user_data.get('business_email')} | Business Phone: {user_data.get('business_phone_number')} | Profile Pic: {user_data.get('profile_pic_url_hd')}"
                         results.append({
-                            "url": f"Instagram Deep Scan API: {target_to_search}",
+                            "source": "Instagram Deep Scan API",
+                            "url": f"API: {target_to_search}",
                             "status": "ACCESSIBLE",
-                            "title": f"Instagram Profile Info: {target_to_search}",
                             "bio": deep_bio,
                             "error": None
                         })
@@ -57,6 +57,7 @@ async def gather_profile_metadata(
         # 2. Standard Web Scraping
         for url in urls:
             profile_data = {
+                "source": "Web Scraping",
                 "url": url,
                 "status": "UNKNOWN",
                 "title": None,
@@ -114,9 +115,8 @@ async def gather_profile_metadata(
         if enable_ddg:
             try:
                 if target_to_search and target_to_search != "unknown":
+                    # Cerca RIGOROSAMENTE l'username per evitare omonimie e falsi positivi
                     search_queries = [target_to_search]
-                    if real_name:
-                        search_queries.append(f'"{real_name}" OR "{target_to_search}"')
                         
                     for q in search_queries:
                         ddg_url = f"https://lite.duckduckgo.com/lite/"
@@ -128,9 +128,9 @@ async def gather_profile_metadata(
                             ddg_text = " ".join([s.get_text(strip=True) for s in snippets])
                             if ddg_text:
                                 results.append({
-                                    "url": f"DuckDuckGo OSINT Search: {q}",
+                                    "source": "DuckDuckGo",
+                                    "url": f"Search: {q}",
                                     "status": "ACCESSIBLE",
-                                    "title": "OSINT Web Leaks & Mentions",
                                     "bio": ddg_text,
                                     "error": None
                                 })

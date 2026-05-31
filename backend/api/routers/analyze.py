@@ -76,35 +76,40 @@ async def run_scraping_task(
             ig_sessionid=ig_sessionid
         )
         
-        # Aggregazione Testo
-        combined_text = ""
-        
-        for profile in raw_data:
-            if profile.get("title"): combined_text += profile["title"] + " "
-            if profile.get("bio"): combined_text += profile["bio"] + " "
+        # Aggregazione strutturata JSON per l'LLM
+        osint_payload = {
+            "scraper_results": raw_data,
+            "holehe_results": []
+        }
 
         # HOLEHE INTEGRATION
         if enable_holehe:
-            # Semplice regex per trovare email nel testo
-            emails_found = list(set(re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', combined_text)))
+            # Semplice regex per trovare email in tutti i testi di bio
+            combined_bio = " ".join([p.get("bio", "") for p in raw_data if p.get("bio")])
+            emails_found = list(set(re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', combined_bio)))
             if emails_found:
                 logger.info(f"Trovate {len(emails_found)} email per Holehe OSINT: {emails_found}")
                 from backend.services.holehe_adapter import run_holehe
                 for em in emails_found:
                     sites = await run_holehe(em)
                     if sites:
-                        holehe_str = f"\n[OSINT HOLEHE] L'email {em} risulta registrata su questi account: {', '.join(sites)}."
-                        combined_text += holehe_str
-                        logger.info(holehe_str)
+                        osint_payload["holehe_results"].append({
+                            "email": em,
+                            "registered_sites": sites
+                        })
+                        logger.info(f"[OSINT HOLEHE] {em} -> {sites}")
             
-        # Limite di sicurezza Anti-DoS per l'analisi NLP
-        if len(combined_text) > 10000:
-            logger.warning(f"DoS Prevention: Testo troncato da {len(combined_text)} a 10000 caratteri prima dell'NLP.")
-            combined_text = combined_text[:10000]
+        import json
+        payload_str = json.dumps(osint_payload, ensure_ascii=False)
+        
+        # Limite di sicurezza Anti-DoS
+        if len(payload_str) > 15000:
+            logger.warning(f"DoS Prevention: Testo troncato da {len(payload_str)} a 15000 caratteri prima dell'NLP.")
+            payload_str = payload_str[:15000]
             
-        # Risk Engine Analysis (Gemini Flash) tramite text integrale e OSINT
+        # Risk Engine Analysis (Gemini Flash) tramite payload JSON strutturato
         from backend.services.risk_engine import calculate_risk
-        risk_report = await calculate_risk(combined_text, target, real_name_deduced)
+        risk_report = await calculate_risk(payload_str, target, real_name_deduced)
         
         pii_dicts = [pii.model_dump() for pii in risk_report.pii_extracted]
         
@@ -112,7 +117,7 @@ async def run_scraping_task(
         with Session(backend.database.engine) as session:
             analysis = session.get(ProfileAnalysis, analysis_id)
             if analysis:
-                analysis.raw_data_dump = {"profiles": raw_data}
+                analysis.raw_data_dump = osint_payload
                 analysis.pii_extracted = pii_dicts
                 
                 # Mapping campi Risk Engine sul DB Model

@@ -26,39 +26,28 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
         
     system_prompt = f"""
     Sei un esperto analista di Social Engineering e Sicurezza OSINT.
-    Ti fornirò un testo raw aggregato da scraping web e ricerche OSINT.
+    Riceverai in input un JSON STRUTTURATO contenente i risultati di vari moduli OSINT (es. DuckDuckGo, Holehe, Instagram).
     
     ATTENZIONE - IDENTIFICAZIONE DEL BERSAGLIO E FALSI POSITIVI:
     Il tuo BERSAGLIO ESATTO è: {target_info}.
-    I testi forniti potrebbero contenere risultati di ricerca (es. DuckDuckGo) che includono profili di ALTRE PERSONE non correlate al bersaglio (es. omonimi, persone nei commenti, directory pubbliche).
-    DEVI ASSOLUTAMENTE IGNORARE qualsiasi PII, età, luogo, o account che si riferisce palesemente a un'altra persona. Estrai dati SOLO SE sei ragionevolmente certo che appartengano al BERSAGLIO.
-    Se il testo contiene solo dati di altre persone, considera i dati del bersaglio come insufficienti/vuoti.
+    Ignora rigorosamente qualsiasi PII o dato appartenente a omonimi o ad altre persone menzionate nei risultati.
     
     ATTENZIONE - GESTIONE ALLUCINAZIONI E PROFILI PRIVATI:
-    Se nel testo trovi il tag "[WARNING: PROFILO PRIVATO O INACCESSIBILE. NON INVENTARE DATI.]", significa che il social principale ha bloccato l'accesso.
-    In questo caso:
-    - NON DEVI inventare PII fittizie per il social bloccato.
-    - TUTTAVIA, DEVI COMUNQUE estrarre le PII e calcolare il rischio se sono presenti risultati validi provenienti da altri moduli OSINT (es. DuckDuckGo, Holehe) nello stesso testo.
-    - Imposta `insufficient_data=True` SOLO SE anche gli altri moduli OSINT non hanno prodotto alcun dato rilevante. Se trovi un'email da Holehe o articoli da DuckDuckGo, il profilo NON ha esposizione nulla.
+    Nel JSON, controlla il campo `status`. Se lo status è `PROTECTED` o `LOGIN_WALL` o un errore 429, significa che quel modulo ha fallito l'estrazione.
+    Se TUTTI i moduli non hanno restituito alcun dato valido sul bersaglio, imposta `insufficient_data=True` e lascia il resto vuoto.
+    Se invece hai trovato dati validi (es. tramite Holehe o DuckDuckGo), procedi regolarmente.
     
-    Il tuo compito in un singolo passaggio sui dati effettivamente trovati:
-    1. Analizza il testo fornito.
-    2. Estrai tutte le PII (Personally Identifiable Information) realmente presenti e popolale in `pii_extracted`.
-    3. Valuta il rischio globale (`score` da 0 a 100).
-    4. Calcola in `sub_scores` i seguenti punteggi (da 0 a 100):
-       - `identity_exposure`: Rischio legato a dati anagrafici, contatti (email, telefono). Se trovi il tag [OSINT HOLEHE] che indica account registrati su altre piattaforme, questo punteggio DEVE alzarsi molto perché l'identità è diffusa.
-       - `network_exposure`: Rischio legato a legami familiari, amici, colleghi esposti (rischio di attacchi a catena).
-       - `routine_exposure`: Rischio legato a luoghi frequentati, geolocalizzazioni o abitudini.
-    5. Popola `threat_vectors` con minacce derivate applicando questi concetti chiave del Social Engineering: 
-       Evidenzia in particolare se "la pubblicazione ricorrente di luoghi frequentati, routine quotidiane, informazioni lavorative e legami familiari può facilitare tentativi di impersonificazione o messaggi fraudolenti personalizzati".
-       (Menziona esplicitamente se hai trovato account correlati tramite Holehe e come questo amplia il vettore di attacco).
-    6. Fornisci un `mitigation_advice` generale.
-    7. Fornisci `mitigation_sections` dividendo il report in macrosezioni logiche in base ai dati trovati (es. "Esposizione Canali di Contatto", "Dati Anagrafici e Sensibili", "Relazioni Personali e Network", "Informazioni Professionali e Aziendali", ecc.).
-       Per ciascuna macrosezione devi indicare:
-       - `title`: Il nome della macrosezione
-       - `exposed_data`: Quali dati esatti sono stati trovati esposti in questa categoria (citando i dati effettivi, es: "email info@...", "relazioni con Camilla, Alice").
-       - `criticality`: Il livello di criticità associato a questa esposizione (es. CRITICA, ALTA, MEDIA, BASSA).
-       - `mitigation`: Consigli ed azioni correttive specifiche per proteggere quella specifica macrosezione.
+    Il tuo compito:
+    1. Estrai le PII valide in `pii_extracted`.
+    2. Valuta il rischio globale (`score` da 0 a 100) ma rendilo MATEMATICAMENTE TRASPARENTE usando `score_breakdown`.
+       Assegna punti esatti in base ai ritrovamenti. Es: 
+       - "Trovata email esposta tramite DuckDuckGo": +20 punti
+       - "Holehe ha rilevato l'iscrizione a 3 siti esterni": +15 punti
+       - "Rilevata potenziale geolocalizzazione o luogo di lavoro": +15 punti
+       La somma di questi punti DEVE essere uguale al `score` finale.
+    3. Calcola i `sub_scores` (identity_exposure, network_exposure, routine_exposure) da 0 a 100 per mostrare su quali assi l'utente è più esposto.
+    4. Popola `threat_vectors` derivati da questi dati reali.
+    5. Fornisci `mitigation_advice` e `mitigation_sections` basati ESATTAMENTE sui dati che hai trovato.
     """
     
     payload_str = raw_text[:20000] # Limite di sicurezza stringa

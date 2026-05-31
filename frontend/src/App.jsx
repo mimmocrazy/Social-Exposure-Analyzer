@@ -184,6 +184,65 @@ const InteractiveLoading = () => {
   );
 };
 
+const OsintTelemetry = ({ rawDataDump }) => {
+  if (!rawDataDump) return null;
+
+  const scrapers = rawDataDump.scraper_results || [];
+  const holehe = rawDataDump.holehe_results || [];
+
+  return (
+    <div className="w-full glassmorphism rounded-3xl p-8 mt-8 border border-white/10">
+      <div className="flex items-center space-x-3 mb-6 border-b border-white/5 pb-4">
+        <div className="p-2 bg-gradient-to-br from-teal-500/20 to-emerald-500/20 rounded-xl border border-white/10">
+          <svg className="w-5 h-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+        </div>
+        <div>
+          <h3 className="text-white text-lg font-bold tracking-tight">Telemetria Sensori OSINT</h3>
+          <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Log esecuzione moduli</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {scrapers.map((s, idx) => (
+          <div key={idx} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">{s.source || "Web Scraper"}</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${s.status === 'ACCESSIBLE' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'}`}>
+                  {s.status}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 truncate w-full" title={s.url}>{s.url}</p>
+            </div>
+            {s.error && <p className="mt-3 text-xs text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20 font-mono">{s.error}</p>}
+            {s.bio && !s.error && <p className="mt-3 text-[10px] text-gray-500 font-mono line-clamp-3 bg-black/30 p-2 rounded-lg">{s.bio}</p>}
+          </div>
+        ))}
+        {holehe.map((h, idx) => (
+          <div key={`h-${idx}`} className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">Holehe (Cross-Check)</span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${h.registered_sites.length > 0 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'}`}>
+                  {h.registered_sites.length} SITI
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 font-mono">{h.email}</p>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1">
+              {h.registered_sites.map(site => (
+                <span key={site} className="text-[10px] bg-red-500/10 text-red-300 px-1.5 py-0.5 rounded border border-red-500/20">
+                  {site}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 function Dashboard({ analysisId }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['analysis', analysisId],
@@ -302,7 +361,21 @@ function Dashboard({ analysisId }) {
               <RadialProgress score={score} isCritical={isCritical} />
             </div>
             
-            <div className="w-full space-y-4 mt-2">
+            {data.llm_report?.score_breakdown && (
+              <div className="w-full mt-2 mb-4 bg-black/20 rounded-xl p-4 border border-white/5 overflow-y-auto max-h-40 custom-scrollbar">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Score Breakdown</h4>
+                <div className="space-y-2">
+                  {data.llm_report.score_breakdown.map((sb, idx) => (
+                    <div key={idx} className="flex justify-between items-start text-xs">
+                      <span className="text-gray-300 mr-2 leading-relaxed">{sb.reason}</span>
+                      <span className="text-white font-bold whitespace-nowrap px-1.5 py-0.5 bg-white/10 rounded">+{sb.points_added}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="w-full space-y-4 mt-2 border-t border-white/5 pt-4">
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-300 font-medium">Identità e Contatti</span>
@@ -384,6 +457,9 @@ function Dashboard({ analysisId }) {
             </div>
           </div>
         </div>
+
+        {/* Telemetry Section */}
+        {data.raw_data_dump && <OsintTelemetry rawDataDump={data.raw_data_dump} />}
 
         {/* AI Audit Alert Box */}
         {data.llm_report && (
