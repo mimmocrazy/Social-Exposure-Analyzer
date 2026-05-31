@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, Text, Metric, Flex, ProgressBar, Title, BarChart } from '@tremor/react';
-import { startAnalysis, getAnalysisStatus } from './api';
+import { Card, Text, Metric, Flex, ProgressBar, Title, BarChart, TextInput, Button } from '@tremor/react';
+import { startAnalysis, getAnalysisStatus, login, register } from './api';
 
 const queryClient = new QueryClient();
 
@@ -105,7 +105,88 @@ function Dashboard({ analysisId }) {
   return null;
 }
 
-function MainApp() {
+function AuthScreen({ onLoginSuccess }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      if (isLogin) {
+        const data = await login(email, password);
+        localStorage.setItem('token', data.access_token);
+        onLoginSuccess();
+      } else {
+        await register(email, password);
+        const data = await login(email, password);
+        localStorage.setItem('token', data.access_token);
+        onLoginSuccess();
+      }
+    } catch (err) {
+      setError(err.response?.data?.detail || "Errore di autenticazione");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-blue-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
+      
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md z-10">
+        <Card className="glassmorphism !bg-transparent border-white/10 p-8 shadow-2xl">
+          <Title className="text-white text-3xl font-bold text-center mb-2">
+            {isLogin ? "Accedi" : "Registrati"}
+          </Title>
+          <Text className="text-gray-400 text-center mb-6">Social Exposure Analyzer Pro</Text>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Text className="text-gray-300 mb-1">Email</Text>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-surface/50 border border-white/10 text-white px-4 py-2 rounded-lg outline-none"
+                required
+              />
+            </div>
+            <div>
+              <Text className="text-gray-300 mb-1">Password</Text>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-surface/50 border border-white/10 text-white px-4 py-2 rounded-lg outline-none"
+                required
+              />
+            </div>
+            
+            {error && <Text className="text-red-400 text-sm text-center">{error}</Text>}
+            
+            <button type="submit" disabled={loading} className="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-colors mt-4">
+              {loading ? "Attendere..." : (isLogin ? "Login" : "Registrati")}
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <button onClick={() => setIsLogin(!isLogin)} className="text-gray-400 hover:text-white text-sm transition-colors">
+              {isLogin ? "Non hai un account? Registrati" : "Hai già un account? Accedi"}
+            </button>
+          </div>
+        </Card>
+      </motion.div>
+    </div>
+  );
+}
+
+function MainApp({ onLogout }) {
   const [targetUrl, setTargetUrl] = useState('');
   const [analysisId, setAnalysisId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,7 +199,11 @@ function MainApp() {
       const res = await startAnalysis(targetUrl);
       setAnalysisId(res.analysis_id);
     } catch (err) {
-      alert("Errore nell'avvio dell'analisi. Controlla che il backend sia attivo.");
+        if(err.response?.status === 401) {
+            onLogout();
+        } else {
+            alert("Errore nell'avvio dell'analisi.");
+        }
     } finally {
       setIsSubmitting(false);
     }
@@ -126,6 +211,10 @@ function MainApp() {
 
   return (
     <div className="min-h-screen flex flex-col items-center py-20 px-6 font-sans relative overflow-hidden">
+      <div className="absolute top-4 right-6 z-20">
+        <button onClick={onLogout} className="text-gray-400 hover:text-white text-sm border border-white/10 px-4 py-2 rounded-full glassmorphism">Logout</button>
+      </div>
+
       {/* Background Decorativo */}
       <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-blue-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
@@ -171,9 +260,20 @@ function MainApp() {
 }
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
-      <MainApp />
+      {isAuthenticated ? (
+        <MainApp onLogout={handleLogout} />
+      ) : (
+        <AuthScreen onLoginSuccess={() => setIsAuthenticated(true)} />
+      )}
     </QueryClientProvider>
   );
 }
