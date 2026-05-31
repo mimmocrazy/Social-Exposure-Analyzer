@@ -148,7 +148,7 @@ function AuthScreen({ onLoginSuccess }) {
       
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md z-10 flex flex-col items-center">
         <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-8 tracking-tight drop-shadow-lg text-center">
-          Social Exposure
+          Social Exposure Analyzer
         </h1>
         <Card className="glassmorphism w-full !bg-transparent border-white/10 p-8 shadow-2xl">
           <Title className="text-white text-2xl font-bold text-center mb-6">
@@ -241,7 +241,7 @@ function MainApp({ onLogout }) {
 
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="text-center max-w-3xl w-full z-10">
         <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-6 tracking-tight drop-shadow-lg">
-          Social Exposure
+          Social Exposure Analyzer
         </h1>
         <p className="text-gray-400 mb-12 text-lg md:text-xl font-light">
           Valutazione automatica del rischio di social engineering tramite <strong className="text-white font-medium">OSINT</strong> e <strong className="text-white font-medium">AI</strong>.
