@@ -81,7 +81,14 @@ async def gather_profile_metadata(
                 logger.warning(f"Errore in Instagram Deep Scan: {e}")
 
         # 2. Standard Web Scraping
+        has_deep_scan = any(r["source"] == "Instagram Deep Scan API" for r in results)
         for url in urls:
+            parsed = urllib.parse.urlparse(url)
+            is_instagram = "instagram.com" in (parsed.hostname or "")
+            if is_instagram and has_deep_scan:
+                logger.info(f"Skipping standard scraping per {url} in quanto il Deep Scan è andato a buon fine.")
+                continue
+
             profile_data = {
                 "source": "Web Scraping",
                 "url": url,
