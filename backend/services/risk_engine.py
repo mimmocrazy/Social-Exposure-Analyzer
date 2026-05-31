@@ -14,14 +14,25 @@ def get_client():
         _client = genai.Client()
     return _client
 
-async def calculate_risk(raw_text: str) -> RiskReport:
+async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: str = None) -> RiskReport:
     """
     Analizza il testo raw estratto invocando Gemini Pro.
     Estrea le PII e valuta il rischio di Social Engineering in un colpo solo.
     """
-    system_prompt = """
+    
+    target_info = f"Username/URL: {target}"
+    if real_name:
+        target_info += f", Nome Dedotto: {real_name}"
+        
+    system_prompt = f"""
     Sei un esperto analista di Social Engineering e Sicurezza OSINT.
     Ti fornirò un testo raw aggregato da scraping web e ricerche OSINT.
+    
+    ATTENZIONE - IDENTIFICAZIONE DEL BERSAGLIO E FALSI POSITIVI:
+    Il tuo BERSAGLIO ESATTO è: {target_info}.
+    I testi forniti potrebbero contenere risultati di ricerca (es. DuckDuckGo) che includono profili di ALTRE PERSONE non correlate al bersaglio (es. omonimi, persone nei commenti, directory pubbliche).
+    DEVI ASSOLUTAMENTE IGNORARE qualsiasi PII, età, luogo, o account che si riferisce palesemente a un'altra persona. Estrai dati SOLO SE sei ragionevolmente certo che appartengano al BERSAGLIO.
+    Se il testo contiene solo dati di altre persone, considera i dati del bersaglio come insufficienti/vuoti.
     
     ATTENZIONE - GESTIONE ALLUCINAZIONI E PROFILI PRIVATI:
     Se nel testo trovi il tag "[WARNING: PROFILO PRIVATO O INACCESSIBILE. NON INVENTARE DATI.]", significa che il social principale ha bloccato l'accesso.

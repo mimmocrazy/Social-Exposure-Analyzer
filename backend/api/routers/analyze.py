@@ -104,7 +104,7 @@ async def run_scraping_task(
             
         # Risk Engine Analysis (Gemini Flash) tramite text integrale e OSINT
         from backend.services.risk_engine import calculate_risk
-        risk_report = await calculate_risk(combined_text)
+        risk_report = await calculate_risk(combined_text, target, real_name_deduced)
         
         pii_dicts = [pii.model_dump() for pii in risk_report.pii_extracted]
         
