@@ -81,12 +81,15 @@ async def gather_profile_metadata(
                 logger.warning(f"Errore in Instagram Deep Scan: {e}")
 
         # 2. Standard Web Scraping
+        # Se l'utente ha fornito un sessionid, lo scraping anonimo su Instagram è sempre inutile
+        # (colpisce il login wall anche se il Deep Scan ha fallito per rate-limit 429)
+        ig_deep_scan_attempted = bool(ig_sessionid and target_to_search and target_to_search != "unknown")
         has_deep_scan = any(r["source"] == "Instagram Deep Scan API" for r in results)
         for url in urls:
             parsed = urllib.parse.urlparse(url)
             is_instagram = "instagram.com" in (parsed.hostname or "")
-            if is_instagram and has_deep_scan:
-                logger.info(f"Skipping standard scraping per {url} in quanto il Deep Scan è andato a buon fine.")
+            if is_instagram and (has_deep_scan or ig_deep_scan_attempted):
+                logger.info(f"Skipping standard scraping per {url} (Deep Scan {'riuscito' if has_deep_scan else 'tentato ma fallito'}).")
                 continue
 
             profile_data = {
