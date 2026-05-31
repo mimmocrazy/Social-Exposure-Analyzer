@@ -29,12 +29,14 @@ export const register = async (email, password) => {
     return response.data;
 };
 
-export const startAnalysis = async (target_url, enable_ddg = true, enable_holehe = true, ig_sessionid = null) => {
+export const startAnalysis = async (target_url, enable_ddg = true, enable_holehe = true, ig_sessionid = null, enable_fb_scan = false, fb_sessionid = null) => {
     const response = await apiClient.post(`/analyze`, { 
         target_url,
         enable_ddg,
         enable_holehe,
-        ig_sessionid
+        ig_sessionid,
+        enable_fb_scan,
+        fb_sessionid
     });
     return response.data;
 };

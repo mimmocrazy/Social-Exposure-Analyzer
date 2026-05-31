@@ -37,7 +37,9 @@ async def run_scraping_task(
     target: str,
     enable_ddg: bool = True,
     enable_holehe: bool = True,
-    ig_sessionid: str = None
+    ig_sessionid: str = None,
+    enable_fb_scan: bool = False,
+    fb_sessionid: str = None
 ):
     """
     Orchestra l'esecuzione di Discovery (se username) e Scraping dei metadati.
@@ -73,7 +75,9 @@ async def run_scraping_task(
             urls_to_scrape, 
             real_name=real_name_deduced,
             enable_ddg=enable_ddg,
-            ig_sessionid=ig_sessionid
+            ig_sessionid=ig_sessionid,
+            enable_fb_scan=enable_fb_scan,
+            fb_sessionid=fb_sessionid
         )
         
         is_instagram_target = any("instagram.com" in url for url in urls_to_scrape)
@@ -88,7 +92,9 @@ async def run_scraping_task(
                 "enable_holehe": enable_holehe,
                 "ig_sessionid_provided": bool(ig_sessionid),
                 "instagram_attempted": is_instagram_target,
-                "sherlock_attempted": sherlock_attempted
+                "sherlock_attempted": sherlock_attempted,
+                "enable_fb_scan": enable_fb_scan,
+                "fb_sessionid_provided": bool(fb_sessionid)
             }
         }
 
@@ -176,7 +182,9 @@ def start_analysis(
         target_str,
         request.enable_ddg,
         request.enable_holehe,
-        request.ig_sessionid
+        request.ig_sessionid,
+        request.enable_fb_scan,
+        request.fb_sessionid
     )
     
     return {

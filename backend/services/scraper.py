@@ -8,7 +8,9 @@ async def gather_profile_metadata(
     urls: List[str], 
     real_name: str = None, 
     enable_ddg: bool = True,
-    ig_sessionid: str = None
+    ig_sessionid: str = None,
+    enable_fb_scan: bool = False,
+    fb_sessionid: str = None
 ) -> List[Dict[str, Any]]:
     """
     Estrae metadati di base dagli URL forniti (approccio Search Dorking).
@@ -181,5 +183,41 @@ async def gather_profile_metadata(
                                 })
             except Exception as e:
                 logger.warning(f"OSINT DuckDuckGo fallito: {e}")
-            
+                
+        # 4. Facebook Deep Scan (mbasic)
+        if enable_fb_scan and (fb_sessionid or target_to_search != "unknown"):
+            try:
+                logger.info(f"Avvio Facebook Deep Scan per {target_to_search}")
+                fb_headers = headers.copy()
+                if fb_sessionid:
+                    fb_headers["Cookie"] = fb_sessionid if "c_user" in fb_sessionid else f"c_user={fb_sessionid}"
+                
+                # Usiamo mbasic per facilitare lo scraping HTML
+                fb_url = f"https://mbasic.facebook.com/{target_to_search}"
+                fb_resp = await client.get(fb_url, headers=fb_headers, follow_redirects=True)
+                
+                if fb_resp.status_code == 200:
+                    soup = BeautifulSoup(fb_resp.text, "html.parser")
+                    # Rimuoviamo script e style
+                    for script in soup(["script", "style"]):
+                        script.decompose()
+                    
+                    text = soup.get_text(separator=" ", strip=True)
+                    # Limitiamo il testo ai primi 2000 caratteri per evitare noise eccessivo
+                    text = text[:2000]
+                    
+                    if text:
+                        results.append({
+                            "source": "Facebook Deep Scan API",
+                            "url": fb_url,
+                            "status": "ACCESSIBLE",
+                            "bio": f"Extracted Text: {text}",
+                            "error": None
+                        })
+                        logger.info("Facebook Deep Scan riuscito.")
+                else:
+                    logger.warning(f"Facebook Deep Scan fallito con status {fb_resp.status_code}")
+            except Exception as e:
+                logger.warning(f"Errore in Facebook Deep Scan: {e}")
+
     return results

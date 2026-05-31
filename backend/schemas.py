@@ -8,3 +8,5 @@ class AnalyzeRequest(BaseModel):
     enable_ddg: bool = Field(default=True)
     enable_holehe: bool = Field(default=True)
     ig_sessionid: Optional[str] = Field(default=None)
+    enable_fb_scan: bool = Field(default=False)
+    fb_sessionid: Optional[str] = Field(default=None)

@@ -256,6 +256,9 @@ function Dashboard({ analysisId }) {
     const isHoleheAttempted = metadata.enable_holehe !== false;
     const isHoleheSuccess = holehe.length > 0;
 
+    const isFbAttempted = metadata.enable_fb_scan === true;
+    const isFbSuccess = scrapers.some(s => s.source === "Facebook Deep Scan API" && s.status === "ACCESSIBLE");
+
     // Pannello Profilo Privato / Dati Insufficienti
     if (isInsufficient) {
       return (
@@ -475,7 +478,7 @@ function Dashboard({ analysisId }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Sherlock */}
               <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isSherlockActive ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10 hover:border-green-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
                 {isSherlockActive && <div className="absolute -top-10 -right-10 w-24 h-24 bg-green-500/10 rounded-full blur-2xl"></div>}
@@ -587,6 +590,36 @@ function Dashboard({ analysisId }) {
                     </div>
                   ) : (
                     <div className="h-9"></div>
+                  )}
+                </div>
+              </div>
+
+              {/* Facebook */}
+              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isFbSuccess ? 'bg-blue-600/5 border-blue-600/20 hover:bg-blue-600/10 hover:border-blue-600/30' : isFbAttempted ? 'bg-red-500/5 border-red-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
+                {isFbSuccess && <div className="absolute -top-10 -right-10 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl"></div>}
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <div className="flex items-center space-x-2">
+                    <div className={`p-2 rounded-lg ${isFbSuccess ? 'bg-blue-600/20 text-blue-400' : isFbAttempted ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-500'}`}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" /></svg>
+                    </div>
+                    <h4 className="text-white text-sm font-bold font-mono">FB Deep Scan</h4>
+                  </div>
+                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isFbSuccess ? 'bg-blue-600/20 text-blue-400 border-blue-600/30 shadow-[0_0_10px_rgba(37,99,235,0.2)]' : isFbAttempted ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                    {isFbSuccess ? 'ESTRATO' : isFbAttempted ? 'FALLITO' : 'NON APPLICATO'}
+                  </span>
+                </div>
+                <div className="relative z-10">
+                  <p className="text-gray-400 text-xs font-light mb-3">Estrazione meta-dati da Facebook.</p>
+                  {isFbSuccess ? (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-blue-600/10">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Testo Estratto</span>
+                      <span className="text-blue-400 font-mono font-bold text-sm">~2KB</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-gray-700/50">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Status API</span>
+                      <span className="text-gray-500 font-mono font-bold text-xs">{isFbAttempted ? 'AUTH ERROR' : 'BYPASSED'}</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -825,6 +858,8 @@ function MainApp() {
   const [enableHolehe, setEnableHolehe] = useState(true);
   const [enableIgScan, setEnableIgScan] = useState(false);
   const [igSessionId, setIgSessionId] = useState('');
+  const [enableFbScan, setEnableFbScan] = useState(false);
+  const [fbSessionId, setFbSessionId] = useState('');
 
   const { data: historyData } = useQuery({
     queryKey: ['history'],
@@ -840,7 +875,9 @@ function MainApp() {
         targetUrl,
         enableDdg,
         enableHolehe,
-        enableIgScan ? igSessionId : null
+        enableIgScan ? igSessionId : null,
+        enableFbScan,
+        enableFbScan ? fbSessionId : null
       );
       setAnalysisId(res.analysis_id);
     } catch (err) {
@@ -1003,6 +1040,48 @@ function MainApp() {
                     </div>
                     <p className="text-[10px] text-purple-300/50 mt-2 ml-2 font-light">
                       * Il sessionid non viene mai salvato nel database ed è usato solo temporaneamente in RAM.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Configurazione Avanzata FB */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-4 p-5 glassmorphism rounded-2xl border border-white/5 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -z-10 group-hover:bg-blue-500/20 transition-colors"></div>
+              
+              <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableFbScan(!enableFbScan)}>
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3.5 rounded-xl transition-colors ${enableFbScan ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" /></svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold text-base">Facebook Deep Scan</h4>
+                    <p className="text-gray-400 text-xs mt-1 font-light">Estrazione post, about e leak di informazioni pubbliche.</p>
+                  </div>
+                </div>
+                <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableFbScan ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-white/10'}`}>
+                  <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableFbScan ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {enableFbScan && (
+                  <motion.div initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 20 }} exit={{ height: 0, opacity: 0, marginTop: 0 }} className="overflow-hidden relative z-10">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-blue-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                      </div>
+                      <input
+                        type="text"
+                        value={fbSessionId}
+                        onChange={(e) => setFbSessionId(e.target.value)}
+                        placeholder="Incolla il cookie c_user e xs..."
+                        className="w-full bg-black/40 border border-blue-500/40 text-white pl-12 pr-4 py-3.5 rounded-xl outline-none text-sm focus:border-blue-400 transition-all placeholder-blue-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] focus:bg-black/60"
+                      />
+                    </div>
+                    <p className="text-[10px] text-blue-300/50 mt-2 ml-2 font-light">
+                      * Assicurati che l'estensione del browser abbia esportato correttamente `c_user=...; xs=...;`
                     </p>
                   </motion.div>
                 )}
