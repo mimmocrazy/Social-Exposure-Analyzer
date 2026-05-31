@@ -122,6 +122,13 @@ function AuthScreen({ onLoginSuccess }) {
         localStorage.setItem('token', data.access_token);
         onLoginSuccess();
       } else {
+        const formElement = e.target;
+        const repeatPassword = formElement.repeat_password.value;
+        if (password !== repeatPassword) {
+          setError("Le password non coincidono");
+          setLoading(false);
+          return;
+        }
         await register(email, password);
         const data = await login(email, password);
         localStorage.setItem('token', data.access_token);
@@ -139,12 +146,14 @@ function AuthScreen({ onLoginSuccess }) {
       <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-blue-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
       
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md z-10">
-        <Card className="glassmorphism !bg-transparent border-white/10 p-8 shadow-2xl">
-          <Title className="text-white text-3xl font-bold text-center mb-2">
-            {isLogin ? "Accedi" : "Registrati"}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md z-10 flex flex-col items-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-8 tracking-tight drop-shadow-lg text-center">
+          Social Exposure
+        </h1>
+        <Card className="glassmorphism w-full !bg-transparent border-white/10 p-8 shadow-2xl">
+          <Title className="text-white text-2xl font-bold text-center mb-6">
+            {isLogin ? "Accedi al tuo account" : "Crea un nuovo account"}
           </Title>
-          <Text className="text-gray-400 text-center mb-6">Social Exposure Analyzer Pro</Text>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -167,6 +176,17 @@ function AuthScreen({ onLoginSuccess }) {
                 required
               />
             </div>
+            {!isLogin && (
+              <div>
+                <Text className="text-gray-300 mb-1">Ripeti Password</Text>
+                <input
+                  type="password"
+                  name="repeat_password"
+                  className="w-full bg-surface/50 border border-white/10 text-white px-4 py-2 rounded-lg outline-none"
+                  required
+                />
+              </div>
+            )}
             
             {error && <Text className="text-red-400 text-sm text-center">{error}</Text>}
             

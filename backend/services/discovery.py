@@ -48,8 +48,13 @@ class SherlockAdapter(BaseDiscovery):
                         valid_urls.append(parts[1].strip())
                         
         except FileNotFoundError:
-            logger.error("Sherlock non è installato o non è nel PATH di sistema.")
+            logger.warning("Sherlock non è installato o non è nel PATH. Uso fallback.")
         except Exception as e:
             logger.exception(f"Errore inaspettato durante l'esecuzione di Sherlock: {e}")
+            
+        # Fallback se Sherlock non trova nulla o non è installato
+        if not valid_urls:
+            logger.info("Nessun URL trovato tramite Sherlock. Applica fallback a Instagram.")
+            valid_urls.append(f"https://instagram.com/{username}")
             
         return valid_urls
