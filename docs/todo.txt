@@ -2,3 +2,5 @@ animazioni di caricamento (FATTO)
 integrazione di tool osint github (FATTO)
 logo
 dato username trovare nome e cognome con possibili altri profili (FATTO)
+
+bilanciare i punteggi, per un profilo pubblico con una bio non puo ottenere 65 (troppo alto)
