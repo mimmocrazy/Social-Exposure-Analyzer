@@ -615,24 +615,9 @@ function AuthScreen({ onLoginSuccess }) {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
       
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md z-10 flex flex-col items-center">
-        <div className="flex items-center justify-center gap-4 mb-8 w-full">
-          <div className="w-16 h-16 overflow-hidden relative flex-shrink-0">
-            <img 
-              src="/logo.png" 
-              alt="SEA Logo" 
-              className="absolute top-0 left-0 w-full h-auto max-w-none" 
-              style={{
-                transform: 'scale(1.5) translateY(-5%)',
-                transformOrigin: 'top center',
-                clipPath: 'inset(0 0 32% 0)',
-                mixBlendMode: 'screen'
-              }} 
-            />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 pb-2 tracking-tight drop-shadow-lg text-left">
-            Social Exposure Analyzer
-          </h1>
-        </div>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 pb-3 mb-5 tracking-tight drop-shadow-lg text-center">
+          Social Exposure Analyzer
+        </h1>
         <Card className="glassmorphism w-full !bg-transparent border-white/10 p-8 shadow-2xl">
           <Title className="text-white text-2xl font-bold text-center mb-6">
             {isLogin ? "Accedi al tuo account" : "Crea un nuovo account"}
@@ -733,30 +718,12 @@ function MainApp({ onLogout }) {
       <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-blue-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
 
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="text-center max-w-3xl w-full z-10 flex flex-col items-center">
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-4 max-w-3xl mx-auto">
-          <div className="w-20 h-20 md:w-24 md:h-24 overflow-hidden relative flex-shrink-0">
-            <motion.img 
-              src="/logo.png" 
-              alt="SEA Logo" 
-              className="absolute top-0 left-0 w-full h-auto max-w-none" 
-              style={{
-                transform: 'scale(1.5) translateY(-5%)',
-                transformOrigin: 'top center',
-                clipPath: 'inset(0 0 32% 0)',
-                mixBlendMode: 'screen'
-              }} 
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            />
-          </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 pb-3 tracking-tight drop-shadow-lg text-center md:text-left">
-            Social Exposure Analyzer
-          </h1>
-        </div>
-        <p className="text-gray-400 text-lg md:text-xl max-w-xl mx-auto mb-12">
-          Valutazione automatica del rischio di social engineering tramite OSINT e AI.
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="text-center max-w-3xl w-full z-10">
+        <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 pb-3 mb-3 tracking-tight drop-shadow-lg">
+          Social Exposure Analyzer
+        </h1>
+        <p className="text-gray-400 mb-12 text-lg md:text-xl font-light">
+          Valutazione automatica del rischio di social engineering tramite <strong className="text-white font-medium">OSINT</strong> e <strong className="text-white font-medium">AI</strong>.
         </p>
 
         <form onSubmit={handleSubmit} className="relative group max-w-2xl mx-auto flex flex-col">
