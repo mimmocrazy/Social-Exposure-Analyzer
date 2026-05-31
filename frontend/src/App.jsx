@@ -274,6 +274,27 @@ function Dashboard({ analysisId }) {
     const isCritical = data.risk_level === 'CRITICAL' || data.risk_level === 'HIGH';
     const isInsufficient = data.llm_report?.insufficient_data === true;
 
+    const scrapers = data.raw_data_dump?.scraper_results || [];
+    const holehe = data.raw_data_dump?.holehe_results || [];
+    const hasIgSessionId = scrapers.some(s => s.source === "Instagram Deep Scan API");
+    const hasHoleheResults = holehe.length > 0;
+
+    const frequentLocations = [];
+    scrapers.forEach(s => {
+      if (s.source === "Instagram Deep Scan API" && s.bio && s.bio.includes("Post Locations (Luoghi Frequenti):")) {
+        const parts = s.bio.split("Post Locations (Luoghi Frequenti):");
+        if (parts.length > 1) {
+          const locString = parts[1].split(" | ")[0];
+          locString.split(",").forEach(l => {
+            const trimmed = l.trim();
+            if (trimmed && !frequentLocations.includes(trimmed)) {
+              frequentLocations.push(trimmed);
+            }
+          });
+        }
+      }
+    });
+
     // Pannello Profilo Privato / Dati Insufficienti
     if (isInsufficient) {
       return (
@@ -343,8 +364,15 @@ function Dashboard({ analysisId }) {
         if (!piiGroups[labelKey]) {
           piiGroups[labelKey] = [];
         }
-        if (pii.value && !piiGroups[labelKey].includes(pii.value)) {
-          piiGroups[labelKey].push(pii.value);
+        if (pii.value) {
+          const exists = piiGroups[labelKey].some(item => item.value === pii.value);
+          if (!exists) {
+            piiGroups[labelKey].push({
+              value: pii.value,
+              source: pii.source || "Scansione OSINT",
+              confidence: pii.confidence_score
+            });
+          }
         }
       });
     }
@@ -440,13 +468,21 @@ function Dashboard({ analysisId }) {
                       </div>
                       
                       <div className="flex flex-wrap gap-1.5 mt-1">
-                        {values.map((val, valIdx) => (
+                        {values.map((valObj, valIdx) => (
                           <span 
                             key={valIdx} 
-                            className="bg-white/5 hover:bg-white/10 text-gray-200 text-xs px-2.5 py-1 rounded-lg transition-colors border border-white/5 break-all font-mono"
-                            title={val}
+                            className="bg-white/5 hover:bg-white/10 text-gray-200 text-xs px-2.5 py-1.5 rounded-lg transition-all duration-200 border border-white/5 break-all font-mono inline-flex items-center gap-1.5 relative group/item"
                           >
-                            {val}
+                            <span>{valObj.value}</span>
+                            <span className="relative group/tooltip inline-flex items-center text-gray-500 hover:text-blue-400 transition-colors cursor-help">
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-950/95 border border-white/10 text-[10px] text-gray-200 rounded-xl shadow-2xl opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-200 z-50 text-center font-sans font-normal leading-normal normal-case backdrop-blur-md">
+                                Fonte: <strong className="text-blue-400 block mt-0.5">{valObj.source || 'Scansione OSINT'}</strong>
+                                {valObj.confidence && <span className="block text-gray-500 mt-1">Confidenza: {Math.round(valObj.confidence * 100)}%</span>}
+                              </span>
+                            </span>
                           </span>
                         ))}
                       </div>
@@ -454,6 +490,155 @@ function Dashboard({ analysisId }) {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Routine & Tools Analysis Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          {/* Card 1: Luoghi Frequenti */}
+          <div className="glassmorphism rounded-3xl p-8 flex flex-col relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 -z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
+            <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl border border-white/10">
+                  <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-white text-lg font-bold tracking-tight">Routine e Luoghi Frequenti</h3>
+                  <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Post Geolocalizzati (OSINT Tracker)</p>
+                </div>
+              </div>
+              <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest border ${
+                frequentLocations.length > 0
+                  ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-red-500/5'
+                  : 'bg-green-500/10 text-green-400 border-green-500/20 shadow-green-500/5'
+              }`}>
+                {frequentLocations.length > 0 ? 'Esposizione Rilevata' : 'Protetto'}
+              </span>
+            </div>
+            
+            <div className="flex-1 space-y-4">
+              {frequentLocations.length > 0 ? (
+                <>
+                  <p className="text-gray-300 text-sm leading-relaxed font-light">
+                    Attraverso la scansione ricorsiva degli ultimi 12 post, il modulo <strong className="text-blue-400">Instagram Deep Scan</strong> ha estratto i seguenti tag geografici ricorrenti. Questi dati permettono a un malintenzionato di ricostruire le tue routine o stabilire luoghi abituali di permanenza:
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {frequentLocations.map((loc, idx) => (
+                      <span key={idx} className="bg-slate-950/60 text-amber-300 border border-amber-500/30 hover:border-amber-500/50 hover:text-white transition-all duration-300 px-3 py-1.5 rounded-xl text-xs font-mono inline-flex items-center gap-1.5 shadow-sm">
+                        <svg className="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        {loc}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-4 mt-2">
+                    <span className="text-[10px] text-red-400 font-extrabold uppercase tracking-widest block mb-1">Vettore di Rischio Core</span>
+                    <p className="text-gray-400 text-xs leading-relaxed font-light">
+                      L'esposizione di luoghi fisici ricorrenti facilita attacchi di spear-phishing contestuali (es. spoofing di servizi locali) e pedinamento digitale (cyberstalking).
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-500 space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-white text-sm font-bold">Nessun Luogo Frequente Rilevato</h4>
+                  <p className="text-xs text-gray-400 max-w-xs">
+                    Non sono stati identificati tag geografici o riferimenti a luoghi frequenti nei post recenti. Ottimo livello di privacy sulle abitudini personali!
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card 2: Strumenti OSINT Integrati */}
+          <div className="glassmorphism rounded-3xl p-8 flex flex-col relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 -z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
+            <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border border-white/10">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-white text-lg font-bold tracking-tight">Analizzatore Strumenti OSINT</h3>
+                  <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Tecnologie e Moduli Attivi</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex-1 space-y-3 pr-1 overflow-y-auto max-h-[320px] custom-scrollbar">
+              {/* Sherlock */}
+              <div className="flex items-start space-x-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-2xl transition-colors">
+                <div className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"></div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-white text-xs font-bold font-mono">Sherlock Username Scan</h4>
+                    <span className="text-[9px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20 font-bold tracking-wider">ATTIVO</span>
+                  </div>
+                  <p className="text-gray-400 text-[11px] leading-relaxed mt-1 font-light">
+                    Esegue una scansione globale ricorsiva su oltre 400 social network per mappare e collegare l'esatta impronta digitale dell'username fornito.
+                  </p>
+                </div>
+              </div>
+
+              {/* Instagram Deep Scan */}
+              <div className="flex items-start space-x-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-2xl transition-colors">
+                <div className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${hasIgSessionId ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-gray-600'}`}></div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-white text-xs font-bold font-mono">Instagram Deep Scan API</h4>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wider ${hasIgSessionId ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
+                      {hasIgSessionId ? 'ATTIVO' : 'NON CONFIGURATO'}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-[11px] leading-relaxed mt-1 font-light">
+                    Estrae in modo mirato follower, e-mail aziendali, telefoni e analizza gli ultimi 12 post estraendone caption e tag geografici (luoghi frequenti).
+                  </p>
+                </div>
+              </div>
+
+              {/* DuckDuckGo */}
+              <div className="flex items-start space-x-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-2xl transition-colors">
+                <div className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"></div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-white text-xs font-bold font-mono">DuckDuckGo OSINT Dorker</h4>
+                    <span className="text-[9px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20 font-bold tracking-wider">ATTIVO</span>
+                  </div>
+                  <p className="text-gray-400 text-[11px] leading-relaxed mt-1 font-light">
+                    Usa dork avanzate sull'username per scovare menzioni pubbliche sul web, leak di dati o credenziali esposte in elenchi testuali esterni.
+                  </p>
+                </div>
+              </div>
+
+              {/* Holehe */}
+              <div className="flex items-start space-x-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-2xl transition-colors">
+                <div className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${hasHoleheResults ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-gray-600'}`}></div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-white text-xs font-bold font-mono">Holehe (Email Cross-Check)</h4>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wider ${hasHoleheResults ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
+                      {hasHoleheResults ? 'ATTIVO' : 'DATO NON TROVATO'}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-[11px] leading-relaxed mt-1 font-light">
+                    Interroga in parallelo oltre 120 portali registrando se l'e-mail rilevata del target è iscritta a siti di incontri, social, forum o e-commerce.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -484,8 +669,8 @@ function Dashboard({ analysisId }) {
                      <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-3">Vettori di Minaccia Rilevati</p>
                      <div className="flex flex-wrap gap-2">
                        {data.llm_report.threat_vectors.map((threat, idx) => (
-                         <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 shadow-sm">
-                           <svg className="w-3 h-3 mr-1.5 opacity-70" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                         <span key={idx} className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950/60 text-red-300 border border-red-500/30 hover:border-red-500/50 hover:text-white transition-all duration-300 shadow-[0_0_10px_rgba(239,68,68,0.02)] hover:shadow-[0_0_12px_rgba(239,68,68,0.12)]">
+                           <svg className="w-3.5 h-3.5 mr-2 text-red-400 opacity-90" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                            {threat}
                          </span>
                        ))}

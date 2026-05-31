@@ -6,6 +6,7 @@ class Entity(BaseModel):
     label: str = Field(description="Il tipo di PII (es. EMAIL, PERSON, LOCATION, ORGANIZATION)")
     value: str = Field(description="Il valore esatto estratto dal testo")
     confidence_score: float = Field(description="Un punteggio da 0.0 a 1.0 basato sulla tua certezza dell'estrazione")
+    source: str = Field(description="La fonte da cui è stato ricavato questo dato esatto (es. 'Instagram Deep Scan API', 'Holehe (Cross-Check)', 'DuckDuckGo Dorking', 'Scraping Web', ecc.). Sii specifico leggendo i log e i risultati forniti.")
 
 class MitigationSection(BaseModel):
     title: str = Field(description="Titolo sintetico della macrosezione (es. Esposizione Anagrafica, Informazioni di Contatto, Canali Social, Relazioni Personali, ecc.)")
