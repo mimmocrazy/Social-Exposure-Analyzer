@@ -881,21 +881,9 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 19:00)
-- **Task Eseguito:** Gestione Errori Gemini API e Risoluzione Finti Profili Privati.
-- **File Modificati:** `backend/services/risk_engine.py`
+### Data: 2026-05-31 (Ore 19:30)
+- **Task Eseguito:** Semplificazione Dashboard, Animazioni Premium e Cronologia Ultime Ricerche.
+- **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/api/routers/analyze.py`
 - **Sintesi Prompt:**
-> ho ottenuto questo errore e invece mi da profilo privato.... ora cambio chiave gemini ma questa cosa va risolta
-- **Spiegazione Tecnica:** Corretto un difetto di robustezza nella gestione degli errori del Risk Engine. Precedentemente, in caso di eccezioni critiche sollevate dalle API di Gemini (es. HTTP 429 Resource Exhausted per superamento dei limiti di quota o problemi di credenziali), il blocco `try...except` catturava genericamente l'errore e restituiva un report di ripiego con `insufficient_data=True`. Questo comportamento induceva erroneamente il frontend a mostrare la schermata di "Profilo Privato / Protetto" anziché notificare il reale fallimento dell'operazione. Rimuovendo il fallback abusivo e rilanciando l'eccezione come `RuntimeError`, l'orchestratore asincrono del backend (`run_scraping_task`) cattura correttamente il problema, contrassegna lo stato dell'analisi come `FAILED` e registra l'esatto messaggio diagnostico. Di conseguenza, il frontend intercetta lo stato `FAILED` e visualizza correttamente la card premium "Analisi Fallita" con il dettaglio dell'errore (ad es. errore di quota 429), offrendo una diagnosi trasparente ed eliminando i falsi positivi di profilo privato.
-
----
-
-### Data: 2026-05-31 (Ore 19:15)
-- **Task Eseguito:** Strutturazione e Colorazione Semantica dei Log di Sistema per Componenti (Fase 5.11).
-- **File Modificati:** `backend/core/logger.py`
-- **Sintesi Prompt:**
-> e se strutturassimo e colorassimo in modo piu intuitivo i log?
-- **Spiegazione Tecnica:** Riprogettato il sistema di logging centralizzato per incrementare la leggibilità e l'intuizione diagnostica durante le fasi di scansione. Integrando un formattatore personalizzato dinamico (`custom_format`) in Loguru, il logger analizza a runtime l'origine del record (pacchetto e funzione) e il contenuto testuale del log per etichettare e colorare in stile neon/console i passaggi critici dell'applicazione. Sono state introdotte etichette semantiche dedicate: `[SHERLOCK OSINT]` in ciano, `[INSTAGRAM API]` in magenta, `[DUCKDUCKGO OSINT]` in giallo, `[HOLEHE OSINT]` in blu, `[RISK ENGINE AI]` in verde, `[LLM IDENTITY]` in verde neon, `[ORCHESTRATOR]` in azzurro e `[SERVER]` / `[HTTP ACCESS]` per il web server. La marcatura temporale è stata attenuata in grigio scuro per non appesantire la lettura visiva delle righe, offrendo un'immediata associazione mentale componente-colore durante il debugging locale o lo streaming in cloud su Azure.
-
-
----
+> Rimuovi la sezione 'Routine e Luoghi Frequenti' e 'Telemetria Sensori OSINT' in quanto risultano ridondanti e poco utili. Aggiungi la visualizzazione delle ultime 3 ricerche effettuate. Rendi le animazioni di caricamento dei passi dell'analisi "capolavoro" sfumandole progressivamente in modo sequenziale.
+- **Spiegazione Tecnica:** Semplificata notevolmente l'interfaccia utente eliminando le sezioni ridondanti (`OsintTelemetry` e la card dei Luoghi Frequenti). Aggiunto l'endpoint `/history` nel router backend collegato all'utente corrente per estrarre gli ultimi 3 record di analisi e integrata la relativa UI `Ultime Ricerche` nella home del frontend. Riscritto completamente il componente `InteractiveLoading`: ora mostra tutti gli step in sequenza, mantenendo sfocati (`blur`) in scala di grigi gli step futuri e visualizzando dinamicamente delle barre/frecce progressive animate in background per accompagnare visivamente lo scorrere della pipeline OSINT.
