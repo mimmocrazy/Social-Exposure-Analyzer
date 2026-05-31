@@ -29,8 +29,13 @@ export const register = async (email, password) => {
     return response.data;
 };
 
-export const startAnalysis = async (target_url) => {
-    const response = await apiClient.post(`/analyze`, { target_url });
+export const startAnalysis = async (target_url, enable_ddg = true, enable_holehe = true, ig_sessionid = null) => {
+    const response = await apiClient.post(`/analyze`, { 
+        target_url,
+        enable_ddg,
+        enable_holehe,
+        ig_sessionid
+    });
     return response.data;
 };
 
