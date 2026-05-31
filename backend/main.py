@@ -1,8 +1,11 @@
+import os
+from dotenv import load_dotenv
+load_dotenv() # Carica subito le variabili d'ambiente da .env
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-import os
 import subprocess
 
 from backend.api.routers import analyze, auth
