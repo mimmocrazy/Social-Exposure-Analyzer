@@ -1,0 +1,4 @@
+animazioni di caricamento (FATTO)
+integrazione di tool osint github (FATTO)
+logo
+dato username trovare nome e cognome con possibili altri profili (FATTO)

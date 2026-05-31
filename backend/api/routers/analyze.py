@@ -15,7 +15,30 @@ from backend.services.scraper import gather_profile_metadata
 
 router = APIRouter()
 
-async def run_scraping_task(analysis_id: uuid.UUID, target: str):
+async def guess_real_name(username: str) -> str:
+    """Usa l'LLM per dedurre il nome reale dall'username per potenziare l'OSINT."""
+    try:
+        from backend.services.risk_engine import get_client
+        client = get_client()
+        prompt = f"Data l'username '{username}', deduci il probabile nome e cognome reale. Rispondi SOLO con il nome e cognome testuale, o 'Sconosciuto' se è totalmente impossibile da dedurre. Esempio 1: mario.rossi89 -> Mario Rossi. Esempio 2: tomasmontagna_ -> Tomas Montagna."
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        name = response.text.strip()
+        if name and name.lower() != 'sconosciuto':
+            return name
+    except Exception as e:
+        logger.warning(f"Errore durante la deduzione del nome per {username}: {e}")
+    return None
+
+async def run_scraping_task(
+    analysis_id: uuid.UUID, 
+    target: str,
+    enable_ddg: bool = True,
+    enable_holehe: bool = True,
+    ig_sessionid: str = None
+):
     """
     Orchestra l'esecuzione di Discovery (se username) e Scraping dei metadati.
     Aggiorna lo stato del database al completamento.
@@ -25,6 +48,7 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
         
     try:
         urls_to_scrape = []
+        real_name_deduced = None
         
         # Validazione rudimentale per identificare se l'input è un URL diretto o uno username
         if re.match(r"^https?://", target):
@@ -34,32 +58,50 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
             logger.info("Target identificato come username, avvio pipeline Discovery...")
             discovery_adapter = SherlockAdapter()
             urls_to_scrape = discovery_adapter.discover_profiles(target)
+            
+            logger.info(f"Avvio deduzione identità tramite LLM per l'username: {target}")
+            real_name_deduced = await guess_real_name(target)
+            if real_name_deduced:
+                logger.info(f"Nome reale dedotto con successo: {real_name_deduced}")
         
         # Se non ho trovato URL validi in fase Discovery (o ne ho trovato zero)
         if not urls_to_scrape:
             raise Exception("Nessun URL utile trovato in fase di Discovery.")
             
-        # Avvio pipeline Scraping asincrona
-        raw_data = await gather_profile_metadata(urls_to_scrape)
+        # Avvio pipeline Scraping asincrona con i nuovi flag
+        raw_data = await gather_profile_metadata(
+            urls_to_scrape, 
+            real_name=real_name_deduced,
+            enable_ddg=enable_ddg,
+            ig_sessionid=ig_sessionid
+        )
         
-        # Simulazione Aggregazione Testo (Scraping + OCR)
+        # Aggregazione Testo
         combined_text = ""
-        # TODO reale: scaricare immagini profilo e passarle a ocr.py
-        # es: combined_text += extract_text_from_image(img_path)
         
         for profile in raw_data:
             if profile.get("title"): combined_text += profile["title"] + " "
             if profile.get("bio"): combined_text += profile["bio"] + " "
+
+        # HOLEHE INTEGRATION
+        if enable_holehe:
+            # Semplice regex per trovare email nel testo
+            emails_found = list(set(re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', combined_text)))
+            if emails_found:
+                logger.info(f"Trovate {len(emails_found)} email per Holehe OSINT: {emails_found}")
+                from backend.services.holehe_adapter import run_holehe
+                for em in emails_found:
+                    sites = await run_holehe(em)
+                    if sites:
+                        holehe_str = f"\n[OSINT HOLEHE] L'email {em} risulta registrata su questi account: {', '.join(sites)}."
+                        combined_text += holehe_str
+                        logger.info(holehe_str)
             
         # Limite di sicurezza Anti-DoS per l'analisi NLP
         if len(combined_text) > 10000:
             logger.warning(f"DoS Prevention: Testo troncato da {len(combined_text)} a 10000 caratteri prima dell'NLP.")
             combined_text = combined_text[:10000]
             
-        # Precedente pipeline NLP (disattivata in favore dell'AI pura)
-        # from backend.services.nlp import extract_pii
-        # pii_results = extract_pii(combined_text)
-        # pii_dicts = [pii.model_dump() for pii in pii_results]
         # Risk Engine Analysis (Gemini Flash) tramite text integrale e OSINT
         from backend.services.risk_engine import calculate_risk
         risk_report = await calculate_risk(combined_text)
@@ -77,9 +119,6 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
                 analysis.risk_score = risk_report.score
                 analysis.risk_level = risk_report.level.value
                 analysis.llm_report = risk_report.model_dump_json()
-                
-                # Se abbiamo analizzato immagini, setta flag
-                # analysis.has_images_analyzed = True
                 
                 analysis.status = AnalysisStatus.COMPLETED
                 session.add(analysis)
@@ -116,7 +155,14 @@ def start_analysis(
     session.refresh(analysis)
     
     # Affida l'orchestrazione al BackgroundTask nativo
-    background_tasks.add_task(run_scraping_task, analysis.id, target_str)
+    background_tasks.add_task(
+        run_scraping_task, 
+        analysis.id, 
+        target_str,
+        request.enable_ddg,
+        request.enable_holehe,
+        request.ig_sessionid
+    )
     
     return {
         "message": "Richiesta OSINT presa in carico",

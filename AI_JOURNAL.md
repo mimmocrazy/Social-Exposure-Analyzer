@@ -4,6 +4,23 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
+### Data: 2026-05-31 (Ore 15:39)
+- **Task Eseguito:** Rivoluzione Dashboard (Moduli Sensori OSINT) & Sub-Scoring.
+- **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/schemas.py`, `backend/models/risk.py`, `backend/services/scraper.py`, `backend/services/holehe_adapter.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`
+- **Sintesi Prompt:**
+> "è perfetto, mi raccomando genera un prompt relativo bello luingo ed esplicativo ed attinente al pattern in ai jorunal, comunque ti faccio notare che il punteggio che esce nel report tipo 80 è molto astratto cioe non so in base a cosa lo sta calcolando non ci sono degli indici o dei punteggi attribuiti a sezioni per capire cosa ce di buono e cosa ce di male, troviamo una strategia per risolvere questa cosa per fare un capolavoro visivo"
+> 
+> Il task richiede l'implementazione del piano OSINT avanzato approvato (con Holehe e Deep Scan Instagram) e l'aggiunta di un sistema di Risk Sub-scoring (Identity, Network, Routine) per giustificare matematicamente il Risk Score globale all'utente.
+> Regole implementative:
+> - Adattare lo schema Pydantic `RiskReport` aggiungendo i `sub_scores`.
+> - Aggiornare il prompt del `risk_engine.py` spiegando come estrarre e relazionare questi indici (con enfasi sul tag [OSINT HOLEHE]).
+> - Creare `holehe_adapter.py` eseguendo holehe via subprocess e analizzandone l'output (solo siti validi).
+> - Modificare `scraper.py` includendo il check del sessionid.
+> - Rivoluzionare la `App.jsx` inserendo un pannello interattivo "Sensori OSINT" e le progress bar di Tremor dedicate ai sub-scores.
+- **Spiegazione Tecnica:** L'architettura è passata da un flusso monolitico a una pipeline modulare. Il frontend ora permette all'utente di definire quali moduli OSINT avviare (DDG, Holehe, IG Deep Scan) governando l'orchestrazione nel background task. Il backend sfrutta un adapter asincrono basato su `subprocess` per interrogare Holehe (aggirando l'incompatibilità fra Trio e Asyncio). Il modello di rischio Pydantic ora impone la struttura `RiskSubScores`, obbligando l'LLM a scomporre razionalmente il punteggio finale per maggiore trasparenza e visualizzazione grafica (Progress Bar).
+
+---
+
 ### Data: 2026-05-30 (Ore 09:00)
 - **Task Eseguito:** Inizializzazione struttura di progetto e documentazione architetturale.
 - **File Modificati:** `.gitignore`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
@@ -740,3 +757,85 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 
 > Documenta le scelte di refactoring e le tecnologie adottate nel journal.
 - **Spiegazione Tecnica:** Riprogettato interamente il componente Dashboard per soddisfare i requisiti estetici. Dismesso il `BarChart` di Tremor in favore di un componente SVG custom animato per evitare difetti di rendering (black box glitch). L'interfaccia ora sfrutta classi CSS custom per un glassmorphism profondo (`backdrop-blur-xl`) e ombre sfumate. Tutti i componenti (Risultati, PII, Audit) godono di *staggering animation* governate da `framer-motion` per garantire un'esperienza fluida e nativa degna di presentazioni Enterprise.
+
+---
+
+### Data: 2026-05-31 (Ore 13:45)
+- **Task Eseguito:** Raggruppamento PII & Audit AI Strutturato con Refining Estetico Premium.
+- **File Modificati:** `backend/models/risk.py`, `backend/services/risk_engine.py`, `frontend/src/App.jsx`, `walkthrough.md`, `task.md`
+- **Sintesi Prompt:**
+> Procedi con il micro-task: 'Raggruppamento PII & Audit AI Strutturato con Refining Estetico Premium'.
+> In base ai test di usabilità eseguiti sul frontend, l'esposizione delle PII risulta disordinata e frammentata quando vengono rilevati molteplici record dello stesso tipo (es. molti nomi 'PERSON' o luoghi 'LOCATION'), generando decine di schede singole ripetitive e insignificanti dal punto di vista dell'analisi. Inoltre, il Piano di Mitigazione generato dall'AI è un unico blocco di testo denso, scarsamente leggibile e non strutturato.
+> 
+> Dobbiamo apportare modifiche strutturate sia nel Backend che nel Frontend per ottimizzare il report e migliorare l'impatto visivo complessivo:
+> 
+> 1. **Aggregazione delle PII per Categoria (Frontend)**:
+>    - Raggruppa i dati sensibili in base alla categoria (`label`). Invece di creare singole card, genera un'unica scheda aggregata per tipo (es. 'Persone Coinvolte' per `PERSON`, 'Indirizzi Email' per `EMAIL`).
+>    - All'interno di ogni card aggregata, renderizza i singoli valori sotto forma di tag o chip orizzontali ad-hoc in stile minimalista ed elegante.
+>    - Traduci tutte le categorie PII in lingua italiana per massimizzare la chiarezza ed assegna icone SVG personalizzate e coordinate a livello cromatico per tutti i tipi (es. icona utente gialla per `PERSON`, valigetta ciano per `OCCUPATION`, sede aziendale indaco per `ORGANIZATION`, ecc.).
+> 
+> 2. **Report AI Strutturato in Macrosezioni (Backend & LLM Prompt)**:
+>    - Aggiorna il modello Pydantic `RiskReport` in `backend/models/risk.py` per includere `mitigation_sections` come lista del modello strutturato `MitigationSection`. Ciascuna sezione deve contenere: `title` (titolo macrosezione), `exposed_data` (citazione precisa dei dati reali esposti rilevati nell'OSINT), `criticality` (livello di criticità) e `mitigation` (azioni correttive e consigli specifici).
+>    - Aggiorna il `system_prompt` in `backend/services/risk_engine.py` per istruire Gemini 2.5 Flash a compilare in modo granulare queste sezioni e gestisci il relativo fallback di errore.
+> 
+> 3. **Visualizzazione Premium & Layout Refinement (Frontend)**:
+>    - Integra un layout scorrevole e pulito per scorrere i vari consigli strutturati dell'Audit AI, implementando scrollbar customizzate semitrasparenti e card vetrate con badge di rischio coordinati (rosso per critico/alta, arancione per media, verde per bassa).
+>    - Risolvi i problemi di dimensionamento orizzontale espandendo il contenitore della dashboard a `max-w-7xl` per rendere i risultati più nitidi e grandiosi.
+>    - Risolvi il clipping del discendente della lettera 'y' nel titolo principale "Social Exposure Analyzer" introducendo bottom padding (`pb-3`) agli `h1`.
+> 
+> Spiega tecnicamente il refactoring eseguito nel journal.
+- **Spiegazione Tecnica:** Implementato un refactoring congiunto backend/frontend per elevare il valore informativo del report di esposizione. Sul backend, lo schema Pydantic `RiskReport` è stato evoluto con il nuovo modello `MitigationSection`, consentendo a Gemini di compilare in modo asincrono un'analisi divisa in macro-ambiti con citazione dei leak reali scoperti durante la pipeline OSINT. Sul frontend, per eliminare il rumore visivo, abbiamo aggregato l'array `pii_extracted` tramite chiave (`label`) accorpando record multipli in tag chip orizzontali. L'intera visualizzazione è stata allargata a `max-w-7xl` ed è stata aggiunta spaziatura di sicurezza alla base degli `h1` per evitare il ritaglio dei font in fase di rendering dell'effetto gradiente su testo trasparente.
+
+---
+
+### Data: 2026-05-31 (Ore 14:50)
+- **Task Eseguito:** Potenziamento OSINT: Anti-Allucinazione AI, Deduzione Identità e Aderenza alla Traccia.
+- **File Modificati:** `backend/api/routers/analyze.py`, `backend/services/scraper.py`, `backend/services/risk_engine.py`, `docs/todo.txt`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Procedi con il micro-task: 'Potenziamento OSINT: Anti-Allucinazione AI e Deduzione Identità'.
+> L'analisi empirica del sistema in fase di demo ha evidenziato due criticità funzionali rilevanti:
+> 1. Quando viene fornito un username associato a un profilo Instagram privato, la pagina HTML restituita contiene esclusivamente la schermata di login ("Login • Instagram"). Il LLM (Gemini), ricevendo questo testo privo di informazioni reali, tende ad "allucinare" PII fittizie per soddisfare lo schema JSON strutturato, generando report fraudolenti.
+> 2. L'applicativo non è attualmente in grado di risalire al nome e cognome reale partendo da uno username, limitando drasticamente la portata delle ricerche OSINT ai soli social diretti (spesso bloccati).
+> 
+> Queste lacune compromettono la rispondenza ai requisiti della traccia di progetto, in particolare la sezione che richiede di "raccogliere e catalogare i contenuti pubblicamente disponibili" e di "evidenziare che la pubblicazione ricorrente di luoghi frequentati, routine quotidiane, informazioni lavorative e legami familiari può facilitare tentativi di impersonificazione o messaggi fraudolenti personalizzati".
+> 
+> Implementa le seguenti correzioni nell'ordine indicato:
+> 
+> 1. **Deduzione Identità LLM-based (`backend/api/routers/analyze.py`)**:
+>    - Implementa una funzione asincrona `guess_real_name(username: str) -> str` che invochi Gemini 2.5 Flash con un prompt mirato per dedurre il probabile nome e cognome reale dall'username fornito (es. `tomasmontagna_` -> `Tomas Montagna`, `mario.rossi89` -> `Mario Rossi`).
+>    - Se la deduzione fallisce o il risultato è "Sconosciuto", ritorna `None` senza bloccare la pipeline.
+>    - Invoca questa funzione nella fase di preprocessing dell'orchestratore `run_scraping_task`, subito dopo la Discovery tramite Sherlock, e passa il nome dedotto allo scraper.
+> 
+> 2. **Anti-Hallucination Firewall (`backend/services/scraper.py`)**:
+>    - Dopo il parsing HTML di ogni URL, analizza il `<title>` della pagina. Se contiene parole chiave indicative di un login wall (`login`, `sign in`, `accedi`) oppure se la `meta description` è assente o vuota, classifica il profilo come potenzialmente privato o inaccessibile.
+>    - In tal caso, inietta nel campo `bio` del risultato un tag esplicito: `[WARNING: PROFILO PRIVATO O INACCESSIBILE. NON INVENTARE DATI.]`. Questo tag sarà visibile esclusivamente al LLM nel payload aggregato.
+>    - Aggiorna la firma della funzione `gather_profile_metadata` per accettare un parametro opzionale `real_name: str = None`.
+>    - Nella sezione OSINT DuckDuckGo, se `real_name` è disponibile, esegui una seconda query di Search Dorking combinando nome reale e username (`"Tomas Montagna" OR "tomasmontagna_"`) per intercettare esposizioni su fonti web alternative (LinkedIn, articoli, directory aziendali) che compensino l'inaccessibilità del profilo social diretto.
+> 
+> 3. **Prompt Engineering Anti-Allucinazione e Aderenza Traccia (`backend/services/risk_engine.py`)**:
+>    - Aggiorna il `system_prompt` del Risk Engine inserendo una sezione dedicata alla gestione del tag `[WARNING]`: se rilevato nel testo, l'AI DEVE impostare `insufficient_data=True`, lasciare `pii_extracted` completamente vuoto e dichiarare che il profilo ha esposizione nulla in quanto adeguatamente protetto da impostazioni di privacy.
+>    - Inserisci nel prompt le terminologie esatte richieste dalla traccia di progetto, in particolare: "la pubblicazione ricorrente di luoghi frequentati, routine quotidiane, informazioni lavorative e legami familiari può facilitare tentativi di impersonificazione o messaggi fraudolenti personalizzati". L'obiettivo è che il report finale contenga esattamente le keyword valutative attese dal docente.
+> 
+> Routine di Chiusura: Aggiorna `docs/todo.txt` e registra l'operazione in `AI_JOURNAL.md` (ore 14:50) copiando fedelmente questo prompt nel formato stabilito.
+- **Spiegazione Tecnica:** Implementato un triplice intervento architetturale per sanare le criticità emerse in fase di demo. (1) **Name Deduction**: la nuova funzione `guess_real_name` in `analyze.py` sfrutta Gemini 2.5 Flash come oracolo euristico per risolvere l'identità reale dell'utente a partire dal suo alias social, ampliando drasticamente il raggio d'azione dell'OSINT successivo. (2) **Anti-Hallucination Firewall**: nello `scraper.py`, un pattern-matching sul `<title>` HTML intercetta i login wall tipici di Instagram e Facebook, iniettando un tag machine-readable (`[WARNING]`) che il LLM è istruito a rispettare come direttiva imperativa. Questo meccanismo elimina alla radice il problema delle PII inventate su profili privati. (3) **Prompt Engineering Traccia-Aware**: il `system_prompt` del Risk Engine è stato arricchito con le terminologie esatte della traccia universitaria (impersonificazione, routine quotidiane, legami familiari), garantendo che i report generati siano formalmente allineati ai criteri di valutazione del docente. La ricerca DuckDuckGo è stata potenziata con una doppia query (username + nome reale) per massimizzare la superficie di raccolta OSINT anche quando il social primario è inaccessibile.
+
+
+
+## Ottimizzazione OSINT: Anti-Allucinazione e Deduzione Identità (31/05/2026)
+
+### Contesto e Obiettivo
+L'utente ha sollevato una criticità importante legata ai requisiti del progetto universitario: se l'applicativo prova a scansionare un profilo privato (es. su Instagram) il LLM potrebbe "allucinare" dei dati PII fittizi pur di compilare il JSON, dato che la pagina HTML restituirebbe solo una generica schermata di login. Inoltre, era richiesto un meccanismo in grado di risalire al vero nome e cognome partendo da uno username, per ampliare le ricerche OSINT.
+
+### 1. Deduzione Identità (LLM-based)
+Prima di effettuare la query OSINT profonda, ho integrato una funzione `guess_real_name` in `backend/api/routers/analyze.py`. Questa funzione utilizza Gemini per dedurre eurusticamente il nome reale dell'utente partendo dall'alias (es. tomasmontagna_ -> Tomas Montagna). Il nome dedotto viene poi passato allo `scraper` per costruire query di `Search Dorking` più precise su DuckDuckGo (`"Tomas Montagna" OR "tomasmontagna_"`), permettendo di trovare esposizioni in articoli pubblici o LinkedIn anche se il social primario è privato.
+
+### 2. Prevenzione Allucinazioni (Anti-Hallucination Firewall)
+Nel modulo `scraper.py`, ho aggiunto una validazione sull'HTML: se il `<title>` contiene parole come `login`, `sign in` o `accedi` e manca una `meta description`, lo scraper inietta nel testo un TAG esplicito: `[WARNING: PROFILO PRIVATO O INACCESSIBILE. NON INVENTARE DATI.]`.
+
+Ho poi aggiornato radicalmente il `system_prompt` in `backend/services/risk_engine.py` imponendo a Gemini di intercettare questo WARNING. Quando rilevato, l'AI deve:
+- Impostare `insufficient_data = True` nel RiskReport.
+- Lasciare `pii_extracted` completamente vuoto.
+- Indicare un rischio BASSO, chiarendo che il profilo è adeguatamente protetto da impostazioni di privacy, evitando inventare informazioni.
+
+### 3. Aderenza ai Rischi di Progetto (Prompt Engineering)
+Sempre nel prompt, ho introdotto le terminologie esatte richieste dalla traccia di progetto (es. *«evidenziare che la pubblicazione ricorrente di luoghi frequentati, routine quotidiane, informazioni lavorative e legami familiari può facilitare tentativi di impersonificazione»*). Ciò spinge il modello a generare report estremamente focalizzati sulle vulnerabilità di Ingegneria Sociale legate alla compromissione del pattern di vita dell'utente.
