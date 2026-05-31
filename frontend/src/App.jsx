@@ -617,13 +617,9 @@ function AuthScreen({ onLoginSuccess }) {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md z-10 flex flex-col items-center">
         <img 
           src="/logo.png" 
-          alt="SEA Logo" 
-          className="w-40 h-auto mb-4 drop-shadow-[0_0_25px_rgba(139,92,246,0.4)]" 
-          style={{ mixBlendMode: 'screen' }} 
+          alt="SEA - Social Exposure Analyzer" 
+          className="w-64 h-auto mb-8 drop-shadow-[0_0_25px_rgba(139,92,246,0.4)] rounded-2xl" 
         />
-        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 pb-3 mb-5 tracking-tight drop-shadow-lg text-center">
-          Social Exposure Analyzer
-        </h1>
         <Card className="glassmorphism w-full !bg-transparent border-white/10 p-8 shadow-2xl">
           <Title className="text-white text-2xl font-bold text-center mb-6">
             {isLogin ? "Accedi al tuo account" : "Crea un nuovo account"}
@@ -727,19 +723,12 @@ function MainApp({ onLogout }) {
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="text-center max-w-3xl w-full z-10">
         <motion.img 
           src="/logo.png" 
-          alt="SEA Logo" 
-          className="w-56 md:w-72 h-auto mx-auto mb-6 drop-shadow-[0_0_35px_rgba(139,92,246,0.5)]" 
-          style={{ mixBlendMode: 'screen' }} 
+          alt="SEA - Social Exposure Analyzer" 
+          className="w-72 md:w-96 h-auto mx-auto mb-10 drop-shadow-[0_0_35px_rgba(139,92,246,0.5)] rounded-2xl" 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         />
-        <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 pb-3 mb-3 tracking-tight drop-shadow-lg">
-          Social Exposure Analyzer
-        </h1>
-        <p className="text-gray-400 mb-12 text-lg md:text-xl font-light">
-          Valutazione automatica del rischio di social engineering tramite <strong className="text-white font-medium">OSINT</strong> e <strong className="text-white font-medium">AI</strong>.
-        </p>
 
         <form onSubmit={handleSubmit} className="relative group max-w-2xl mx-auto flex flex-col">
           <div className="relative">
