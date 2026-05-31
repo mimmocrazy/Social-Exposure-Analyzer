@@ -66,6 +66,14 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Frontend Rivoluzione Dashboard: Pannello "Sensori OSINT" nella home (toggles UI) e Data Visualization visiva con Progress Bars Tremor per le sub-metrizzazioni del rischio.
 - [x] Documentazione Finale: Aggiornamento `AI_JOURNAL.md` e sync con `ARCHITECTURE.md`.
 
+### Fase 5.9: Trasparenza UI/UX High-Signal, Routine e Mappatura Sensori OSINT
+- [x] Modelli & Estrazione Source PII: Estensione del modello `Entity` in `backend/models/risk.py` per estrarre la fonte (`source`) di ciascuna informazione tramite Structured Outputs di Gemini.
+- [x] Anti-Login Wall Optimization: Aggiornamento logica di `backend/services/scraper.py` per saltare lo standard scraping anonimo su Instagram quando il Deep Scan va a buon fine, evitando allucinazioni e warning.
+- [x] Tooltip Informativi Fonti PII: Integrazione tooltip CSS puri su icona info `(i)` per visualizzare la fonte OSINT e la confidenza di ciascun dato sensibile nella Dashboard.
+- [x] Widget Geolocalizzazione e Luoghi Frequenti: Sviluppo del widget "Routine e Luoghi Frequenti" che mappa e analizza i tag di geolocalizzazione estratti dagli ultimi post Instagram del target.
+- [x] OSINT Sensors Hub UI: Integrazione dell'Analizzatore Strumenti OSINT per monitorare lo stato di attivazione e il funzionamento di Sherlock, Holehe, DuckDuckGo e Instagram Deep Scan.
+- [x] Documentazione: Aggiornamento `AI_JOURNAL.md` e sync con `ARCHITECTURE.md`.
+
 ### Fase 6: Azure Deployment & Documentazione
 - [x] Configurazione script e workflow Azure (App Service, GitHub Actions).
 - [x] Deploy Automation Script (`deploy_azure.sh`, `startup.sh`).

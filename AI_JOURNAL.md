@@ -820,3 +820,31 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Spiegazione Tecnica:** L'architettura è passata da un flusso monolitico a una pipeline modulare. Il frontend ora permette all'utente di definire quali moduli OSINT avviare (DDG, Holehe, IG Deep Scan) governando l'orchestrazione nel background task. Il backend sfrutta un adapter asincrono basato su `subprocess` per interrogare Holehe (aggirando l'incompatibilità fra Trio e Asyncio). Il modello di rischio Pydantic ora impone la struttura `RiskSubScores`, obbligando l'LLM a scomporre razionalmente il punteggio finale per maggiore trasparenza e visualizzazione grafica (Progress Bar).
 
 ---
+
+### Data: 2026-05-31 (Ore 17:30)
+- **Task Eseguito:** Trasparenza UI/UX High-Signal, Routine e Mappatura Sensori OSINT (Fase 5.9).
+- **File Modificati:** `backend/models/risk.py`, `backend/services/scraper.py`, `frontend/src/App.jsx`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Procedi con il micro-task: 'Trasparenza UI/UX High-Signal, Routine e Mappatura Sensori OSINT'.
+> La Dashboard mostra i risultati ma manca di chiarezza circa l'esatta provenienza dei dati sensibili e dei tool utilizzati, diminuendo la percezione di robustezza del sistema. Inoltre, il tracciamento dei luoghi frequenti e delle routine del target non è esposto in modo evidente nel frontend, riducendo l'aderenza alla traccia d'esame. Infine, la visualizzazione dei Vettori di Minaccia presenta un contrasto cromatico disarmonico (rosso su rosso).
+> 
+> Ottimizza il sistema con i seguenti macro-task:
+> 
+> 1. **Modello Dati & Estrazione Fonti (Backend & LLM)**:
+>    - Estendi lo schema Pydantic `Entity` in `backend/models/risk.py` inserendo il campo `source`.
+>    - Istruisci il Risk Engine a dedurre e valorizzare l'esatta provenienza di ciascun dato (es. 'Instagram Deep Scan API', 'Holehe (Cross-Check)', 'DuckDuckGo Dorking') analizzando la struttura del JSON aggregato.
+> 
+> 2. **Ottimizzazione Anti-Login Wall (Backend Scraper)**:
+>    - In `backend/services/scraper.py`, se il Deep Scan di Instagram va a buon fine, disabilita lo scraping standard anonimo su quello stesso URL. Questo evita che la richiesta anonima colpisca il Login Wall generando inutili log di warning ed errori fittizi nei report.
+> 
+> 3. **Trasparenza delle Fonti in UI (Frontend Tooltips)**:
+>    - Raggruppa le PII mantenendo intatto l'oggetto sorgente.
+>    - In `App.jsx`, integra un'icona info `(i)` circolare minimalista a fianco di ciascun dato. Mostra in mouseover un tooltip elegante in puro CSS contenente la fonte e la confidenza dell'estrazione.
+> 
+> 4. **Mappatura Routine & Geolocalizzazione (Frontend)**:
+>    - Sviluppa una card "Routine e Luoghi Frequenti" che intercetti e mostri in modo esplicito i tag geografici collezionati da Instagram, spiegando all'utente il rischio di pedinamento digitale.
+> 
+> 5. **OSINT Sensors Hub & Refine Estetico (Frontend)**:
+>    - Integra un widget "Analizzatore Strumenti OSINT" per mappare visivamente il funzionamento e lo stato attivo/inattivo dei vari tool (Sherlock, Holehe, DDG, Instagram Deep Scan).
+>    - Mitiga il rosso-su-rosso nella sezione Vettori di Minaccia introducendo badge a contrasto con sfondo slate-gray e bordi neon sfumati ad alta leggibilità.
+- **Spiegazione Tecnica:** Implementato un robusto aggiornamento focalizzato sulla trasparenza informativa, l'aderenza alla traccia d'esame e la qualità visiva. (1) **Source Tracking**: grazie all'estensione del modello Pydantic `Entity` con il campo `source`, Gemini 2.5 Flash mappa la provenienza di ciascun dato sensibile direttamente dai payload dei sensori, esponendolo in UI tramite tooltip CSS ad altissima usabilità (mouseover su icone info). (2) **Scraper Pipeline Optimization**: modificato `scraper.py` per bypassare lo scraping anonimo su Instagram qualora il Deep Scan autenticato abbia già recuperato i dati, eliminando warning spuri e allucinazioni del modello. (3) **Routine Tracker & Sensors Hub**: sviluppati due widget chiave nella Dashboard; uno mappa i tag geografici Instagram (Luoghi Frequenti) per adempiere al requisito di Routine della traccia d'esame, l'altro agisce da centro di controllo visuale che documenta l'esecuzione di Sherlock, Holehe, DuckDuckGo e Instagram Deep Scan. (4) **UI Refinement**: i Vettori di Minaccia sono stati ri-stilizzati abbandonando la colorazione piatta in favore di card slate-gray con bordi neon e hover micro-animati a contrasto.
