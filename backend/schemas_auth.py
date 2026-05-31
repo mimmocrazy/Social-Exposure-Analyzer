@@ -6,8 +6,10 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+import uuid
+
 class UserRead(BaseModel):
-    id: str
+    id: uuid.UUID
     email: str
     is_active: bool
 
