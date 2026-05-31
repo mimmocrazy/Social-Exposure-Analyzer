@@ -859,7 +859,8 @@ function MainApp() {
   const [enableIgScan, setEnableIgScan] = useState(false);
   const [igSessionId, setIgSessionId] = useState('');
   const [enableFbScan, setEnableFbScan] = useState(false);
-  const [fbSessionId, setFbSessionId] = useState('');
+  const [fbCUser, setFbCUser] = useState('');
+  const [fbXs, setFbXs] = useState('');
 
   const { data: historyData } = useQuery({
     queryKey: ['history'],
@@ -877,7 +878,8 @@ function MainApp() {
         enableHolehe,
         enableIgScan ? igSessionId : null,
         enableFbScan,
-        enableFbScan ? fbSessionId : null
+        enableFbScan ? fbCUser : null,
+        enableFbScan ? fbXs : null
       );
       setAnalysisId(res.analysis_id);
     } catch (err) {
@@ -1067,21 +1069,33 @@ function MainApp() {
 
               <AnimatePresence>
                 {enableFbScan && (
-                  <motion.div initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 20 }} exit={{ height: 0, opacity: 0, marginTop: 0 }} className="overflow-hidden relative z-10">
+                  <motion.div initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 20 }} exit={{ height: 0, opacity: 0, marginTop: 0 }} className="overflow-hidden relative z-10 flex flex-col space-y-3">
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg className="h-5 w-5 text-blue-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
                       </div>
                       <input
                         type="text"
-                        value={fbSessionId}
-                        onChange={(e) => setFbSessionId(e.target.value)}
-                        placeholder="Incolla il cookie c_user e xs..."
-                        className="w-full bg-black/40 border border-blue-500/40 text-white pl-12 pr-4 py-3.5 rounded-xl outline-none text-sm focus:border-blue-400 transition-all placeholder-blue-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] focus:bg-black/60"
+                        value={fbCUser}
+                        onChange={(e) => setFbCUser(e.target.value)}
+                        placeholder="Valore c_user (es. 1000...)"
+                        className="w-full bg-black/40 border border-blue-500/40 text-white pl-12 pr-4 py-3 rounded-xl outline-none text-sm focus:border-blue-400 transition-all placeholder-blue-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] focus:bg-black/60"
                       />
                     </div>
-                    <p className="text-[10px] text-blue-300/50 mt-2 ml-2 font-light">
-                      * Assicurati che l'estensione del browser abbia esportato correttamente `c_user=...; xs=...;`
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-blue-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                      </div>
+                      <input
+                        type="password"
+                        value={fbXs}
+                        onChange={(e) => setFbXs(e.target.value)}
+                        placeholder="Valore xs (es. 123456...)"
+                        className="w-full bg-black/40 border border-blue-500/40 text-white pl-12 pr-4 py-3 rounded-xl outline-none text-sm focus:border-blue-400 transition-all placeholder-blue-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] focus:bg-black/60"
+                      />
+                    </div>
+                    <p className="text-[10px] text-blue-300/50 ml-2 font-light">
+                      * Inserisci i due valori separatamente. Il cookie verrà assemblato in automatico dal backend.
                     </p>
                   </motion.div>
                 )}

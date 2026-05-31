@@ -175,6 +175,10 @@ def start_analysis(
     session.commit()
     session.refresh(analysis)
     
+    fb_cookie = None
+    if request.enable_fb_scan and request.fb_c_user and request.fb_xs:
+        fb_cookie = f"c_user={request.fb_c_user}; xs={request.fb_xs};"
+
     # Affida l'orchestrazione al BackgroundTask nativo
     background_tasks.add_task(
         run_scraping_task, 
@@ -184,7 +188,7 @@ def start_analysis(
         request.enable_holehe,
         request.ig_sessionid,
         request.enable_fb_scan,
-        request.fb_sessionid
+        fb_cookie
     )
     
     return {

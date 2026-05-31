@@ -9,4 +9,5 @@ class AnalyzeRequest(BaseModel):
     enable_holehe: bool = Field(default=True)
     ig_sessionid: Optional[str] = Field(default=None)
     enable_fb_scan: bool = Field(default=False)
-    fb_sessionid: Optional[str] = Field(default=None)
+    fb_c_user: Optional[str] = Field(default=None)
+    fb_xs: Optional[str] = Field(default=None)
