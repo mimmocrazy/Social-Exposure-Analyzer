@@ -524,3 +524,26 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > 
 > Routine di Chiusura: Registra fedelmente questo macro-prompt nel `AI_JOURNAL.md` per garantire la Trasparenza AI, aggiorna la documentazione e fai il commit di setup iniziale.
 - **Spiegazione Tecnica:** Accolta la richiesta di upgrade. Ho aggiornato `ARCHITECTURE.md` aggiungendo la Fase 7. Ho generato questo log dettagliato e strutturato per mantenere la ferrea conformità ai requisiti di Tracciabilità e Trasparenza AI del progetto, fissando il patto architetturale: Auth JWT + Alembic, con collaudo rigorosamente Local-First.
+
+---
+
+### Data: 2026-05-31 (Ore 11:00)
+- **Task Eseguito:** Inizializzazione Fase 7 (Pro & Cloud Native Upgrade) - Auth & Alembic.
+- **File Modificati:** `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Esegui il micro-task iniziale per l'espansione del progetto: "Fase 7: Pro & Cloud Native Upgrade".
+> Il sistema base (PoC) è perfetto. Ora evolviamo l'infrastruttura verso standard SaaS (Software as a Service) pronti per una user-base reale. Segui l'approccio *Local-First*.
+> 
+> 1. **Aggiornamento Documentazione Strategica:**
+>    - Aggiungi la "Fase 7" in `ARCHITECTURE.md` con i relativi micro-task (Auth, Migrazioni Alembic, UI Frontend e Deploy Reale).
+> 
+> 2. **Implementazione Autenticazione (Backend Security):**
+>    - Lo standard scelto è **JWT (JSON Web Tokens)** nativo (Niente OAuth per il momento, manteniamo i dati proprietari).
+>    - Implementa i modelli di sicurezza (`User`) e configura gli endpoint `/login` e `/register`. Proteggi le route esistenti imponendo un token valido.
+> 
+> 3. **Migrazione Database (Infrastructure as Code):**
+>    - Abbandona la creazione automatica `create_all()` delle tabelle.
+>    - Implementa **Alembic**. Configuralo per testare tutto localmente in SQLite, ma predisponilo per PostgreSQL (cambiando solo la var d'ambiente `DATABASE_URL`).
+> 
+> Routine di Chiusura: Registra fedelmente questo macro-prompt nel `AI_JOURNAL.md` per garantire la Trasparenza AI, aggiorna la documentazione e fai il commit di setup iniziale.
+- **Spiegazione Tecnica:** Accolta la richiesta di upgrade. Ho aggiornato `ARCHITECTURE.md` aggiungendo la Fase 7. Ho generato questo log dettagliato e strutturato per mantenere la ferrea conformità ai requisiti di Tracciabilità e Trasparenza AI del progetto, fissando il patto architetturale: Auth JWT + Alembic, con collaudo rigorosamente Local-First.
