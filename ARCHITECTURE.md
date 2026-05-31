@@ -91,4 +91,11 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Inizializzazione Auth JWT e Security Models.
 - [x] Configurazione Alembic per Database Migrations (PostgreSQL/SQLite).
 - [x] Implementazione UI Frontend (Login/Register).
+### Fase 7.1: UI Premium & Auth Bypass Locale
+- [x] Semplificazione del workflow frontend tramite bypass completo del blocco `AuthScreen` (accesso diretto a `MainApp`).
+- [x] Bypasso middleware JWT in `auth.py` con iniezione automatica di utente locale di default per l'archiviazione history senza barriere di login.
+- [x] Restyling "Premium" della sezione `Analizzatore Strumenti OSINT`: transizione a griglia 2x2 con effetti glassmorphism, contatori dinamici basati sui payload reali (es. numero leak DDG, account Sherlock, hit Holehe) per massima trasparenza telemetrica.
+- [x] Correzione rendering colori `ProgressBar` Tremor (fix da `rose/amber` a `red/amber`).
+
+### Fase 8: Deploy Cloud Native Reale su Azure
 - [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).

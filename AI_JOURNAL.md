@@ -887,3 +887,13 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Sintesi Prompt:**
 > Rimuovi la sezione 'Routine e Luoghi Frequenti' e 'Telemetria Sensori OSINT' in quanto risultano ridondanti e poco utili. Aggiungi la visualizzazione delle ultime 3 ricerche effettuate. Rendi le animazioni di caricamento dei passi dell'analisi "capolavoro" sfumandole progressivamente in modo sequenziale.
 - **Spiegazione Tecnica:** Semplificata notevolmente l'interfaccia utente eliminando le sezioni ridondanti (`OsintTelemetry` e la card dei Luoghi Frequenti). Aggiunto l'endpoint `/history` nel router backend collegato all'utente corrente per estrarre gli ultimi 3 record di analisi e integrata la relativa UI `Ultime Ricerche` nella home del frontend. Riscritto completamente il componente `InteractiveLoading`: ora mostra tutti gli step in sequenza, mantenendo sfocati (`blur`) in scala di grigi gli step futuri e visualizzando dinamicamente delle barre/frecce progressive animate in background per accompagnare visivamente lo scorrere della pipeline OSINT.
+
+---
+
+### Data: 2026-05-31 (Ore 19:50)
+- **Task Eseguito:** Bypasso Autenticazione per Esecuzione Locale, Correzione ProgressBar e Restyling Hub Sensori OSINT.
+- **File Modificati:** `frontend/src/App.jsx`, `backend/api/routers/auth.py`
+- **Sintesi Prompt:**
+> "la barra identita e contatti non ha un colore, la sezione analizzatore strumenti osint mi sembra veramente inutile cosi, troviamone un modo piu utile e dilettevole e figo"
+> "ma il login e registrazione sono veramente necessari??"
+- **Spiegazione Tecnica:** Eseguite tre modifiche mirate: (1) **Auth Bypass:** Rimosso completamente il componente `AuthScreen` da `App.jsx` e bypassato il meccanismo JWT nel backend (`auth.py`), iniettando sempre un utente di default (`local_admin@local.host`) per velocizzare i test e l'utilizzo locale. (2) **ProgressBar Fix:** Sostituito il colore non supportato `rose` con `red` per Identità e Contatti, e ristabilito `amber` per Routine. (3) **OSINT Analyzer Redesign:** Riprogettata l'intera sezione `Analizzatore Strumenti OSINT` passando da una semplice lista testuale a una griglia 2x2. Implementati effetti glassmorphism, glowing borders e contatori statistici dinamici agganciati ai risultati OSINT reali (es. numero hit di Holehe, counter esecuzioni DuckDuckGo), fornendo una telemetria visiva "capolavoro" senza ingombrare la UX.

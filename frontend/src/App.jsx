@@ -121,7 +121,7 @@ const InteractiveLoading = () => {
     { text: "Inizializzazione Deep OSINT", icon: "⚙️", delay: 0 },
     { text: "Scansione Instagram", icon: "📸", delay: 1500 },
     { text: "Footprint X (Twitter)", icon: "🐦", delay: 3500 },
-    { text: "Verifica LinkedIn & FB", icon: "👥", delay: 5500 },
+    { text: "Verifica LinkedIn & FaceBook", icon: "👥", delay: 5500 },
     { text: "Estrazione Dati Sensibili", icon: "🕵️", delay: 7500 },
     { text: "Audit AI in corso", icon: "🧠", delay: 10000 },
     { text: "Stesura Risk Report", icon: "📄", delay: 13000 }
@@ -156,13 +156,12 @@ const InteractiveLoading = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
-                className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all duration-1000 w-36 md:w-44 text-center relative group ${
-                  isActive
+                className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all duration-1000 w-36 md:w-44 text-center relative group ${isActive
                     ? 'bg-blue-500/10 border-blue-400/50 shadow-[0_0_40px_rgba(59,130,246,0.3)] z-10 scale-110'
                     : isPast
-                    ? 'bg-green-500/5 border-green-500/20 opacity-80 scale-95'
-                    : 'bg-white/5 border-white/5 opacity-30 scale-90 blur-[1px] grayscale'
-                }`}
+                      ? 'bg-green-500/5 border-green-500/20 opacity-80 scale-95'
+                      : 'bg-white/5 border-white/5 opacity-30 scale-90 blur-[1px] grayscale'
+                  }`}
               >
                 {isActive && (
                   <motion.div
@@ -192,7 +191,7 @@ const InteractiveLoading = () => {
                     className={`h-0.5 w-full transition-all duration-1000 relative ${isPast ? 'bg-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : isActive ? 'bg-blue-400/80 shadow-[0_0_15px_rgba(59,130,246,0.8)]' : 'bg-white/10'}`}
                   >
                     {isActive && (
-                      <motion.div 
+                      <motion.div
                         initial={{ x: '-100%', opacity: 1 }}
                         animate={{ x: '100%', opacity: 0 }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
@@ -385,7 +384,7 @@ function Dashboard({ analysisId }) {
                   <span className="text-gray-300 font-medium">Routine e Luoghi</span>
                   <span className="text-white font-bold">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
                 </div>
-                <ProgressBar value={data.llm_report?.sub_scores?.routine_exposure || 0} color="yellow" className="h-1.5" />
+                <ProgressBar value={data.llm_report?.sub_scores?.routine_exposure || 0} color="amber" className="h-1.5" />
               </div>
             </div>
 
@@ -816,7 +815,7 @@ function AuthScreen({ onLoginSuccess }) {
   );
 }
 
-function MainApp({ onLogout }) {
+function MainApp() {
   const [targetUrl, setTargetUrl] = useState('');
   const [analysisId, setAnalysisId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -845,11 +844,7 @@ function MainApp({ onLogout }) {
       );
       setAnalysisId(res.analysis_id);
     } catch (err) {
-      if (err.response?.status === 401) {
-        onLogout();
-      } else {
-        alert("Errore nell'avvio dell'analisi.");
-      }
+      alert("Errore nell'avvio dell'analisi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -857,9 +852,7 @@ function MainApp({ onLogout }) {
 
   return (
     <div className="min-h-screen flex flex-col items-center py-12 md:py-24 px-6 font-sans relative overflow-hidden">
-      <div className="absolute top-4 right-6 z-20">
-        <button onClick={onLogout} className="text-gray-400 hover:text-white text-sm border border-white/10 px-4 py-2 rounded-full glassmorphism transition-colors">Logout</button>
-      </div>
+
 
       {/* Background Decorativo Esteso */}
       <div className="absolute top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-blue-600/10 rounded-full blur-3xl -z-10 mix-blend-screen animate-[pulse_10s_ease-in-out_infinite]"></div>
@@ -1044,20 +1037,9 @@ function MainApp({ onLogout }) {
 }
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
-      {isAuthenticated ? (
-        <MainApp onLogout={handleLogout} />
-      ) : (
-        <AuthScreen onLoginSuccess={() => setIsAuthenticated(true)} />
-      )}
+      <MainApp />
     </QueryClientProvider>
   );
 }

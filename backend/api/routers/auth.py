@@ -15,23 +15,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 logger = logging.getLogger("auth")
 
-def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-        
+def get_current_user(session: Session = Depends(get_session)) -> User:
+    email = "local_admin@local.host"
     user = session.exec(select(User).where(User.email == email)).first()
-    if user is None:
-        raise credentials_exception
+    if not user:
+        user = User(email=email, hashed_password="not_needed")
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     return user
 
 @router.post("/register", response_model=UserRead)
