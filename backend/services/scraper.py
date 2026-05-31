@@ -71,4 +71,27 @@ async def gather_profile_metadata(urls: List[str]) -> List[Dict[str, Any]]:
                 
             results.append(profile_data)
             
+        # OSINT Aggressivo: Ricerca DuckDuckGo Lite per menzioni del target
+        try:
+            # Prendi l'ultimo url o il target originale
+            target_to_search = urls[0].split('/')[-1] if urls else "unknown"
+            if target_to_search:
+                ddg_url = f"https://lite.duckduckgo.com/lite/"
+                logger.info(f"Avvio OSINT profondo su DuckDuckGo per: {target_to_search}")
+                resp = await client.post(ddg_url, data={"q": f'"{target_to_search}"'}, follow_redirects=True)
+                if resp.status_code == 200:
+                    soup = BeautifulSoup(resp.text, "html.parser")
+                    snippets = soup.find_all("td", class_="result-snippet")
+                    ddg_text = " ".join([s.get_text(strip=True) for s in snippets])
+                    if ddg_text:
+                        results.append({
+                            "url": f"DuckDuckGo OSINT Search: {target_to_search}",
+                            "status": "ACCESSIBLE",
+                            "title": "OSINT Web Leaks & Mentions",
+                            "bio": ddg_text,
+                            "error": None
+                        })
+        except Exception as e:
+            logger.warning(f"OSINT DuckDuckGo fallito: {e}")
+            
     return results

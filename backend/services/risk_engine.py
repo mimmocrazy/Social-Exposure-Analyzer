@@ -14,25 +14,25 @@ def get_client():
         _client = genai.Client()
     return _client
 
-async def calculate_risk(pii_data: list) -> RiskReport:
+async def calculate_risk(raw_text: str) -> RiskReport:
     """
-    Analizza le PII estratte invocando Gemini Pro tramite Structured Outputs.
-    Valuta il rischio di Social Engineering e restituisce un RiskReport garantito a livello di schema.
+    Analizza il testo raw estratto invocando Gemini Pro.
+    Estrea le PII e valuta il rischio di Social Engineering in un colpo solo.
     """
     system_prompt = """
     Sei un esperto analista di Social Engineering e Sicurezza OSINT.
-    Analizza il JSON delle PII (Personally Identifiable Information) estratte da profili social pubblici.
+    Ti fornirò un testo raw aggregato da scraping web e ricerche OSINT.
     
-    Regole di Valutazione Rigide:
-    1. Zero Allucinazioni: basati esclusivamente sui dati JSON forniti nel payload. 
-    2. Calcola l'impatto (score 0-100). Esempio: Email + Telefono + Data di Nascita = Score Alto (facilita SIM Swapping o Phishing mirato). Solo Nome comune = Score Basso.
-    3. Imposta `insufficient_data=True` e `score` sotto i 20 se i dati non bastano per ipotizzare un attacco reale.
-    4. Elenca i vettori di minaccia concreti in `threat_vectors`.
-    5. Fornisci consigli pratici in `mitigation_advice`.
+    Il tuo compito in un singolo passaggio:
+    1. Analizza il testo fornito.
+    2. Valuta il rischio di esposizione. Se trovi un semplice username o una bio generica il rischio è BASSO. Se trovi possibili collegamenti, email, scuole o posizioni lavorative il rischio sale.
+    3. Popola `threat_vectors` con possibili minacce derivate (es. Phishing mirato se c'è un'azienda).
+    4. Fornisci `mitigation_advice` per rimediare.
+    5. Imposta `insufficient_data=True` se il testo non contiene nulla di utile per un attacco.
     """
     
-    # Prevenzione Data Leakage (OWASP A09): Limitiamo il payload ai soli dati utente (nessun secret di sistema)
-    payload_str = json.dumps(pii_data, ensure_ascii=False)
+    payload_str = raw_text[:20000] # Limite di sicurezza stringa
+
     
     try:
         logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output)...")

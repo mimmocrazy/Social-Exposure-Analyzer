@@ -56,14 +56,15 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
             logger.warning(f"DoS Prevention: Testo troncato da {len(combined_text)} a 10000 caratteri prima dell'NLP.")
             combined_text = combined_text[:10000]
             
-        # Estrazione PII (NLP Pipeline)
-        from backend.services.nlp import extract_pii
-        pii_results = extract_pii(combined_text)
-        pii_dicts = [pii.model_dump() for pii in pii_results]
+        # Precedente pipeline NLP (disattivata in favore dell'AI pura)
+        # from backend.services.nlp import extract_pii
+        # pii_results = extract_pii(combined_text)
+        # pii_dicts = [pii.model_dump() for pii in pii_results]
+        pii_dicts = [] # Mantenuto vuoto per compatibilità schema DB, l'AI deciderà il rischio dal testo raw
         
-        # Risk Engine Analysis (Gemini Pro)
+        # Risk Engine Analysis (Gemini Pro) tramite text integrale e OSINT
         from backend.services.risk_engine import calculate_risk
-        risk_report = await calculate_risk(pii_dicts)
+        risk_report = await calculate_risk(combined_text)
         
         # Aggiornamento Database con i dati raw, PII e Risk Score
         with Session(backend.database.engine) as session:
