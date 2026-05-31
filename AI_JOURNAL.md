@@ -502,71 +502,29 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 > Routine di Chiusura: Registra fedelmente questo macro-prompt nel `AI_JOURNAL.md` per garantire la Trasparenza AI, aggiorna la documentazione e fai il commit di setup iniziale.
 - **Spiegazione Tecnica:** Accolta la richiesta di upgrade. Ho aggiornato `ARCHITECTURE.md` aggiungendo la Fase 7. Ho generato questo log dettagliato e strutturato per mantenere la ferrea conformità ai requisiti di Tracciabilità e Trasparenza AI del progetto, fissando il patto architetturale: Auth JWT + Alembic, con collaudo rigorosamente Local-First.
 
----
-
-### Data: 2026-05-31 (Ore 11:00)
-- **Task Eseguito:** Inizializzazione Fase 7 (Pro & Cloud Native Upgrade) - Auth & Alembic.
-- **File Modificati:** `ARCHITECTURE.md`, `AI_JOURNAL.md`
-- **Sintesi Prompt:**
-> Esegui il micro-task iniziale per l'espansione del progetto: "Fase 7: Pro & Cloud Native Upgrade".
-> Il sistema base (PoC) è perfetto. Ora evolviamo l'infrastruttura verso standard SaaS (Software as a Service) pronti per una user-base reale. Segui l'approccio *Local-First*.
-> 
-> 1. **Aggiornamento Documentazione Strategica:**
->    - Aggiungi la "Fase 7" in `ARCHITECTURE.md` con i relativi micro-task (Auth, Migrazioni Alembic, UI Frontend e Deploy Reale).
-> 
-> 2. **Implementazione Autenticazione (Backend Security):**
->    - Lo standard scelto è **JWT (JSON Web Tokens)** nativo (Niente OAuth per il momento, manteniamo i dati proprietari).
->    - Implementa i modelli di sicurezza (`User`) e configura gli endpoint `/login` e `/register`. Proteggi le route esistenti imponendo un token valido.
-> 
-> 3. **Migrazione Database (Infrastructure as Code):**
->    - Abbandona la creazione automatica `create_all()` delle tabelle.
->    - Implementa **Alembic**. Configuralo per testare tutto localmente in SQLite, ma predisponilo per PostgreSQL (cambiando solo la var d'ambiente `DATABASE_URL`).
-> 
-> Routine di Chiusura: Registra fedelmente questo macro-prompt nel `AI_JOURNAL.md` per garantire la Trasparenza AI, aggiorna la documentazione e fai il commit di setup iniziale.
-- **Spiegazione Tecnica:** Accolta la richiesta di upgrade. Ho aggiornato `ARCHITECTURE.md` aggiungendo la Fase 7. Ho generato questo log dettagliato e strutturato per mantenere la ferrea conformità ai requisiti di Tracciabilità e Trasparenza AI del progetto, fissando il patto architetturale: Auth JWT + Alembic, con collaudo rigorosamente Local-First.
 
 ---
 
-### Data: 2026-05-31 (Ore 11:00)
-- **Task Eseguito:** Inizializzazione Fase 7 (Pro & Cloud Native Upgrade) - Auth & Alembic.
-- **File Modificati:** `ARCHITECTURE.md`, `AI_JOURNAL.md`
+### Data: 2026-05-31 (Ore 12:25)
+- **Task Eseguito:** Refactoring Architetturale OSINT & PII Extraction (Approccio LLM-Native).
+- **File Modificati:** `backend/services/scraper.py`, `backend/services/risk_engine.py`, `backend/models/risk.py`, `backend/api/routers/analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
-> Esegui il micro-task iniziale per l'espansione del progetto: "Fase 7: Pro & Cloud Native Upgrade".
-> Il sistema base (PoC) è perfetto. Ora evolviamo l'infrastruttura verso standard SaaS (Software as a Service) pronti per una user-base reale. Segui l'approccio *Local-First*.
+> Procedi con il micro-task: 'Refactoring Architetturale OSINT & PII Extraction'.
+> A seguito dell'analisi dei risultati empirici in fase di test, l'approccio ibrido basato su SpaCy (modello statistico NLP) ha dimostrato limitazioni evidenti nell'estrazione di PII (Personally Identifiable Information) da stringhe non strutturate o frammentate tipiche dei social network, generando un tasso inaccettabile di falsi negativi.
 > 
-> 1. **Aggiornamento Documentazione Strategica:**
->    - Aggiungi la "Fase 7" in `ARCHITECTURE.md` con i relativi micro-task (Auth, Migrazioni Alembic, UI Frontend e Deploy Reale).
+> Dobbiamo evolvere l'architettura verso un approccio LLM-Native e Deep OSINT:
 > 
-> 2. **Implementazione Autenticazione (Backend Security):**
->    - Lo standard scelto è **JWT (JSON Web Tokens)** nativo (Niente OAuth per il momento, manteniamo i dati proprietari).
->    - Implementa i modelli di sicurezza (`User`) e configura gli endpoint `/login` e `/register`. Proteggi le route esistenti imponendo un token valido.
+> 1. **Potenziamento OSINT (`scraper.py`)**:
+>    - Integra una ricerca programmatica su DuckDuckGo Lite. Utilizza il target (username o azienda) per estrarre snippet testuali da forum, directory e web leak, arricchendo massivamente il payload informativo rispetto al semplice parsing dei meta-tag.
 > 
-> 3. **Migrazione Database (Infrastructure as Code):**
->    - Abbandona la creazione automatica `create_all()` delle tabelle.
->    - Implementa **Alembic**. Configuralo per testare tutto localmente in SQLite, ma predisponilo per PostgreSQL (cambiando solo la var d'ambiente `DATABASE_URL`).
+> 2. **Refactoring Modelli Dati (`backend/models/risk.py`)**:
+>    - Migra lo schema Pydantic `Entity` da `nlp.py` al modulo centrale `risk.py`.
+>    - Estendi il modello `RiskReport` includendo la proprietà `pii_extracted: List[Entity]`. Questo permetterà all'LLM di validare strutturalmente l'estrazione.
 > 
-> Routine di Chiusura: Registra fedelmente questo macro-prompt nel `AI_JOURNAL.md` per garantire la Trasparenza AI, aggiorna la documentazione e fai il commit di setup iniziale.
-- **Spiegazione Tecnica:** Accolta la richiesta di upgrade. Ho aggiornato `ARCHITECTURE.md` aggiungendo la Fase 7. Ho generato questo log dettagliato e strutturato per mantenere la ferrea conformità ai requisiti di Tracciabilità e Trasparenza AI del progetto, fissando il patto architetturale: Auth JWT + Alembic, con collaudo rigorosamente Local-First.
-
----
-
-### Data: 2026-05-31 (Ore 11:00)
-- **Task Eseguito:** Inizializzazione Fase 7 (Pro & Cloud Native Upgrade) - Auth & Alembic.
-- **File Modificati:** `ARCHITECTURE.md`, `AI_JOURNAL.md`
-- **Sintesi Prompt:**
-> Esegui il micro-task iniziale per l'espansione del progetto: "Fase 7: Pro & Cloud Native Upgrade".
-> Il sistema base (PoC) è perfetto. Ora evolviamo l'infrastruttura verso standard SaaS (Software as a Service) pronti per una user-base reale. Segui l'approccio *Local-First*.
+> 3. **Migrazione a Gemini Native (`risk_engine.py` e `analyze.py`)**:
+>    - Depreca definitivamente il modulo `nlp.py`.
+>    - Invia il testo aggregato crudo (combined_text) direttamente al modello Gemini Flash.
+>    - Aggiorna il System Prompt istruendo il modello a eseguire un doppio task asincrono: estrazione contestuale delle PII e calcolo del Risk Score in un'unica transazione strutturata.
 > 
-> 1. **Aggiornamento Documentazione Strategica:**
->    - Aggiungi la "Fase 7" in `ARCHITECTURE.md` con i relativi micro-task (Auth, Migrazioni Alembic, UI Frontend e Deploy Reale).
-> 
-> 2. **Implementazione Autenticazione (Backend Security):**
->    - Lo standard scelto è **JWT (JSON Web Tokens)** nativo (Niente OAuth per il momento, manteniamo i dati proprietari).
->    - Implementa i modelli di sicurezza (`User`) e configura gli endpoint `/login` e `/register`. Proteggi le route esistenti imponendo un token valido.
-> 
-> 3. **Migrazione Database (Infrastructure as Code):**
->    - Abbandona la creazione automatica `create_all()` delle tabelle.
->    - Implementa **Alembic**. Configuralo per testare tutto localmente in SQLite, ma predisponilo per PostgreSQL (cambiando solo la var d'ambiente `DATABASE_URL`).
-> 
-> Routine di Chiusura: Registra fedelmente questo macro-prompt nel `AI_JOURNAL.md` per garantire la Trasparenza AI, aggiorna la documentazione e fai il commit di setup iniziale.
-- **Spiegazione Tecnica:** Accolta la richiesta di upgrade. Ho aggiornato `ARCHITECTURE.md` aggiungendo la Fase 7. Ho generato questo log dettagliato e strutturato per mantenere la ferrea conformità ai requisiti di Tracciabilità e Trasparenza AI del progetto, fissando il patto architetturale: Auth JWT + Alembic, con collaudo rigorosamente Local-First.
+> Esegui le modifiche, valida la pipeline e aggiorna rigorosamente l'AI Journal con la giustificazione tecnica di questa scelta architetturale.
+- **Spiegazione Tecnica:** Eseguita modifica architetturale massiva per elevare le performance del Social Exposure Analyzer. L'approccio statistico NLP (SpaCy) è stato dismesso a causa della scarsa resilienza sui testi grezzi non strutturati dei social. Centralizzando il riconoscimento PII e il risk assessment su Google Gemini 2.5 Flash, sfruttando la validazione formale di Structured Outputs (Pydantic), il sistema ora correla semanticamente le entità e analizza i leak recuperati dalla nuova deep search tramite DuckDuckGo.
