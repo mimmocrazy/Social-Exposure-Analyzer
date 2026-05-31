@@ -808,15 +808,15 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Task Eseguito:** Rivoluzione Dashboard (Moduli Sensori OSINT) & Sub-Scoring.
 - **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/schemas.py`, `backend/models/risk.py`, `backend/services/scraper.py`, `backend/services/holehe_adapter.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`
 - **Sintesi Prompt:**
-> "è perfetto, mi raccomando genera un prompt relativo bello luingo ed esplicativo ed attinente al pattern in ai jorunal, comunque ti faccio notare che il punteggio che esce nel report tipo 80 è molto astratto cioe non so in base a cosa lo sta calcolando non ci sono degli indici o dei punteggi attribuiti a sezioni per capire cosa ce di buono e cosa ce di male, troviamo una strategia per risolvere questa cosa per fare un capolavoro visivo"
+> Implementa l'integrazione di moduli OSINT avanzati e un sistema di Risk Sub-scoring per rendere la valutazione del rischio trasparente e quantificabile.
 > 
-> Il task richiede l'implementazione del piano OSINT avanzato approvato (con Holehe e Deep Scan Instagram) e l'aggiunta di un sistema di Risk Sub-scoring (Identity, Network, Routine) per giustificare matematicamente il Risk Score globale all'utente.
-> Regole implementative:
-> - Adattare lo schema Pydantic `RiskReport` aggiungendo i `sub_scores`.
-> - Aggiornare il prompt del `risk_engine.py` spiegando come estrarre e relazionare questi indici (con enfasi sul tag [OSINT HOLEHE]).
-> - Creare `holehe_adapter.py` eseguendo holehe via subprocess e analizzandone l'output (solo siti validi).
-> - Modificare `scraper.py` includendo il check del sessionid.
-> - Rivoluzionare la `App.jsx` inserendo un pannello interattivo "Sensori OSINT" e le progress bar di Tremor dedicate ai sub-scores.
+> Attualmente, il Risk Score restituito dal sistema risulta astratto e monolitico. Per migliorare la User Experience e fornire una granularità analitica, il punteggio finale deve essere scomposto in sotto-indici specifici. Inoltre, il sistema necessita di un potenziamento delle fonti dati tramite tool OSINT specializzati, da rendere facoltativi e attivabili lato frontend.
+>
+> Procedi con l'esecuzione dei seguenti macro-task:
+> 
+> 1. **Data Model & Sub-scoring**: Adatta lo schema Pydantic `RiskReport` introducendo il costrutto `RiskSubScores` (Identity, Network, Routine) per giustificare matematicamente il Risk Score globale. Aggiorna il `system_prompt` del Risk Engine affinché l'LLM estragga e correli razionalmente questi indici.
+> 2. **Moduli OSINT Core**: Crea un adapter asincrono (`holehe_adapter.py`) per eseguire `holehe` in subprocess, parsare i risultati e mappare la presenza di e-mail estratte su domini esterni. Modifica lo `scraper.py` per supportare un `ig_sessionid` (Instagram Deep Scan) ed esporre un parametro per il DuckDuckGo Dorking.
+> 3. **Frontend & Data Visualization**: Rivoluziona la Dashboard in `App.jsx` inserendo un pannello interattivo ("Sensori OSINT") che consenta l'attivazione selettiva dei moduli. Implementa inoltre una visualizzazione grafica a barre (es. Tremor Progress Bars) per renderizzare i sub-score associati al livello di rischio, elevando la componente visiva a standard qualitativi ottimali.
 - **Spiegazione Tecnica:** L'architettura è passata da un flusso monolitico a una pipeline modulare. Il frontend ora permette all'utente di definire quali moduli OSINT avviare (DDG, Holehe, IG Deep Scan) governando l'orchestrazione nel background task. Il backend sfrutta un adapter asincrono basato su `subprocess` per interrogare Holehe (aggirando l'incompatibilità fra Trio e Asyncio). Il modello di rischio Pydantic ora impone la struttura `RiskSubScores`, obbligando l'LLM a scomporre razionalmente il punteggio finale per maggiore trasparenza e visualizzazione grafica (Progress Bar).
 
 ---
