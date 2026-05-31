@@ -41,6 +41,32 @@ async def gather_profile_metadata(
                     user_data = ig_data.get("data", {}).get("user", {})
                     if user_data:
                         deep_bio = f"Full Name: {user_data.get('full_name')} | Followers: {user_data.get('edge_followed_by', {}).get('count')} | Bio: {user_data.get('biography')} | Business Email: {user_data.get('business_email')} | Business Phone: {user_data.get('business_phone_number')} | Profile Pic: {user_data.get('profile_pic_url_hd')}"
+                        
+                        # Estrazione Luoghi e Testi dagli ultimi post
+                        timeline = user_data.get("edge_owner_to_timeline_media", {}).get("edges", [])
+                        recent_locations = []
+                        recent_captions = []
+                        
+                        for edge in timeline[:12]: # Analizza gli ultimi 12 post
+                            node = edge.get("node", {})
+                            
+                            # Estrai Luogo (Location tag)
+                            loc = node.get("location")
+                            if loc and loc.get("name"):
+                                recent_locations.append(loc.get("name"))
+                                
+                            # Estrai Testo/Caption
+                            caption_edges = node.get("edge_media_to_caption", {}).get("edges", [])
+                            if caption_edges:
+                                text = caption_edges[0].get("node", {}).get("text")
+                                if text:
+                                    recent_captions.append(text.replace("\n", " ")[:100])
+                        
+                        if recent_locations:
+                            deep_bio += f" | Post Locations (Luoghi Frequenti): {', '.join(set(recent_locations))}"
+                        if recent_captions:
+                            deep_bio += f" | Recent Post Captions: {' || '.join(recent_captions)}"
+                            
                         results.append({
                             "source": "Instagram Deep Scan API",
                             "url": f"API: {target_to_search}",
