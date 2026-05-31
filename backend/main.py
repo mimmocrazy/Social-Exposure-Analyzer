@@ -21,11 +21,15 @@ def run_security_check():
         except Exception:
             pass
 
+from backend.database import create_db_and_tables
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Eseguito allo startup dell'app
     setup_logging()
     logger.info("Avvio di Social Exposure Analyzer...")
+    create_db_and_tables()
+    logger.info("Database SQLite e tabelle inizializzati per il dev locale.")
     run_security_check()
     yield
     # Eseguito allo shutdown dell'app
