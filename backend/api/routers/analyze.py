@@ -184,6 +184,30 @@ def start_analysis(
         "analysis_id": analysis.id
     }
 
+@router.get("/history")
+def get_analysis_history(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Restituisce le ultime 3 ricerche OSINT effettuate dall'utente corrente.
+    """
+    from sqlmodel import select
+    statement = select(ProfileAnalysis).where(ProfileAnalysis.user_id == current_user.id).order_by(ProfileAnalysis.scan_date.desc()).limit(3)
+    results = session.exec(statement).all()
+    
+    history = []
+    for analysis in results:
+        history.append({
+            "id": analysis.id,
+            "target_url": analysis.target_url,
+            "status": analysis.status,
+            "scan_date": analysis.scan_date,
+            "risk_score": analysis.risk_score,
+            "risk_level": analysis.risk_level,
+        })
+    return history
+
 @router.get("/analyze/{analysis_id}")
 def get_analysis_status(
     analysis_id: uuid.UUID,
