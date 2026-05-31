@@ -43,3 +43,8 @@ export const getAnalysisStatus = async (analysis_id) => {
     const response = await apiClient.get(`/analyze/${analysis_id}`);
     return response.data;
 };
+
+export const getAnalysisHistory = async () => {
+    const response = await apiClient.get(`/history`);
+    return response.data;
+};
