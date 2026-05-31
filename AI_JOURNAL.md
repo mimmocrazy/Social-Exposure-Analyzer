@@ -848,3 +848,45 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 >    - Integra un widget "Analizzatore Strumenti OSINT" per mappare visivamente il funzionamento e lo stato attivo/inattivo dei vari tool (Sherlock, Holehe, DDG, Instagram Deep Scan).
 >    - Mitiga il rosso-su-rosso nella sezione Vettori di Minaccia introducendo badge a contrasto con sfondo slate-gray e bordi neon sfumati ad alta leggibilità.
 - **Spiegazione Tecnica:** Implementato un robusto aggiornamento focalizzato sulla trasparenza informativa, l'aderenza alla traccia d'esame e la qualità visiva. (1) **Source Tracking**: grazie all'estensione del modello Pydantic `Entity` con il campo `source`, Gemini 2.5 Flash mappa la provenienza di ciascun dato sensibile direttamente dai payload dei sensori, esponendolo in UI tramite tooltip CSS ad altissima usabilità (mouseover su icone info). (2) **Scraper Pipeline Optimization**: modificato `scraper.py` per bypassare lo scraping anonimo su Instagram qualora il Deep Scan autenticato abbia già recuperato i dati, eliminando warning spuri e allucinazioni del modello. (3) **Routine Tracker & Sensors Hub**: sviluppati due widget chiave nella Dashboard; uno mappa i tag geografici Instagram (Luoghi Frequenti) per adempiere al requisito di Routine della traccia d'esame, l'altro agisce da centro di controllo visuale che documenta l'esecuzione di Sherlock, Holehe, DuckDuckGo e Instagram Deep Scan. (4) **UI Refinement**: i Vettori di Minaccia sono stati ri-stilizzati abbandonando la colorazione piatta in favore di card slate-gray con bordi neon e hover micro-animati a contrasto.
+
+---
+
+### Data: 2026-05-31 (Ore 18:15)
+- **Task Eseguito:** Risoluzione Errore HTTP 429 Instagram Deep Scan & Stabilizzazione Suite Test (Fase 5.10).
+- **File Modificati:** `backend/services/scraper.py`, `requirements.txt`, `tests/conftest.py`, `tests/test_scraper.py`
+- **Sintesi Prompt:**
+> Risolvi l'errore HTTP 429 (Too Many Requests) riscontrato sul modulo Instagram Deep Scan durante i test. 
+> Instagram impone blocchi severi basati sul fingerprinting TLS/HTTP e controlli sintattici degli header.
+> 
+> 1. Abilita il supporto HTTP/2 nel client `httpx.AsyncClient` inserendo la libreria `h2` nelle dipendenze del progetto.
+> 2. Correggi il refuso nello User-Agent (`come Gecko` -> `like Gecko`) che faceva fallire la validazione sintattica dei bot.
+> 3. Arricchisci le chiamate di Deep Scan con gli header di sessione e sicurezza attesi da un browser reale (`X-ASBD-ID`, `X-IG-App-ID`, `Referer`, `Origin`, ecc.).
+> 4. Rendi il Deep Scan automatico per tutti i profili Instagram pubblici, potendo funzionare con successo via HTTP/2 anche senza un `sessionid` esplicito.
+> 5. Risolvi i fallimenti dei test degli endpoint in `tests/` configurando una fixture di autenticazione per simulare correttamente l'utente JWT in `conftest.py`.
+- **Spiegazione Tecnica:** Eseguito un intervento mirato per superare le barriere anti-bot di Instagram. Attivando HTTP/2 via libreria `h2`, correggendo il typo nello User-Agent e iniettando gli header di sessione browser (`X-ASBD-ID`, `X-IG-App-ID`, `Referer`, `Origin`), la chiamata API al profilo web non viene più respinta con lo status 429. Inoltre, l'estrazione funziona ora anche senza cookie di sessione per profili pubblici. Sul lato testing, l'introduzione di un mock utente auto-autenticato nel database in-memory e l'override sistematico della dipendenza `get_current_user` in `conftest.py` ha riportato al superamento del 100% della suite di test FastAPI.
+
+---
+
+### Data: 2026-05-31 (Ore 18:30)
+- **Task Eseguito:** Correlazione Vettori di Minaccia e Mitigazioni & Fix Stati Sensori OSINT.
+- **File Modificati:** `backend/models/risk.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`, `frontend/src/App.jsx`, `tests/test_ai_services.py`
+- **Sintesi Prompt:**
+> Riorganizza l'Audit AI per correlare in modo biunivoco i Vettori di Minaccia con le relative Mitigazioni e Cause, evitando liste scollegate.
+> 
+> 1. Modifica il modello `MitigationSection` in `risk.py` inserendo il campo `threat_vector`.
+> 2. Aggiorna il system prompt in `risk_engine.py` per istruire l'LLM a mappare esplicitamente ciascun vettore di minaccia con la sua causa (exposed_data) e soluzione consigliata.
+> 3. Modifica la Dashboard in `App.jsx` per visualizzare il vettore di rischio correlato a ciascuna card del Piano di Mitigazione.
+> 4. Correggi gli indicatori di stato dell'Hub Sensori OSINT: invia un blocco `metadata` dal backend all'interno del payload per tracciare l'effettivo avvio e lo stato di ciascun sensore (Sherlock, Holehe, DuckDuckGo, Instagram Deep Scan) a prescindere dal successo del recupero dati, evitando badge erroneamente inattivi nel frontend.
+- **Spiegazione Tecnica:** Eseguito refactoring dei modelli dati e della UI. Il modello `MitigationSection` ora mappa il vettore di minaccia associato, costringendo Gemini a compilare il report in modo coerente e visualizzando la correlazione causa/effetto direttamente all'interno delle card del Piano di Mitigazione. Inoltre, l'introduzione dell'oggetto `metadata` all'interno dell'aggregato OSINT inviato dal backend consente al frontend di determinare in modo preciso e deterministico lo stato dei vari sensori (es. distinguendo se Sherlock è disattivato per via di un URL diretto, se Holehe ha registrato l'assenza di email, o se Instagram ha riscontrato un blocco 429), offrendo massima trasparenza visiva all'utente.
+
+---
+
+### Data: 2026-05-31 (Ore 19:00)
+- **Task Eseguito:** Gestione Errori Gemini API e Risoluzione Finti Profili Privati.
+- **File Modificati:** `backend/services/risk_engine.py`
+- **Sintesi Prompt:**
+> ho ottenuto questo errore e invece mi da profilo privato.... ora cambio chiave gemini ma questa cosa va risolta
+- **Spiegazione Tecnica:** Corretto un difetto di robustezza nella gestione degli errori del Risk Engine. Precedentemente, in caso di eccezioni critiche sollevate dalle API di Gemini (es. HTTP 429 Resource Exhausted per superamento dei limiti di quota o problemi di credenziali), il blocco `try...except` catturava genericamente l'errore e restituiva un report di ripiego con `insufficient_data=True`. Questo comportamento induceva erroneamente il frontend a mostrare la schermata di "Profilo Privato / Protetto" anziché notificare il reale fallimento dell'operazione. Rimuovendo il fallback abusivo e rilanciando l'eccezione come `RuntimeError`, l'orchestratore asincrono del backend (`run_scraping_task`) cattura correttamente il problema, contrassegna lo stato dell'analisi come `FAILED` e registra l'esatto messaggio diagnostico. Di conseguenza, il frontend intercetta lo stato `FAILED` e visualizza correttamente la card premium "Analisi Fallita" con il dettaglio dell'errore (ad es. errore di quota 429), offrendo una diagnosi trasparente ed eliminando i falsi positivi di profilo privato.
+
+
+---

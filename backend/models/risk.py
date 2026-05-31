@@ -10,6 +10,7 @@ class Entity(BaseModel):
 
 class MitigationSection(BaseModel):
     title: str = Field(description="Titolo sintetico della macrosezione (es. Esposizione Anagrafica, Informazioni di Contatto, Canali Social, Relazioni Personali, ecc.)")
+    threat_vector: str = Field(description="Il vettore di minaccia correlato a questa sezione (es. 'Spear Phishing via email', 'OSINT Impersonification', 'Physical Tracking / Routine Exposure')")
     exposed_data: str = Field(description="Citazione precisa del dato o dei dati esposti collegati a questa sezione")
     criticality: str = Field(description="Livello di criticità della macrosezione (es. CRITICA, ALTA, MEDIA, BASSA)")
     mitigation: str = Field(description="Mitigazione specifica, consigli e azioni concrete da intraprendere")

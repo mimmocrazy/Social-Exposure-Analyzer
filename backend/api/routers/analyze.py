@@ -76,10 +76,20 @@ async def run_scraping_task(
             ig_sessionid=ig_sessionid
         )
         
+        is_instagram_target = any("instagram.com" in url for url in urls_to_scrape)
+        sherlock_attempted = not re.match(r"^https?://", target)
+
         # Aggregazione strutturata JSON per l'LLM
         osint_payload = {
             "scraper_results": raw_data,
-            "holehe_results": []
+            "holehe_results": [],
+            "metadata": {
+                "enable_ddg": enable_ddg,
+                "enable_holehe": enable_holehe,
+                "ig_sessionid_provided": bool(ig_sessionid),
+                "instagram_attempted": is_instagram_target,
+                "sherlock_attempted": sherlock_attempted
+            }
         }
 
         # HOLEHE INTEGRATION
@@ -208,5 +218,6 @@ def get_analysis_status(
         "risk_level": analysis.risk_level,
         "pii_extracted": analysis.pii_extracted,
         "llm_report": llm_report_parsed,
+        "raw_data_dump": analysis.raw_data_dump,
         "error_message": analysis.error_message
     }

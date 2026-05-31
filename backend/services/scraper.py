@@ -19,20 +19,28 @@ async def gather_profile_metadata(
     
     # Header di base per mitigare controlli anti-bot rudimentali
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, come Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9"
     }
 
     target_to_search = urls[0].split('/')[-1] if urls else "unknown"
 
-    async with httpx.AsyncClient(headers=headers, timeout=10.0) as client:
-        # 1. Instagram Deep Scan (Se sessionid fornito)
-        if ig_sessionid and target_to_search and target_to_search != "unknown":
+    async with httpx.AsyncClient(headers=headers, timeout=10.0, http2=True) as client:
+        # 1. Instagram Deep Scan (Se sessionid fornito o se stiamo scansionando Instagram)
+        is_instagram_target = any("instagram.com" in url for url in urls)
+        if (ig_sessionid or is_instagram_target) and target_to_search and target_to_search != "unknown":
             try:
-                logger.info(f"Avvio Instagram Deep Scan per {target_to_search} tramite sessionid.")
+                logger.info(f"Avvio Instagram Deep Scan per {target_to_search} (sessionid fornito: {bool(ig_sessionid)})")
                 ig_headers = headers.copy()
-                ig_headers["Cookie"] = f"sessionid={ig_sessionid}"
+                if ig_sessionid:
+                    ig_headers["Cookie"] = f"sessionid={ig_sessionid}"
                 ig_headers["X-IG-App-ID"] = "936619743392459"
+                ig_headers["X-ASBD-ID"] = "129477"
+                ig_headers["X-IG-WWW-Claim"] = "0"
+                ig_headers["X-Requested-With"] = "XMLHttpRequest"
+                ig_headers["Referer"] = f"https://www.instagram.com/{target_to_search}/"
+                ig_headers["Origin"] = "https://www.instagram.com"
+                
                 ig_api_url = f"https://i.instagram.com/api/v1/users/web_profile_info/?username={target_to_search}"
                 
                 ig_resp = await client.get(ig_api_url, headers=ig_headers, follow_redirects=True)
@@ -81,15 +89,12 @@ async def gather_profile_metadata(
                 logger.warning(f"Errore in Instagram Deep Scan: {e}")
 
         # 2. Standard Web Scraping
-        # Se l'utente ha fornito un sessionid, lo scraping anonimo su Instagram è sempre inutile
-        # (colpisce il login wall anche se il Deep Scan ha fallito per rate-limit 429)
-        ig_deep_scan_attempted = bool(ig_sessionid and target_to_search and target_to_search != "unknown")
         has_deep_scan = any(r["source"] == "Instagram Deep Scan API" for r in results)
         for url in urls:
             parsed = urllib.parse.urlparse(url)
             is_instagram = "instagram.com" in (parsed.hostname or "")
-            if is_instagram and (has_deep_scan or ig_deep_scan_attempted):
-                logger.info(f"Skipping standard scraping per {url} (Deep Scan {'riuscito' if has_deep_scan else 'tentato ma fallito'}).")
+            if is_instagram and has_deep_scan:
+                logger.info(f"Skipping standard scraping per {url} in quanto il Deep Scan è andato a buon fine.")
                 continue
 
             profile_data = {
@@ -151,8 +156,12 @@ async def gather_profile_metadata(
         if enable_ddg:
             try:
                 if target_to_search and target_to_search != "unknown":
-                    # Cerca RIGOROSAMENTE l'username per evitare omonimie e falsi positivi
                     search_queries = [target_to_search]
+                    if real_name and real_name.lower() != "sconosciuto":
+                        # Cerca il nome esatto
+                        search_queries.append(f'"{real_name}"')
+                        # Dork esplicita per profili OnlyFans e leak (come richiesto)
+                        search_queries.append(f'"{real_name}" onlyfans OR leak')
                         
                     for q in search_queries:
                         ddg_url = f"https://lite.duckduckgo.com/lite/"

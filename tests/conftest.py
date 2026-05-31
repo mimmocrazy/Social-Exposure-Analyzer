@@ -40,18 +40,28 @@ def client_fixture(session: Session):
     """
     Fornisce un TestClient di FastAPI configurato per utilizzare il 
     database di test. Esegue l'override della dependency `get_session` 
-    dell'applicazione principale in modo che le API usino la fixture della sessione.
-    
-    Args:
-        session (Session): La sessione del database di test iniettata.
-        
-    Yields:
-        TestClient: Istanza client pronta per effettuare richieste HTTP ai router.
+    e `get_current_user` dell'applicazione principale.
     """
+    from backend.models.user import User
+    from backend.core.security import get_password_hash
+    from backend.api.routers.auth import get_current_user
+    
+    mock_user = User(
+        email="test@example.com",
+        hashed_password=get_password_hash("password")
+    )
+    session.add(mock_user)
+    session.commit()
+    session.refresh(mock_user)
+    
     def get_session_override():
         return session
+        
+    def get_current_user_override():
+        return mock_user
     
     app.dependency_overrides[get_session] = get_session_override
+    app.dependency_overrides[get_current_user] = get_current_user_override
     client = TestClient(app)
     yield client
     app.dependency_overrides.clear()

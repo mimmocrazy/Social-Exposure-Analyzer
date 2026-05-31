@@ -36,7 +36,7 @@ def test_extract_text_from_image_error(mocker, tmp_path):
 @pytest.mark.asyncio
 async def test_calculate_risk_success(mocker):
     mock_generate = mocker.MagicMock()
-    mock_generate.text = '{"score": 85, "level": "HIGH", "threat_vectors": ["Phishing"], "mitigation_advice": "Advice", "insufficient_data": false}'
+    mock_generate.text = '{"score": 85, "score_breakdown": [{"reason": "Phishing", "points_added": 85}], "sub_scores": {"identity_exposure": 85, "network_exposure": 0, "routine_exposure": 0}, "level": "HIGH", "threat_vectors": ["Phishing"], "mitigation_advice": "Advice", "mitigation_sections": [{"title": "Phishing Section", "threat_vector": "Phishing", "exposed_data": "test@test.com", "criticality": "HIGH", "mitigation": "Enable 2FA"}], "insufficient_data": false, "pii_extracted": [{"label": "EMAIL", "value": "test@test.com", "confidence_score": 0.9, "source": "DuckDuckGo"}]}'
     
     mock_client_instance = mocker.MagicMock()
     mock_client_instance.models.generate_content.return_value = mock_generate

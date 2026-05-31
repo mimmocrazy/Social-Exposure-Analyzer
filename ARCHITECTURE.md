@@ -74,6 +74,14 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] OSINT Sensors Hub UI: Integrazione dell'Analizzatore Strumenti OSINT per monitorare lo stato di attivazione e il funzionamento di Sherlock, Holehe, DuckDuckGo e Instagram Deep Scan.
 - [x] Documentazione: Aggiornamento `AI_JOURNAL.md` e sync con `ARCHITECTURE.md`.
 
+### Fase 5.10: Risoluzione Errore HTTP 429 Instagram Deep Scan & Stabilizzazione Suite Test
+- [x] Abilitazione supporto HTTP/2 in `httpx` (libreria `h2`) per bypassare il fingerprinting anti-bot di Instagram.
+- [x] Correzione typo User-Agent (`come Gecko` -> `like Gecko`) e arricchimento header browser-like (`X-ASBD-ID`, `X-IG-App-ID`, Referer, Origin).
+- [x] Automazione del Deep Scan per target Instagram in modalità Zero-Login (senza sessionid per profili pubblici).
+- [x] Stabilizzazione e correzione dell'autenticazione JWT nella suite di test in `conftest.py`.
+- [x] Strutturazione e correlazione dei Vettori di Minaccia e delle relative Mitigazioni direttamente nel modello `MitigationSection`.
+- [x] Mappatura precisa degli stati dei sensori OSINT nel frontend tramite l'introduzione di un blocco `metadata` inviato dal backend.
+
 ### Fase 6: Azure Deployment & Documentazione
 - [x] Configurazione script e workflow Azure (App Service, GitHub Actions).
 - [x] Deploy Automation Script (`deploy_azure.sh`, `startup.sh`).

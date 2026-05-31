@@ -118,14 +118,13 @@ const getIconForPII = (label) => {
 
 const InteractiveLoading = () => {
   const steps = [
-    { text: "Inizializzazione Deep OSINT Engine...", icon: "⚙️", delay: 0 },
-    { text: "Ricerca target su Instagram...", icon: "📸", delay: 1500 },
-    { text: "Analisi footprint su X (Twitter)...", icon: "🐦", delay: 3500 },
-    { text: "Scansione esposizione su Facebook...", icon: "👥", delay: 5500 },
-    { text: "Verifica profilo LinkedIn...", icon: "💼", delay: 7500 },
-    { text: "Estrazione dati sensibili in corso...", icon: "🕵️", delay: 10000 },
-    { text: "Elaborazione Audit AI tramite Gemini...", icon: "🧠", delay: 12500 },
-    { text: "Finalizzazione Risk Report...", icon: "📄", delay: 16000 }
+    { text: "Inizializzazione Deep OSINT...", icon: "⚙️", delay: 0 },
+    { text: "Scansione Instagram...", icon: "📸", delay: 1500 },
+    { text: "Footprint X (Twitter)...", icon: "🐦", delay: 3500 },
+    { text: "Verifica LinkedIn & FB...", icon: "👥", delay: 5500 },
+    { text: "Estrazione Dati Sensibili...", icon: "🕵️", delay: 7500 },
+    { text: "Audit AI in corso...", icon: "🧠", delay: 10000 },
+    { text: "Stesura Risk Report...", icon: "📄", delay: 13000 }
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -140,46 +139,79 @@ const InteractiveLoading = () => {
   }, []);
 
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center p-10 glassmorphism rounded-3xl mt-8 shadow-2xl w-full max-w-xl mx-auto border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 animate-pulse rounded-3xl -z-10"></div>
-        
-        <div className="relative w-20 h-20 mb-8">
-          <div className="absolute inset-0 rounded-full border-4 border-white/10"></div>
-          <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
-          <div className="absolute inset-2 rounded-full border-4 border-purple-500 border-b-transparent animate-[spin_1.5s_linear_infinite_reverse]"></div>
-          
-          <div className="absolute inset-0 flex items-center justify-center text-2xl">
-             {steps[currentStep]?.icon || "⏳"}
-          </div>
-        </div>
-        
-        <h2 className="text-white text-2xl font-bold tracking-tight mb-6">Analisi in corso</h2>
-        
-        <div className="w-full flex flex-col space-y-3 relative">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center py-12 w-full max-w-6xl mx-auto relative mt-10">
+      <h2 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 text-3xl md:text-4xl font-extrabold tracking-tight mb-16 drop-shadow-lg text-center animate-pulse">
+        Analisi Profonda in Corso
+      </h2>
+
+      <div className="w-full relative flex flex-wrap justify-center items-center gap-4 md:gap-6">
+        <AnimatePresence>
           {steps.map((step, index) => {
+            if (index > currentStep) return null;
+            
             const isActive = index === currentStep;
             const isPast = index < currentStep;
-            const isFuture = index > currentStep;
-            
-            if (isFuture && index > currentStep + 1) return null;
-            
+
             return (
-              <motion.div 
-                key={index} 
-                initial={{ opacity: 0, x: -10 }} 
-                animate={{ opacity: isFuture ? 0.3 : 1, x: 0 }}
-                className={`flex items-center space-x-3 p-3 rounded-xl border transition-all duration-500 ${isActive ? 'bg-blue-500/10 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : isPast ? 'bg-green-500/5 border-green-500/10' : 'bg-transparent border-transparent'}`}
-              >
-                <div className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${isPast ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.6)]' : 'bg-white/10 text-gray-500'}`}>
-                  {isPast ? "✓" : isActive ? "..." : ""}
-                </div>
-                <span className={`text-sm font-medium ${isPast ? 'text-gray-400 line-through' : isActive ? 'text-blue-400' : 'text-gray-600'}`}>
-                   {step.text}
-                </span>
-              </motion.div>
-            )
+              <React.Fragment key={index}>
+                <motion.div
+                  initial={{ opacity: 0, x: -30, scale: 0.8 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
+                  className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all duration-700 w-44 md:w-52 text-center backdrop-blur-xl relative group ${
+                    isActive 
+                      ? 'bg-blue-500/10 border-blue-400/50 shadow-[0_0_40px_rgba(59,130,246,0.3)] z-10' 
+                      : 'bg-white/5 border-white/10 opacity-60 scale-95'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div 
+                      className="absolute inset-0 rounded-3xl border-2 border-blue-400/50"
+                      initial={{ scale: 1, opacity: 1 }}
+                      animate={{ scale: 1.15, opacity: 0 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+                    />
+                  )}
+                  <div className={`text-4xl md:text-5xl mb-4 transition-transform duration-500 ${isActive ? 'scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]' : 'grayscale opacity-50'}`}>
+                    {step.icon}
+                  </div>
+                  <span className={`text-sm md:text-base font-semibold tracking-wide ${isActive ? 'text-white' : 'text-gray-500'}`}>
+                    {step.text}
+                  </span>
+                </motion.div>
+
+                {/* Freccia Orizzontale per Desktop */}
+                {index < steps.length - 1 && index < currentStep && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0, x: -20 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                    className="hidden lg:flex text-blue-500/50 items-center justify-center"
+                  >
+                    <svg className="w-10 h-10 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </motion.div>
+                )}
+                
+                {/* Freccia Verticale per Mobile/Tablet */}
+                {index < steps.length - 1 && index < currentStep && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0, y: -20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                    className="flex lg:hidden text-blue-500/50 w-full justify-center my-2"
+                  >
+                    <svg className="w-8 h-8 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </motion.div>
+                )}
+              </React.Fragment>
+            );
           })}
-        </div>
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 };
@@ -276,8 +308,19 @@ function Dashboard({ analysisId }) {
 
     const scrapers = data.raw_data_dump?.scraper_results || [];
     const holehe = data.raw_data_dump?.holehe_results || [];
-    const hasIgSessionId = scrapers.some(s => s.source === "Instagram Deep Scan API");
-    const hasHoleheResults = holehe.length > 0;
+    const metadata = data.raw_data_dump?.metadata || {};
+
+    const isSherlockActive = metadata.sherlock_attempted !== false;
+    
+    const isInstagramAttempted = metadata.instagram_attempted || scrapers.some(s => s.url?.includes("instagram.com"));
+    const isInstagramSuccess = scrapers.some(s => s.source === "Instagram Deep Scan API" && s.status === "ACCESSIBLE");
+    const isInstagramRateLimit = scrapers.some(s => s.source === "Instagram Deep Scan API" && s.error?.includes("429"));
+    const isInstagramError = scrapers.some(s => s.source === "Instagram Deep Scan API" && s.error);
+    
+    const isDdgActive = metadata.enable_ddg !== false;
+    
+    const isHoleheAttempted = metadata.enable_holehe !== false;
+    const isHoleheSuccess = holehe.length > 0;
 
     const frequentLocations = [];
     scrapers.forEach(s => {
@@ -582,11 +625,13 @@ function Dashboard({ analysisId }) {
             <div className="flex-1 space-y-3 pr-1 overflow-y-auto max-h-[320px] custom-scrollbar">
               {/* Sherlock */}
               <div className="flex items-start space-x-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-2xl transition-colors">
-                <div className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"></div>
+                <div className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${isSherlockActive ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-gray-600'}`}></div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <h4 className="text-white text-xs font-bold font-mono">Sherlock Username Scan</h4>
-                    <span className="text-[9px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20 font-bold tracking-wider">ATTIVO</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wider ${isSherlockActive ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
+                      {isSherlockActive ? 'ATTIVO' : 'NON APPLICATO (URL)'}
+                    </span>
                   </div>
                   <p className="text-gray-400 text-[11px] leading-relaxed mt-1 font-light">
                     Esegue una scansione globale ricorsiva su oltre 400 social network per mappare e collegare l'esatta impronta digitale dell'username fornito.
@@ -596,12 +641,36 @@ function Dashboard({ analysisId }) {
 
               {/* Instagram Deep Scan */}
               <div className="flex items-start space-x-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-2xl transition-colors">
-                <div className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${hasIgSessionId ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-gray-600'}`}></div>
+                <div className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${
+                  isInstagramSuccess 
+                    ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' 
+                    : isInstagramRateLimit 
+                      ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'
+                      : isInstagramError
+                        ? 'bg-orange-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+                        : 'bg-gray-600'
+                }`}></div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <h4 className="text-white text-xs font-bold font-mono">Instagram Deep Scan API</h4>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wider ${hasIgSessionId ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
-                      {hasIgSessionId ? 'ATTIVO' : 'NON CONFIGURATO'}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wider ${
+                      isInstagramSuccess 
+                        ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                        : isInstagramRateLimit 
+                          ? 'bg-red-500/10 text-red-400 border-red-500/20' 
+                          : isInstagramError
+                            ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+                            : 'bg-white/5 text-gray-500 border-white/5'
+                    }`}>
+                      {isInstagramSuccess 
+                        ? 'ATTIVO' 
+                        : isInstagramRateLimit 
+                          ? 'RATE LIMIT (429)' 
+                          : isInstagramError 
+                            ? 'ERRORE SCAN' 
+                            : isInstagramAttempted 
+                              ? 'NON CONFIGURATO (SESSIONID)' 
+                              : 'NON APPLICATO'}
                     </span>
                   </div>
                   <p className="text-gray-400 text-[11px] leading-relaxed mt-1 font-light">
@@ -612,11 +681,13 @@ function Dashboard({ analysisId }) {
 
               {/* DuckDuckGo */}
               <div className="flex items-start space-x-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-2xl transition-colors">
-                <div className="flex-shrink-0 mt-1.5 w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"></div>
+                <div className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${isDdgActive ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-gray-600'}`}></div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <h4 className="text-white text-xs font-bold font-mono">DuckDuckGo OSINT Dorker</h4>
-                    <span className="text-[9px] bg-green-500/10 text-green-400 px-1.5 py-0.5 rounded border border-green-500/20 font-bold tracking-wider">ATTIVO</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wider ${isDdgActive ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
+                      {isDdgActive ? 'ATTIVO' : 'DISATTIVATO'}
+                    </span>
                   </div>
                   <p className="text-gray-400 text-[11px] leading-relaxed mt-1 font-light">
                     Usa dork avanzate sull'username per scovare menzioni pubbliche sul web, leak di dati o credenziali esposte in elenchi testuali esterni.
@@ -626,12 +697,28 @@ function Dashboard({ analysisId }) {
 
               {/* Holehe */}
               <div className="flex items-start space-x-3 p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 rounded-2xl transition-colors">
-                <div className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${hasHoleheResults ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' : 'bg-gray-600'}`}></div>
+                <div className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${
+                  isHoleheSuccess 
+                    ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]' 
+                    : isHoleheAttempted 
+                      ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]' 
+                      : 'bg-gray-600'
+                }`}></div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <h4 className="text-white text-xs font-bold font-mono">Holehe (Email Cross-Check)</h4>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wider ${hasHoleheResults ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/5 text-gray-500 border-white/5'}`}>
-                      {hasHoleheResults ? 'ATTIVO' : 'DATO NON TROVATO'}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded border font-bold tracking-wider ${
+                      isHoleheSuccess 
+                        ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                        : isHoleheAttempted 
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+                          : 'bg-white/5 text-gray-500 border-white/5'
+                    }`}>
+                      {isHoleheSuccess 
+                        ? 'ATTIVO' 
+                        : isHoleheAttempted 
+                          ? 'NESSUNA EMAIL RILEVATA' 
+                          : 'DISATTIVATO'}
                     </span>
                   </div>
                   <p className="text-gray-400 text-[11px] leading-relaxed mt-1 font-light">
@@ -714,7 +801,14 @@ function Dashboard({ analysisId }) {
                             className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4 hover:border-white/10 transition-colors"
                           >
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
-                              <h5 className="text-white text-base font-bold tracking-tight">{section.title}</h5>
+                              <div>
+                                <h5 className="text-white text-base font-bold tracking-tight">{section.title}</h5>
+                                {section.threat_vector && (
+                                  <span className="text-[10px] text-red-400 font-mono tracking-wider block mt-0.5 uppercase">
+                                    Vettore: {section.threat_vector}
+                                  </span>
+                                )}
+                              </div>
                               <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest border self-start sm:self-auto shadow-sm ${badgeColor}`}>
                                 {section.criticality || 'MEDIA'}
                               </span>
@@ -723,7 +817,7 @@ function Dashboard({ analysisId }) {
                             <div className="space-y-4 text-sm">
                               {section.exposed_data && (
                                 <div className="bg-white/[0.01] border border-white/5 rounded-xl p-4">
-                                  <span className="text-[10px] text-gray-500 font-extrabold uppercase tracking-widest block mb-1.5">Dato Esposto Rilevato</span>
+                                  <span className="text-[10px] text-gray-500 font-extrabold uppercase tracking-widest block mb-1.5">Dato Esposto Rilevato (Causa)</span>
                                   <p className="text-gray-300 font-medium italic break-words leading-relaxed">
                                     “{section.exposed_data}”
                                   </p>
@@ -894,104 +988,151 @@ function MainApp({ onLogout }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center py-20 px-6 font-sans relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center py-12 md:py-24 px-6 font-sans relative overflow-hidden">
       <div className="absolute top-4 right-6 z-20">
-        <button onClick={onLogout} className="text-gray-400 hover:text-white text-sm border border-white/10 px-4 py-2 rounded-full glassmorphism">Logout</button>
+        <button onClick={onLogout} className="text-gray-400 hover:text-white text-sm border border-white/10 px-4 py-2 rounded-full glassmorphism transition-colors">Logout</button>
       </div>
 
-      {/* Background Decorativo */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-blue-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-purple-600/20 rounded-full blur-3xl -z-10 mix-blend-screen"></div>
+      {/* Background Decorativo Esteso */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-blue-600/10 rounded-full blur-3xl -z-10 mix-blend-screen animate-[pulse_10s_ease-in-out_infinite]"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50rem] h-[50rem] bg-purple-600/10 rounded-full blur-3xl -z-10 mix-blend-screen animate-[pulse_12s_ease-in-out_infinite_reverse]"></div>
 
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="text-center max-w-3xl w-full z-10">
-        <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 pb-3 mb-3 tracking-tight drop-shadow-lg">
-          Social Exposure Analyzer
-        </h1>
-        <p className="text-gray-400 mb-12 text-lg md:text-xl font-light">
-          Valutazione automatica del rischio di social engineering tramite <strong className="text-white font-medium">OSINT</strong> e <strong className="text-white font-medium">AI</strong>.
-        </p>
+      {/* Layout Principale a due colonne se non in analisi */}
+      {!analysisId ? (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-6xl z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center mt-8">
+          
+          {/* Colonna Sinistra: Hero & Search */}
+          <div className="flex flex-col text-left">
+            <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-200 to-purple-400 pb-2 tracking-tight drop-shadow-2xl leading-[1.1]">
+              Social<br/>Exposure<br/>Analyzer
+            </h1>
+            <p className="text-gray-400 mt-6 mb-10 text-lg md:text-xl font-light max-w-xl leading-relaxed">
+              Mappa istantaneamente l'impronta digitale di un bersaglio per valutare i rischi di <strong className="text-blue-400 font-semibold">social engineering</strong> tramite sensori OSINT avanzati e Intelligenza Artificiale.
+            </p>
 
-        <form onSubmit={handleSubmit} className="relative group max-w-2xl mx-auto flex flex-col">
-          <div className="relative">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative flex items-center bg-surface border border-white/10 rounded-full p-2 shadow-2xl">
-              <input
-                type="text"
-                value={targetUrl}
-                onChange={(e) => setTargetUrl(e.target.value)}
-                placeholder="Inserisci l'URL di un profilo social o uno username..."
-                className="w-full bg-transparent text-white px-6 py-4 outline-none placeholder-gray-500 text-lg"
-                disabled={isSubmitting || analysisId !== null}
-              />
-              {!analysisId && (
-                <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-blue-600 text-white font-semibold py-4 px-10 rounded-full transition-colors flex-shrink-0 text-lg">
+            <form onSubmit={handleSubmit} className="w-full flex flex-col group relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/40 to-purple-500/40 rounded-2xl blur-xl opacity-30 group-hover:opacity-70 transition duration-500 group-hover:duration-200"></div>
+              <div className="relative flex items-center bg-surface border border-white/10 rounded-2xl p-2 shadow-2xl backdrop-blur-xl">
+                <div className="pl-5 pr-2 text-blue-400/80">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </div>
+                <input
+                  type="text"
+                  value={targetUrl}
+                  onChange={(e) => setTargetUrl(e.target.value)}
+                  placeholder="URL profilo o username..."
+                  className="w-full bg-transparent text-white px-3 py-4 outline-none placeholder-gray-500 text-lg font-medium"
+                  disabled={isSubmitting}
+                />
+                <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-4 px-8 rounded-xl transition-all flex-shrink-0 text-lg shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transform hover:-translate-y-0.5 active:translate-y-0">
                   {isSubmitting ? 'Avvio...' : 'Scansiona'}
                 </button>
-              )}
-              {analysisId && (
-                <button type="button" onClick={() => { setAnalysisId(null); setTargetUrl(''); }} className="bg-white/10 hover:bg-white/20 text-white font-semibold py-4 px-10 rounded-full transition-colors flex-shrink-0 backdrop-blur-md border border-white/5 text-lg">
-                  Reset
-                </button>
-              )}
-            </div>
+              </div>
+            </form>
           </div>
 
-          {!analysisId && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 flex flex-col space-y-4 text-left glassmorphism p-6 rounded-3xl mx-auto w-full max-w-lg border-white/5 shadow-2xl">
-              <div className="flex items-center justify-between">
-                <h3 className="text-white font-bold text-sm tracking-widest uppercase mb-1">Moduli Sensori OSINT</h3>
-                <span className="text-xs text-gray-400 bg-white/5 px-2 py-1 rounded">Advanced</span>
+          {/* Colonna Destra: Switches OSINT (Design Premium) */}
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="flex flex-col space-y-4 relative">
+            <div className="flex items-center space-x-4 mb-4">
+               <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1"></div>
+               <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest px-4">Configurazione Sensori</h3>
+               <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1"></div>
+            </div>
+
+            {/* DDG Sensor */}
+            <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group ${enableDdg ? 'bg-blue-500/10 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableDdg(!enableDdg)}>
+              {enableDdg && <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>}
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3.5 rounded-xl transition-colors ${enableDdg ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold text-base">DuckDuckGo Dorking</h4>
+                    <p className="text-gray-400 text-xs mt-1 font-light">Ricerca estesa di leak testuali e menzioni web.</p>
+                  </div>
+                </div>
+                <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableDdg ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-white/10'}`}>
+                  <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableDdg ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Holehe Sensor */}
+            <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group ${enableHolehe ? 'bg-rose-500/10 border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableHolehe(!enableHolehe)}>
+              {enableHolehe && <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/20 rounded-full blur-3xl"></div>}
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3.5 rounded-xl transition-colors ${enableHolehe ? 'bg-rose-500/20 text-rose-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold text-base">Cross-Check Email</h4>
+                    <p className="text-gray-400 text-xs mt-1 font-light">Verifica iscrizioni su oltre 120 portali web.</p>
+                  </div>
+                </div>
+                <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableHolehe ? 'bg-gradient-to-r from-rose-500 to-orange-500' : 'bg-white/10'}`}>
+                  <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableHolehe ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Instagram Sensor */}
+            <motion.div className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 backdrop-blur-md ${enableIgScan ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
+              {enableIgScan && <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl"></div>}
+              <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableIgScan(!enableIgScan)}>
+                <div className="flex items-center space-x-4">
+                  <div className={`p-3.5 rounded-xl transition-colors ${enableIgScan ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold text-base">Instagram Deep Scan</h4>
+                    <p className="text-gray-400 text-xs mt-1 font-light">Estrazione avanzata follower e routine/luoghi.</p>
+                  </div>
+                </div>
+                <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableIgScan ? 'bg-gradient-to-r from-purple-500 to-indigo-500' : 'bg-white/10'}`}>
+                  <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableIgScan ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
+                </div>
               </div>
               
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <div>
-                  <div className="text-gray-200 text-sm font-medium">DuckDuckGo Dorking</div>
-                  <div className="text-gray-500 text-xs">Ricerca aggressiva per menzioni web e data leaks.</div>
-                </div>
-                <button type="button" onClick={() => setEnableDdg(!enableDdg)} className={`w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none flex items-center px-1 ${enableDdg ? 'bg-blue-500' : 'bg-gray-600'}`}>
-                  <div className={`w-4 h-4 rounded-full bg-white transform transition-transform duration-300 ${enableDdg ? 'translate-x-6' : ''}`}></div>
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <div>
-                  <div className="text-gray-200 text-sm font-medium">Holehe (Cross-Check Email)</div>
-                  <div className="text-gray-500 text-xs">Verifica se l'email estratta è registrata su 120+ siti web.</div>
-                </div>
-                <button type="button" onClick={() => setEnableHolehe(!enableHolehe)} className={`w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none flex items-center px-1 ${enableHolehe ? 'bg-blue-500' : 'bg-gray-600'}`}>
-                  <div className={`w-4 h-4 rounded-full bg-white transform transition-transform duration-300 ${enableHolehe ? 'translate-x-6' : ''}`}></div>
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between pb-1">
-                <div>
-                  <div className="text-gray-200 text-sm font-medium">Deep Scan Instagram</div>
-                  <div className="text-gray-500 text-xs">Richiede un sessionid attivo (non salvato nel DB).</div>
-                </div>
-                <button type="button" onClick={() => setEnableIgScan(!enableIgScan)} className={`w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none flex items-center px-1 ${enableIgScan ? 'bg-purple-500' : 'bg-gray-600'}`}>
-                  <div className={`w-4 h-4 rounded-full bg-white transform transition-transform duration-300 ${enableIgScan ? 'translate-x-6' : ''}`}></div>
-                </button>
-              </div>
-
               <AnimatePresence>
                 {enableIgScan && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                    <input
-                      type="text"
-                      value={igSessionId}
-                      onChange={(e) => setIgSessionId(e.target.value)}
-                      placeholder="sessionid (es. 123456789%3AABCDE...)"
-                      className="w-full mt-2 bg-black/30 border border-purple-500/30 text-white px-4 py-2 rounded-lg outline-none text-xs focus:border-purple-500 transition-colors placeholder-gray-600"
-                    />
+                  <motion.div initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 20 }} exit={{ height: 0, opacity: 0, marginTop: 0 }} className="overflow-hidden relative z-10">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-purple-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                      </div>
+                      <input
+                        type="text"
+                        value={igSessionId}
+                        onChange={(e) => setIgSessionId(e.target.value)}
+                        placeholder="Incolla il cookie sessionid per bypass login..."
+                        className="w-full bg-black/40 border border-purple-500/40 text-white pl-12 pr-4 py-3.5 rounded-xl outline-none text-sm focus:border-purple-400 transition-all placeholder-purple-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(168,85,247,0.2)] focus:bg-black/60"
+                      />
+                    </div>
+                    <p className="text-[10px] text-purple-300/50 mt-2 ml-2 font-light">
+                      * Il sessionid non viene mai salvato nel database ed è usato solo temporaneamente in RAM.
+                    </p>
                   </motion.div>
                 )}
               </AnimatePresence>
-
             </motion.div>
-          )}
+          </motion.div>
 
-        </form>
-      </motion.div>
+        </motion.div>
+      ) : (
+        /* Intestazione Compattata quando in analisi */
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-7xl z-10 flex flex-col md:flex-row items-center justify-between mt-4 mb-8 glassmorphism p-6 rounded-3xl border-white/5">
+           <div>
+             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Social Exposure Analyzer</h2>
+             <p className="text-sm text-gray-400 font-mono mt-1">Target: <span className="text-white">{targetUrl}</span></p>
+           </div>
+           <button type="button" onClick={() => { setAnalysisId(null); setTargetUrl(''); }} className="mt-4 md:mt-0 bg-white/10 hover:bg-white/20 text-white font-semibold py-2 px-6 rounded-full transition-colors backdrop-blur-md border border-white/5 flex items-center space-x-2">
+             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+             <span>Nuova Scansione</span>
+           </button>
+        </motion.div>
+      )}
 
       <AnimatePresence mode="wait">
         {analysisId && (

@@ -47,7 +47,7 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
        La somma di questi punti DEVE essere uguale al `score` finale.
     3. Calcola i `sub_scores` (identity_exposure, network_exposure, routine_exposure) da 0 a 100 per mostrare su quali assi l'utente è più esposto.
     4. Popola `threat_vectors` derivati da questi dati reali.
-    5. Fornisci `mitigation_advice` e `mitigation_sections` basati ESATTAMENTE sui dati che hai trovato.
+    5. Fornisci `mitigation_advice` e `mitigation_sections` basati ESATTAMENTE sui dati che hai trovato. Correla esplicitamente ogni sezione di mitigazione al rispettivo vettore di minaccia compilando il campo `threat_vector` di ciascun oggetto `MitigationSection`.
     """
     
     payload_str = raw_text[:20000] # Limite di sicurezza stringa
@@ -75,15 +75,6 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
         
     except Exception as e:
         logger.error(f"Errore critico durante l'analisi Risk Engine: {e}")
-        # Fallback sicuro in caso di downtime AI o refusal
-        from backend.models.risk import RiskSubScores
-        return RiskReport(
-            score=0,
-            sub_scores=RiskSubScores(identity_exposure=0, network_exposure=0, routine_exposure=0),
-            level="LOW",
-            threat_vectors=["Analisi non completata per errore di sistema LLM"],
-            mitigation_advice="Controllare manualmente l'esposizione dei dati.",
-            mitigation_sections=[],
-            insufficient_data=True,
-            pii_extracted=[]
-        )
+        # Rilancia l'eccezione per far fallire correttamente l'analisi asincrona
+        # ed evitare di mostrare all'utente un finto profilo privato/protetto.
+        raise RuntimeError(f"Errore critico Gemini API / NLP: {e}") from e

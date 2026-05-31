@@ -9,7 +9,7 @@ async def test_gather_profile_metadata_success(mocker):
     
     mocker.patch('httpx.AsyncClient.get', return_value=mock_response)
     
-    results = await gather_profile_metadata(["https://example.com/johndoe"])
+    results = await gather_profile_metadata(["https://example.com/johndoe"], enable_ddg=False)
     
     assert len(results) == 1
     assert results[0]["status"] == "ACCESSIBLE"
@@ -19,7 +19,7 @@ async def test_gather_profile_metadata_success(mocker):
 @pytest.mark.asyncio
 async def test_gather_profile_metadata_ssrf_protection():
     # Verifica che le richieste verso localhost o IP interni vengano scartate
-    results = await gather_profile_metadata(["http://localhost:8080/admin", "http://192.168.1.10/router"])
+    results = await gather_profile_metadata(["http://localhost:8080/admin", "http://192.168.1.10/router"], enable_ddg=False)
     
     assert len(results) == 2
     for r in results:
@@ -32,7 +32,7 @@ async def test_gather_profile_metadata_http_error(mocker):
     mock_response.status_code = 403
     mocker.patch('httpx.AsyncClient.get', return_value=mock_response)
     
-    results = await gather_profile_metadata(["https://example.com/private"])
+    results = await gather_profile_metadata(["https://example.com/private"], enable_ddg=False)
     
     assert results[0]["status"] == "PROTECTED"
     assert "HTTP Error 403" in results[0]["error"]
