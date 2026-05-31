@@ -40,7 +40,7 @@ async def calculate_risk(pii_data: list) -> RiskReport:
         # Utilizziamo la sintassi sincrona standard dell'SDK all'interno del context asincrono
         client = get_client()
         response = client.models.generate_content(
-            model='gemini-2.5-pro',
+            model='gemini-2.5-flash',
             contents=payload_str,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
