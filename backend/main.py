@@ -6,7 +6,7 @@ import os
 import subprocess
 
 from backend.database import create_db_and_tables
-from backend.api.routers import analyze
+from backend.api.routers import analyze, auth
 from backend.core.logger import setup_logging, logger
 from backend.api.exceptions import global_exception_handler
 
@@ -75,5 +75,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inclusione dei router
+# Inclusione dei Router Inclusions
+app.include_router(auth.router, prefix="/api/v1")
 app.include_router(analyze.router, prefix="/api/v1", tags=["Analysis"])

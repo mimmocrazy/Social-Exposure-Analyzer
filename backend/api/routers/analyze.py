@@ -7,6 +7,8 @@ from backend.schemas import AnalyzeRequest
 from backend.models import ProfileAnalysis, AnalysisStatus
 from backend.database import get_session
 import backend.database
+from backend.models.user import User
+from backend.api.routers.auth import get_current_user
 from backend.core.logger import logger
 from backend.services.discovery import SherlockAdapter
 from backend.services.scraper import gather_profile_metadata
@@ -94,17 +96,19 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
                 session.commit()
 
 @router.post("/analyze", status_code=202)
-def analyze_profile(
+def start_analysis(
     request: AnalyzeRequest,
     background_tasks: BackgroundTasks,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
 ):
     target_str = str(request.target_url)
     
     # Creazione record iniziale in DB
     analysis = ProfileAnalysis(
         target_url=target_str,
-        status=AnalysisStatus.PENDING
+        status=AnalysisStatus.PENDING,
+        user_id=current_user.id
     )
     session.add(analysis)
     session.commit()
@@ -121,7 +125,8 @@ def analyze_profile(
 @router.get("/analyze/{analysis_id}")
 def get_analysis_status(
     analysis_id: uuid.UUID,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Endpoint per il polling del Frontend.
@@ -130,6 +135,9 @@ def get_analysis_status(
     analysis = session.get(ProfileAnalysis, analysis_id)
     if not analysis:
         raise HTTPException(status_code=404, detail="Analisi non trovata")
+        
+    if analysis.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Non autorizzato a visualizzare questa analisi")
         
     import json
     llm_report_parsed = None
