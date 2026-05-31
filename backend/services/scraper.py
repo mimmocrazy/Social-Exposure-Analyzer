@@ -205,8 +205,29 @@ async def gather_profile_metadata(
                     text = soup.get_text(separator=" ", strip=True)
                     # Limitiamo il testo ai primi 2000 caratteri per evitare noise eccessivo
                     text = text[:2000]
+                    text_lower = text.lower()
+                    is_fb_login_wall = "accedi a facebook" in text_lower or "log in to facebook" in text_lower or "devi accedere" in text_lower or "you must log in" in text_lower
+                    is_fb_not_found = "page not found" in text_lower or "pagina non trovata" in text_lower or "content isn't available" in text_lower or "contenuto non trovato" in text_lower
                     
-                    if text:
+                    if is_fb_login_wall:
+                        logger.warning("Facebook Deep Scan ha incontrato un Login Wall. Cookie probabilmente scaduti o non validi.")
+                        results.append({
+                            "source": "Facebook Deep Scan API",
+                            "url": fb_url,
+                            "status": "PROTECTED",
+                            "bio": "[WARNING: COOKIE NON VALIDI. FACEBOOK RICHIEDE IL LOGIN.]",
+                            "error": "Login Wall"
+                        })
+                    elif is_fb_not_found:
+                        logger.warning(f"Facebook Deep Scan: Pagina non trovata per {target_to_search}.")
+                        results.append({
+                            "source": "Facebook Deep Scan API",
+                            "url": fb_url,
+                            "status": "NOT_FOUND",
+                            "bio": "[WARNING: PROFILO FACEBOOK NON TROVATO PER QUESTO USERNAME.]",
+                            "error": "Not Found"
+                        })
+                    elif text:
                         results.append({
                             "source": "Facebook Deep Scan API",
                             "url": fb_url,
@@ -214,7 +235,7 @@ async def gather_profile_metadata(
                             "bio": f"Extracted Text: {text}",
                             "error": None
                         })
-                        logger.info("Facebook Deep Scan riuscito.")
+                        logger.info("Facebook Deep Scan riuscito con estrazione dati valida.")
                 else:
                     logger.warning(f"Facebook Deep Scan fallito con status {fb_resp.status_code}")
             except Exception as e:
