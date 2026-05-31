@@ -23,8 +23,8 @@ def run_security_check():
 async def lifespan(app: FastAPI):
     # Eseguito allo startup dell'app
     setup_logging()
+    logger.info("Avvio di Social Exposure Analyzer...")
     run_security_check()
-    create_db_and_tables()
     yield
     # Eseguito allo shutdown dell'app
 
