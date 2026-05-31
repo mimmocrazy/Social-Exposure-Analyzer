@@ -63,3 +63,9 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Configurazione script e workflow Azure (App Service, GitHub Actions).
 - [x] Deploy Automation Script (`deploy_azure.sh`, `startup.sh`).
 - [x] Stesura relazione finale (`docs/FINAL_REPORT.md` inclusiva di trasparenza AI come da `AI_JOURNAL.md`).
+
+### Fase 7: Pro & Cloud Native Upgrade (Auth, Alembic, UI/UX)
+- [ ] Inizializzazione Auth JWT e Security Models.
+- [ ] Configurazione Alembic per Database Migrations (PostgreSQL/SQLite).
+- [ ] Implementazione UI Frontend (Login/Register).
+- [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).
