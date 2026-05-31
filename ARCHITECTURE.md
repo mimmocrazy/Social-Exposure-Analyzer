@@ -30,13 +30,12 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Continuous Security Audit (SAST/SCA & Report Update).
 - [x] Continuous Security Audit (Manuale).
 
-### Fase 2: Tests - Backend Foundation
-- [x] Setup Pytest (`pytest.ini`, `conftest.py`).
-- [x] Unit tests per operazioni CRUD e validazione input endpoint.
-
-### Fase 3: AI & NLP Core Integration
-- [x] Sviluppo modulo Discovery (Sherlock Adapter) e Scraping (Search Dorking).
-- [x] Sviluppo modulo **NLP** (Estrazione PII con Presidio/spaCy).
+### Phase 3: AI-Driven PII Extraction & Risk Assessment (Gemini Pro/Flash)
+- Abbandono della libreria NLP statistica (SpaCy) in favore dell'uso di Google Gemini 2.5 Flash.
+- **Workflow**: 
+  - Il testo grezzo unito (scraped metadata + OSINT leaks) viene inviato interamente al modello LLM.
+  - L'LLM restituisce in modalità **Structured Outputs** (JSON nativo) sia le PII estratte (Entity) sia il `RiskReport`.
+- Lo storage nel database e l'invio alla Dashboard avvengono in formato strutturato, garantendo affidabilità e assenza di allucinazioni grazie alla restrizione dello schema JSON.
 - [x] Sviluppo modulo **OCR** (Analisi immagini con Tesseract/EasyOCR).
 - [x] Sviluppo modulo **Risk Engine** (Prompting Gemini Pro per Risk Score e Report).
 
@@ -65,7 +64,7 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Stesura relazione finale (`docs/FINAL_REPORT.md` inclusiva di trasparenza AI come da `AI_JOURNAL.md`).
 
 ### Fase 7: Pro & Cloud Native Upgrade (Auth, Alembic, UI/UX)
-- [ ] Inizializzazione Auth JWT e Security Models.
-- [ ] Configurazione Alembic per Database Migrations (PostgreSQL/SQLite).
-- [ ] Implementazione UI Frontend (Login/Register).
+- [x] Inizializzazione Auth JWT e Security Models.
+- [x] Configurazione Alembic per Database Migrations (PostgreSQL/SQLite).
+- [x] Implementazione UI Frontend (Login/Register).
 - [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).
