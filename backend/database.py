@@ -9,7 +9,7 @@ if DATABASE_URL:
     engine = create_engine(DATABASE_URL, echo=False)
 else:
     # Dev locale: SQLite fallback
-    sqlite_file_name = "social_exposure_analyzer.db"
+    sqlite_file_name = "data/social_exposure_analyzer.db"
     sqlite_url = f"sqlite:///./{sqlite_file_name}"
     connect_args = {"check_same_thread": False}
     engine = create_engine(sqlite_url, echo=False, connect_args=connect_args)

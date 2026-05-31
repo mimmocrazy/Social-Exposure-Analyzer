@@ -25,10 +25,11 @@ async def calculate_risk(raw_text: str) -> RiskReport:
     
     Il tuo compito in un singolo passaggio:
     1. Analizza il testo fornito.
-    2. Valuta il rischio di esposizione. Se trovi un semplice username o una bio generica il rischio è BASSO. Se trovi possibili collegamenti, email, scuole o posizioni lavorative il rischio sale.
-    3. Popola `threat_vectors` con possibili minacce derivate (es. Phishing mirato se c'è un'azienda).
-    4. Fornisci `mitigation_advice` per rimediare.
-    5. Imposta `insufficient_data=True` se il testo non contiene nulla di utile per un attacco.
+    2. Estrai tutte le PII (Personally Identifiable Information) trovate e popolale in `pii_extracted`.
+    3. Valuta il rischio di esposizione. Se trovi un semplice username o una bio generica il rischio è BASSO. Se trovi possibili collegamenti, email, scuole o posizioni lavorative il rischio sale.
+    4. Popola `threat_vectors` con possibili minacce derivate (es. Phishing mirato se c'è un'azienda).
+    5. Fornisci `mitigation_advice` per rimediare.
+    6. Imposta `insufficient_data=True` se il testo non contiene nulla di utile per un attacco.
     """
     
     payload_str = raw_text[:20000] # Limite di sicurezza stringa
@@ -62,5 +63,6 @@ async def calculate_risk(raw_text: str) -> RiskReport:
             level="LOW",
             threat_vectors=["Analisi non completata per errore di sistema LLM"],
             mitigation_advice="Controllare manualmente l'esposizione dei dati.",
-            insufficient_data=True
+            insufficient_data=True,
+            pii_extracted=[]
         )

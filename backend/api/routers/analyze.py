@@ -60,11 +60,11 @@ async def run_scraping_task(analysis_id: uuid.UUID, target: str):
         # from backend.services.nlp import extract_pii
         # pii_results = extract_pii(combined_text)
         # pii_dicts = [pii.model_dump() for pii in pii_results]
-        pii_dicts = [] # Mantenuto vuoto per compatibilità schema DB, l'AI deciderà il rischio dal testo raw
-        
-        # Risk Engine Analysis (Gemini Pro) tramite text integrale e OSINT
+        # Risk Engine Analysis (Gemini Flash) tramite text integrale e OSINT
         from backend.services.risk_engine import calculate_risk
         risk_report = await calculate_risk(combined_text)
+        
+        pii_dicts = [pii.model_dump() for pii in risk_report.pii_extracted]
         
         # Aggiornamento Database con i dati raw, PII e Risk Score
         with Session(backend.database.engine) as session:

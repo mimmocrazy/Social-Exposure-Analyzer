@@ -2,8 +2,6 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, Any
-from .risk import RiskReport
-from .user import User
 from sqlmodel import Field, SQLModel, Column, JSON, String, Text, Relationship
 
 class AnalysisStatus(str, Enum):
@@ -32,3 +30,7 @@ class ProfileAnalysis(SQLModel, table=True):
     error_message: Optional[str] = Field(default=None, sa_column=Column(Text))
     user_id: Optional[uuid.UUID] = Field(default=None, foreign_key="user.id")
     user: Optional["User"] = Relationship(back_populates="analyses")
+
+# Import postponed to avoid circular imports
+from .risk import RiskReport
+from .user import User
