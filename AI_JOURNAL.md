@@ -4,22 +4,6 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 15:39)
-- **Task Eseguito:** Rivoluzione Dashboard (Moduli Sensori OSINT) & Sub-Scoring.
-- **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/schemas.py`, `backend/models/risk.py`, `backend/services/scraper.py`, `backend/services/holehe_adapter.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`
-- **Sintesi Prompt:**
-> "è perfetto, mi raccomando genera un prompt relativo bello luingo ed esplicativo ed attinente al pattern in ai jorunal, comunque ti faccio notare che il punteggio che esce nel report tipo 80 è molto astratto cioe non so in base a cosa lo sta calcolando non ci sono degli indici o dei punteggi attribuiti a sezioni per capire cosa ce di buono e cosa ce di male, troviamo una strategia per risolvere questa cosa per fare un capolavoro visivo"
-> 
-> Il task richiede l'implementazione del piano OSINT avanzato approvato (con Holehe e Deep Scan Instagram) e l'aggiunta di un sistema di Risk Sub-scoring (Identity, Network, Routine) per giustificare matematicamente il Risk Score globale all'utente.
-> Regole implementative:
-> - Adattare lo schema Pydantic `RiskReport` aggiungendo i `sub_scores`.
-> - Aggiornare il prompt del `risk_engine.py` spiegando come estrarre e relazionare questi indici (con enfasi sul tag [OSINT HOLEHE]).
-> - Creare `holehe_adapter.py` eseguendo holehe via subprocess e analizzandone l'output (solo siti validi).
-> - Modificare `scraper.py` includendo il check del sessionid.
-> - Rivoluzionare la `App.jsx` inserendo un pannello interattivo "Sensori OSINT" e le progress bar di Tremor dedicate ai sub-scores.
-- **Spiegazione Tecnica:** L'architettura è passata da un flusso monolitico a una pipeline modulare. Il frontend ora permette all'utente di definire quali moduli OSINT avviare (DDG, Holehe, IG Deep Scan) governando l'orchestrazione nel background task. Il backend sfrutta un adapter asincrono basato su `subprocess` per interrogare Holehe (aggirando l'incompatibilità fra Trio e Asyncio). Il modello di rischio Pydantic ora impone la struttura `RiskSubScores`, obbligando l'LLM a scomporre razionalmente il punteggio finale per maggiore trasparenza e visualizzazione grafica (Progress Bar).
-
----
 
 ### Data: 2026-05-30 (Ore 09:00)
 - **Task Eseguito:** Inizializzazione struttura di progetto e documentazione architetturale.
@@ -820,22 +804,19 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Spiegazione Tecnica:** Implementato un triplice intervento architetturale per sanare le criticità emerse in fase di demo. (1) **Name Deduction**: la nuova funzione `guess_real_name` in `analyze.py` sfrutta Gemini 2.5 Flash come oracolo euristico per risolvere l'identità reale dell'utente a partire dal suo alias social, ampliando drasticamente il raggio d'azione dell'OSINT successivo. (2) **Anti-Hallucination Firewall**: nello `scraper.py`, un pattern-matching sul `<title>` HTML intercetta i login wall tipici di Instagram e Facebook, iniettando un tag machine-readable (`[WARNING]`) che il LLM è istruito a rispettare come direttiva imperativa. Questo meccanismo elimina alla radice il problema delle PII inventate su profili privati. (3) **Prompt Engineering Traccia-Aware**: il `system_prompt` del Risk Engine è stato arricchito con le terminologie esatte della traccia universitaria (impersonificazione, routine quotidiane, legami familiari), garantendo che i report generati siano formalmente allineati ai criteri di valutazione del docente. La ricerca DuckDuckGo è stata potenziata con una doppia query (username + nome reale) per massimizzare la superficie di raccolta OSINT anche quando il social primario è inaccessibile.
 
 
+### Data: 2026-05-31 (Ore 15:39)
+- **Task Eseguito:** Rivoluzione Dashboard (Moduli Sensori OSINT) & Sub-Scoring.
+- **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/schemas.py`, `backend/models/risk.py`, `backend/services/scraper.py`, `backend/services/holehe_adapter.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`
+- **Sintesi Prompt:**
+> "è perfetto, mi raccomando genera un prompt relativo bello luingo ed esplicativo ed attinente al pattern in ai jorunal, comunque ti faccio notare che il punteggio che esce nel report tipo 80 è molto astratto cioe non so in base a cosa lo sta calcolando non ci sono degli indici o dei punteggi attribuiti a sezioni per capire cosa ce di buono e cosa ce di male, troviamo una strategia per risolvere questa cosa per fare un capolavoro visivo"
+> 
+> Il task richiede l'implementazione del piano OSINT avanzato approvato (con Holehe e Deep Scan Instagram) e l'aggiunta di un sistema di Risk Sub-scoring (Identity, Network, Routine) per giustificare matematicamente il Risk Score globale all'utente.
+> Regole implementative:
+> - Adattare lo schema Pydantic `RiskReport` aggiungendo i `sub_scores`.
+> - Aggiornare il prompt del `risk_engine.py` spiegando come estrarre e relazionare questi indici (con enfasi sul tag [OSINT HOLEHE]).
+> - Creare `holehe_adapter.py` eseguendo holehe via subprocess e analizzandone l'output (solo siti validi).
+> - Modificare `scraper.py` includendo il check del sessionid.
+> - Rivoluzionare la `App.jsx` inserendo un pannello interattivo "Sensori OSINT" e le progress bar di Tremor dedicate ai sub-scores.
+- **Spiegazione Tecnica:** L'architettura è passata da un flusso monolitico a una pipeline modulare. Il frontend ora permette all'utente di definire quali moduli OSINT avviare (DDG, Holehe, IG Deep Scan) governando l'orchestrazione nel background task. Il backend sfrutta un adapter asincrono basato su `subprocess` per interrogare Holehe (aggirando l'incompatibilità fra Trio e Asyncio). Il modello di rischio Pydantic ora impone la struttura `RiskSubScores`, obbligando l'LLM a scomporre razionalmente il punteggio finale per maggiore trasparenza e visualizzazione grafica (Progress Bar).
 
-## Ottimizzazione OSINT: Anti-Allucinazione e Deduzione Identità (31/05/2026)
-
-### Contesto e Obiettivo
-L'utente ha sollevato una criticità importante legata ai requisiti del progetto universitario: se l'applicativo prova a scansionare un profilo privato (es. su Instagram) il LLM potrebbe "allucinare" dei dati PII fittizi pur di compilare il JSON, dato che la pagina HTML restituirebbe solo una generica schermata di login. Inoltre, era richiesto un meccanismo in grado di risalire al vero nome e cognome partendo da uno username, per ampliare le ricerche OSINT.
-
-### 1. Deduzione Identità (LLM-based)
-Prima di effettuare la query OSINT profonda, ho integrato una funzione `guess_real_name` in `backend/api/routers/analyze.py`. Questa funzione utilizza Gemini per dedurre eurusticamente il nome reale dell'utente partendo dall'alias (es. tomasmontagna_ -> Tomas Montagna). Il nome dedotto viene poi passato allo `scraper` per costruire query di `Search Dorking` più precise su DuckDuckGo (`"Tomas Montagna" OR "tomasmontagna_"`), permettendo di trovare esposizioni in articoli pubblici o LinkedIn anche se il social primario è privato.
-
-### 2. Prevenzione Allucinazioni (Anti-Hallucination Firewall)
-Nel modulo `scraper.py`, ho aggiunto una validazione sull'HTML: se il `<title>` contiene parole come `login`, `sign in` o `accedi` e manca una `meta description`, lo scraper inietta nel testo un TAG esplicito: `[WARNING: PROFILO PRIVATO O INACCESSIBILE. NON INVENTARE DATI.]`.
-
-Ho poi aggiornato radicalmente il `system_prompt` in `backend/services/risk_engine.py` imponendo a Gemini di intercettare questo WARNING. Quando rilevato, l'AI deve:
-- Impostare `insufficient_data = True` nel RiskReport.
-- Lasciare `pii_extracted` completamente vuoto.
-- Indicare un rischio BASSO, chiarendo che il profilo è adeguatamente protetto da impostazioni di privacy, evitando inventare informazioni.
-
-### 3. Aderenza ai Rischi di Progetto (Prompt Engineering)
-Sempre nel prompt, ho introdotto le terminologie esatte richieste dalla traccia di progetto (es. *«evidenziare che la pubblicazione ricorrente di luoghi frequentati, routine quotidiane, informazioni lavorative e legami familiari può facilitare tentativi di impersonificazione»*). Ciò spinge il modello a generare report estremamente focalizzati sulle vulnerabilità di Ingegneria Sociale legate alla compromissione del pattern di vita dell'utente.
+---

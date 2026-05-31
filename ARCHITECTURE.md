@@ -58,6 +58,14 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 ### Fase 5.5: Master Test Orchestrator
 - [x] Setup Master Test Suite (Validation Gate API, DoS, Frontend).
 
+### Fase 5.8: OSINT Core & Risk Sub-scoring
+- [x] Installazione Dipendenze (Holehe).
+- [x] Aggiornamento Modelli & Schema API (Risk Sub-scoring): Aggiornamento `backend/schemas.py` per i toggle OSINT e `backend/models/risk.py` per `RiskSubScores` (Identity, Network, Routine).
+- [x] Backend Integrazione Moduli OSINT Core: Implementazione `holehe_adapter.py` e aggiornamento `scraper.py` per Instagram Deep Scan (sessionid) e switch DDG.
+- [x] Prompt Engineering LLM: Aggiornamento `backend/services/risk_engine.py` per il mapping dei Risk Sub-scores e parsing dei risultati Holehe.
+- [x] Frontend Rivoluzione Dashboard: Pannello "Sensori OSINT" nella home (toggles UI) e Data Visualization visiva con Progress Bars Tremor per le sub-metrizzazioni del rischio.
+- [x] Documentazione Finale: Aggiornamento `AI_JOURNAL.md` e sync con `ARCHITECTURE.md`.
+
 ### Fase 6: Azure Deployment & Documentazione
 - [x] Configurazione script e workflow Azure (App Service, GitHub Actions).
 - [x] Deploy Automation Script (`deploy_azure.sh`, `startup.sh`).
@@ -67,22 +75,4 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Inizializzazione Auth JWT e Security Models.
 - [x] Configurazione Alembic per Database Migrations (PostgreSQL/SQLite).
 - [x] Implementazione UI Frontend (Login/Register).
-- [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).
-
-### Fase 7: Pro & Cloud Native Upgrade (Auth, Alembic, UI/UX)
-- [ ] Inizializzazione Auth JWT e Security Models.
-- [ ] Configurazione Alembic per Database Migrations (PostgreSQL/SQLite).
-- [ ] Implementazione UI Frontend (Login/Register).
-- [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).
-
-### Fase 7: Pro & Cloud Native Upgrade (Auth, Alembic, UI/UX)
-- [ ] Inizializzazione Auth JWT e Security Models.
-- [ ] Configurazione Alembic per Database Migrations (PostgreSQL/SQLite).
-- [ ] Implementazione UI Frontend (Login/Register).
-- [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).
-
-### Fase 7: Pro & Cloud Native Upgrade (Auth, Alembic, UI/UX)
-- [ ] Inizializzazione Auth JWT e Security Models.
-- [ ] Configurazione Alembic per Database Migrations (PostgreSQL/SQLite).
-- [ ] Implementazione UI Frontend (Login/Register).
 - [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).
