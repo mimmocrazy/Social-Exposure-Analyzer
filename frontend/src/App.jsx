@@ -169,92 +169,98 @@ const getOfficialIcon = (iconName, isActive) => {
 const InteractiveLoading = () => {
   const steps = [
     { text: "Inizializzazione Deep OSINT", icon: "gears", delay: 0 },
-    { text: "Scansione Instagram", icon: "instagram", delay: 1500 },
-    { text: "Footprint X (Twitter)", icon: "x", delay: 3500 },
-    { text: "Verifica LinkedIn", icon: "linkedin", delay: 5500 },
-    { text: "Verifica FaceBook", icon: "facebook", delay: 7500 },
-    { text: "Estrazione Dati Sensibili", icon: "spy", delay: 9500 },
-    { text: "Audit AI in corso", icon: "brain", delay: 12000 },
-    { text: "Stesura Risk Report", icon: "doc", delay: 14500 }
+    { text: "Scansione Target (Web & Social)", icon: "spy", delay: 1500 },
+    { text: "Footprint Esteso (Instagram/X)", icon: "instagram", delay: 3500 },
+    { text: "Cross-check Data Breaches", icon: "linkedin", delay: 5500 },
+    { text: "Estrazione Media & OCR", icon: "doc", delay: 7500 },
+    { text: "Analisi Relazionale (NLP)", icon: "facebook", delay: 9500 },
+    { text: "Audit AI Vulnerabilità in corso", icon: "brain", delay: 12000 },
+    { text: "Generazione Risk Report", icon: "gears", delay: 14500 }
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     const timers = steps.map((step, index) =>
-      setTimeout(() => {
-        setCurrentStep(index);
-      }, step.delay)
+      setTimeout(() => setCurrentStep(index), step.delay)
     );
     return () => timers.forEach(t => clearTimeout(t));
   }, []);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center py-12 w-full max-w-7xl mx-auto relative mt-10">
-      <h2 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 text-3xl md:text-4xl font-extrabold tracking-tight mb-20 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] text-center animate-pulse">
-        Analisi Profonda in Corso
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-10 md:py-16 w-full max-w-5xl mx-auto relative mt-4 md:mt-10">
+      
+      <h2 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 text-xl md:text-3xl font-mono tracking-[0.3em] uppercase mb-12 md:mb-16 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse text-center">
+        System Processing
       </h2>
 
-      <div className="w-full relative flex flex-wrap justify-center items-center gap-y-12 gap-x-2 md:gap-x-4 px-4">
-        {steps.map((step, index) => {
-          const isActive = index === currentStep;
-          const isPast = index < currentStep;
-          const isFuture = index > currentStep;
+      <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-16 md:gap-32 w-full">
+        
+        {/* Central Radar Orb (Left Column on Desktop) */}
+        <div className="relative w-64 h-64 md:w-72 md:h-72 flex items-center justify-center flex-shrink-0">
+          <motion.div 
+            animate={{ rotate: 360 }} 
+            transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+            className="absolute inset-0 rounded-full border border-blue-500/30 border-t-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.1)]"
+          ></motion.div>
+          <motion.div 
+            animate={{ rotate: -360 }} 
+            transition={{ repeat: Infinity, duration: 12, ease: "linear" }}
+            className="absolute inset-6 rounded-full border border-purple-500/20 border-b-purple-400 opacity-60"
+          ></motion.div>
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }} 
+            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            className="w-40 h-40 bg-gradient-to-tr from-blue-600/10 to-purple-600/10 rounded-full blur-2xl absolute"
+          ></motion.div>
+          
+          <div className="z-10 bg-black/60 backdrop-blur-xl rounded-full w-28 h-28 md:w-32 md:h-32 flex items-center justify-center border border-white/10 shadow-[0_0_40px_rgba(59,130,246,0.3)]">
+             <motion.div 
+               key={currentStep}
+               initial={{ scale: 0, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               transition={{ type: "spring", stiffness: 300, damping: 20 }}
+             >
+               {getOfficialIcon(steps[currentStep].icon, true)}
+             </motion.div>
+          </div>
+        </div>
 
-          return (
-            <React.Fragment key={index}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all duration-1000 w-40 h-40 md:w-48 md:h-48 aspect-square flex-shrink-0 text-center relative group ${isActive
-                    ? 'bg-blue-500/10 border-blue-400/50 shadow-[0_0_40px_rgba(59,130,246,0.3)] z-10 scale-110'
-                    : isPast
-                      ? 'bg-green-500/5 border-green-500/20 opacity-80 scale-95'
-                      : 'bg-white/5 border-white/5 opacity-30 scale-90 blur-[1px] grayscale'
-                  }`}
-              >
-                {isActive && (
-                  <motion.div
-                    className="absolute inset-0 rounded-3xl border-2 border-blue-400/50"
-                    initial={{ scale: 1, opacity: 1 }}
-                    animate={{ scale: 1.2, opacity: 0 }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
-                  />
-                )}
-                {isPast && (
-                  <div className="absolute -top-3 -right-3 bg-green-500 text-white rounded-full p-1 shadow-[0_0_10px_rgba(34,197,94,0.6)]">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                )}
-                <div className={`flex items-center justify-center mb-4 transition-transform duration-700 ${isActive ? 'scale-110' : ''}`}>
-                  {getOfficialIcon(step.icon, isActive || isPast)}
+        {/* Stepper List (Right Column on Desktop) */}
+        <div className="w-full max-w-sm flex flex-col space-y-6 relative pl-4 md:pl-0">
+          <div className="absolute left-[34px] md:left-[24px] top-4 bottom-4 w-px bg-white/10"></div>
+          {steps.map((step, index) => {
+            const isActive = index === currentStep;
+            const isPast = index < currentStep;
+            
+            return (
+              <div key={index} className="flex items-center space-x-6 relative z-10">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
+                  isActive ? 'bg-blue-500/20 border border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)]' : 
+                  isPast ? 'bg-green-500/10 border border-green-500/30' : 'bg-black border border-white/5'
+                }`}>
+                  {isPast ? (
+                    <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  ) : isActive ? (
+                    <div className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-ping"></div>
+                  ) : (
+                    <div className="w-2 h-2 bg-white/20 rounded-full"></div>
+                  )}
                 </div>
-                <span className={`text-xs md:text-sm font-semibold tracking-wide transition-colors duration-700 ${isActive ? 'text-white drop-shadow-md' : isPast ? 'text-green-400/80' : 'text-gray-500'}`}>
-                  {step.text}
-                </span>
-              </motion.div>
-
-              {/* Frecce dinamiche */}
-              {index < steps.length - 1 && (
-                <div className="hidden md:flex items-center justify-center w-8 lg:w-12">
-                  <motion.div
-                    className={`h-0.5 w-full transition-all duration-1000 relative ${isPast ? 'bg-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : isActive ? 'bg-blue-400/80 shadow-[0_0_15px_rgba(59,130,246,0.8)]' : 'bg-white/10'}`}
-                  >
-                    {isActive && (
-                      <motion.div
-                        initial={{ x: '-100%', opacity: 1 }}
-                        animate={{ x: '100%', opacity: 0 }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                        className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent"
-                      />
-                    )}
-                  </motion.div>
+                <div className="flex flex-col flex-1">
+                  <span className={`text-sm md:text-base font-mono tracking-widest uppercase transition-all duration-500 ${
+                    isActive ? 'text-blue-300 font-bold drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]' : isPast ? 'text-gray-400' : 'text-gray-700'
+                  }`}>
+                    {step.text}
+                  </span>
+                  {isActive && (
+                     <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 2.5, ease: "linear" }} className="h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-transparent mt-1"></motion.div>
+                  )}
                 </div>
-              )}
-            </React.Fragment>
-          );
-        })}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );
@@ -539,22 +545,32 @@ function Dashboard({ analysisId }) {
                 <p className="text-gray-400 text-sm font-medium">Nessun media o testo estratto disponibile.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex overflow-x-auto gap-6 pb-6 pt-2 custom-scrollbar snap-x snap-mandatory scroll-smooth w-full">
                 {ocrResults.map((ocr, idx) => (
-                  <div key={idx} className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden flex flex-col hover:bg-white/[0.05] transition-colors">
-                    <div className="h-40 w-full overflow-hidden bg-black/40 relative group/img">
+                  <div key={idx} className="min-w-[320px] max-w-[400px] flex-shrink-0 snap-center bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl overflow-hidden flex flex-col hover:border-cyan-500/30 transition-colors shadow-xl">
+                    <div className="h-48 w-full overflow-hidden bg-black/40 relative group/img">
                       <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 group-hover/img:scale-105 transition-all duration-500" />
-                      <div className="absolute top-2 right-2 bg-red-500/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold text-white shadow-lg border border-red-400/50 flex items-center space-x-1">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                        <span>TESTO RILEVATO</span>
+                      <div className="absolute top-2 right-2 bg-blue-500/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold text-white shadow-lg border border-blue-400/50 flex items-center space-x-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>ANALISI AI</span>
                       </div>
                     </div>
-                    <div className="p-4 flex-1 flex flex-col">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2 block">Testo Estratto in Chiaro (Computer Vision)</span>
-                      <div className="bg-black/30 rounded-xl p-3 border border-white/5 flex-1 overflow-y-auto max-h-32 custom-scrollbar">
-                        <p className="text-gray-300 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap">
-                          {ocr.text_extracted}
-                        </p>
+                    <div className="p-5 flex-1 flex flex-col">
+                      <h4 className="text-white text-sm font-bold mb-3 leading-snug">
+                        {ocr.ai_description || "Descrizione AI non disponibile."}
+                      </h4>
+                      <div className="mt-auto pt-4 border-t border-white/5">
+                        <details className="group/details">
+                          <summary className="text-[10px] text-gray-500 hover:text-cyan-400 uppercase tracking-widest font-bold cursor-pointer flex items-center transition-colors">
+                            <svg className="w-3 h-3 mr-1 transform group-open/details:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                            Mostra Testo Grezzo Rilevato
+                          </summary>
+                          <div className="bg-black/30 rounded-xl p-3 border border-white/5 mt-2 max-h-32 overflow-y-auto custom-scrollbar">
+                            <p className="text-gray-400 font-mono text-[10px] leading-relaxed break-words whitespace-pre-wrap">
+                              {ocr.text_extracted}
+                            </p>
+                          </div>
+                        </details>
                       </div>
                     </div>
                   </div>
@@ -1128,6 +1144,26 @@ function MainApp() {
 
           {/* Colonna Destra: Switches OSINT (Design Premium) */}
           <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="flex flex-col space-y-4 relative">
+            
+            {/* Profondità di Analisi Widget */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-2 relative overflow-hidden group backdrop-blur-md">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="flex justify-between items-center relative z-10">
+                <div>
+                  <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Profondità di Analisi</h4>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-white text-xl font-extrabold tracking-tight">
+                      {enableDdg && enableHolehe && (enableIgScan || enableFbScan) ? 'MILITARE (OSINT Esteso)' : 
+                       (enableDdg || enableHolehe || enableIgScan || enableFbScan) ? 'AVANZATA (Deep Web)' : 'STANDARD (Superficie)'}
+                    </span>
+                  </div>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                  <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                </div>
+              </div>
+            </div>
+
             <div className="flex items-center space-x-4 mb-4">
               <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1"></div>
               <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest px-4">Configurazione Sensori</h3>
