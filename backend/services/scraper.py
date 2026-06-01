@@ -19,13 +19,16 @@ async def gather_profile_metadata(
     """
     results = []
     
+    target_to_search = urls[0].rstrip('/').split('/')[-1] if urls else "unknown"
+    
+
     # Header di base per mitigare controlli anti-bot rudimentali
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9"
     }
 
-    target_to_search = urls[0].split('/')[-1] if urls else "unknown"
+    target_to_search = urls[0].rstrip('/').split('/')[-1] if urls else "unknown"
 
     async with httpx.AsyncClient(headers=headers, timeout=10.0, http2=True) as client:
         # 1. Instagram Deep Scan (Se sessionid fornito o se stiamo scansionando Instagram)
@@ -56,6 +59,7 @@ async def gather_profile_metadata(
                         timeline = user_data.get("edge_owner_to_timeline_media", {}).get("edges", [])
                         recent_locations = []
                         recent_captions = []
+                        recent_images = []
                         
                         for edge in timeline[:12]: # Analizza gli ultimi 12 post
                             node = edge.get("node", {})
@@ -71,6 +75,11 @@ async def gather_profile_metadata(
                                 text = caption_edges[0].get("node", {}).get("text")
                                 if text:
                                     recent_captions.append(text.replace("\n", " ")[:100])
+                                    
+                            # Estrai Immagini
+                            img_url = node.get("display_url")
+                            if img_url:
+                                recent_images.append(img_url)
                         
                         if recent_locations:
                             deep_bio += f" | Post Locations (Luoghi Frequenti): {', '.join(set(recent_locations))}"
@@ -82,6 +91,7 @@ async def gather_profile_metadata(
                             "url": f"API: {target_to_search}",
                             "status": "ACCESSIBLE",
                             "bio": deep_bio,
+                            "images": recent_images[:5],  # Limitiamo alle ultime 5 immagini per evitare overhead
                             "error": None
                         })
                         logger.info("Instagram Deep Scan riuscito con successo.")
@@ -162,8 +172,8 @@ async def gather_profile_metadata(
                     if real_name and real_name.lower() != "sconosciuto":
                         # Cerca il nome esatto
                         search_queries.append(f'"{real_name}"')
-                        # Dork esplicita per profili OnlyFans e leak (come richiesto)
-                        search_queries.append(f'"{real_name}" onlyfans OR leak')
+                        # Dork per identificare eventuali data leak o esposizioni su paste site
+                        search_queries.append(f'"{real_name}" pastebin OR dump OR "data breach"')
                         
                     for q in search_queries:
                         ddg_url = f"https://lite.duckduckgo.com/lite/"

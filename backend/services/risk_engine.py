@@ -54,20 +54,34 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
 
     
     try:
-        logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output)...")
-        # In contesto asincrono, possiamo sfruttare l'SDK se supporta aio o eseguirlo in thread.
-        # Utilizziamo la sintassi sincrona standard dell'SDK all'interno del context asincrono
+        logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...")
         client = get_client()
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=payload_str,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                response_mime_type="application/json",
-                response_schema=RiskReport,
-                temperature=0.2, # Basso per risposte deterministiche e formali
-            ),
-        )
+        
+        models_to_try = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+        response = None
+        last_err = None
+        
+        for model_name in models_to_try:
+            try:
+                logger.info(f"Tentativo di generazione report con modello {model_name}...")
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=payload_str,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        response_mime_type="application/json",
+                        response_schema=RiskReport,
+                        temperature=0.2, # Basso per risposte deterministiche e formali
+                    ),
+                )
+                logger.info(f"Successo con il modello {model_name}!")
+                break
+            except Exception as e:
+                logger.warning(f"Errore con il modello {model_name}: {e}. Provo il prossimo modello di fallback...")
+                last_err = e
+                
+        if response is None:
+            raise last_err
         
         # Validazione Pydantic sicura della risposta text JSON-like
         report = RiskReport.model_validate_json(response.text)

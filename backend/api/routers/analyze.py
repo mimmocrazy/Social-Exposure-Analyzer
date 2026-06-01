@@ -21,10 +21,25 @@ async def guess_real_name(username: str) -> str:
         from backend.services.risk_engine import get_client
         client = get_client()
         prompt = f"Data l'username '{username}', deduci il probabile nome e cognome reale. Rispondi SOLO con il nome e cognome testuale, o 'Sconosciuto' se è totalmente impossibile da dedurre. Esempio 1: mario.rossi89 -> Mario Rossi. Esempio 2: tomasmontagna_ -> Tomas Montagna."
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt
-        )
+        
+        models_to_try = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+        response = None
+        last_err = None
+        
+        for model_name in models_to_try:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                break
+            except Exception as e:
+                logger.warning(f"Errore con {model_name} in guess_real_name: {e}. Provo il fallback...")
+                last_err = e
+                
+        if response is None:
+            raise last_err
+            
         name = response.text.strip()
         if name and name.lower() != 'sconosciuto':
             return name
@@ -83,10 +98,70 @@ async def run_scraping_task(
         is_instagram_target = any("instagram.com" in url for url in urls_to_scrape)
         sherlock_attempted = not re.match(r"^https?://", target)
 
+        images_to_ocr = []
+        for item in raw_data:
+            if item.get("images"):
+                images_to_ocr.extend(item["images"])
+        
+        ocr_results_payload = []
+        ocr_texts = []
+        import httpx
+        import tempfile
+        import os
+        from backend.services.ocr import extract_text_from_image
+        
+        if images_to_ocr:
+            logger.info(f"Avvio estrazione OCR per {len(images_to_ocr)} immagini trovate.")
+            async with httpx.AsyncClient() as img_client:
+                for idx, img_url in enumerate(images_to_ocr):
+                    try:
+                        if img_url.startswith("/mocks/"):
+                            local_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../frontend/public", img_url.lstrip("/")))
+                            if os.path.exists(local_path):
+                                import shutil
+                                tmp_mock_path = os.path.join(tempfile.gettempdir(), f"ocr_mock_{analysis_id}_{idx}.png")
+                                shutil.copy(local_path, tmp_mock_path)
+                                text = extract_text_from_image(tmp_mock_path)
+                                if text and len(text.strip()) > 2:
+                                    ocr_texts.append(text)
+                                    ocr_results_payload.append({
+                                        "url": img_url,
+                                        "text_extracted": text
+                                    })
+                            continue
+                            
+                        img_resp = await img_client.get(img_url, timeout=10.0)
+                        if img_resp.status_code == 200:
+                            tmp_path = os.path.join(tempfile.gettempdir(), f"ocr_img_{analysis_id}_{idx}.jpg")
+                            with open(tmp_path, "wb") as f:
+                                f.write(img_resp.content)
+                            text = extract_text_from_image(tmp_path)
+                            if text and len(text.strip()) > 2:
+                                ocr_texts.append(text)
+                                ocr_results_payload.append({
+                                    "url": img_url,
+                                    "text_extracted": text
+                                })
+                    except Exception as e:
+                        logger.warning(f"Errore download/OCR immagine: {e}")
+
+        # NLP Pipeline classica (SpaCy) come da requisiti universitari
+        from backend.services.nlp import extract_pii
+        combined_text = " ".join([p.get("bio", "") for p in raw_data if p.get("bio")])
+        if ocr_texts:
+            combined_text += " " + " ".join(ocr_texts)
+            
+        logger.info("Avvio estrazione PII tramite SpaCy...")
+        spacy_entities = extract_pii(combined_text)
+        spacy_payload = [e.model_dump() for e in spacy_entities]
+
         # Aggregazione strutturata JSON per l'LLM
         osint_payload = {
             "scraper_results": raw_data,
             "holehe_results": [],
+            "databreach_results": [],
+            "ocr_results": ocr_results_payload,
+            "spacy_entities": spacy_payload,
             "metadata": {
                 "enable_ddg": enable_ddg,
                 "enable_holehe": enable_holehe,
@@ -106,6 +181,7 @@ async def run_scraping_task(
             if emails_found:
                 logger.info(f"Trovate {len(emails_found)} email per Holehe OSINT: {emails_found}")
                 from backend.services.holehe_adapter import run_holehe
+                from backend.services.databreach_service import check_data_breaches
                 for em in emails_found:
                     sites = await run_holehe(em)
                     if sites:
@@ -114,6 +190,15 @@ async def run_scraping_task(
                             "registered_sites": sites
                         })
                         logger.info(f"[OSINT HOLEHE] {em} -> {sites}")
+                    
+                    # Data breach check
+                    breaches = await check_data_breaches(em)
+                    if breaches:
+                        osint_payload["databreach_results"].append({
+                            "email": em,
+                            "breaches": breaches
+                        })
+                        logger.warning(f"[OSINT BREACH] {em} è esposta in {len(breaches)} databreaches!")
             
         import json
         payload_str = json.dumps(osint_payload, ensure_ascii=False)
@@ -257,3 +342,22 @@ def get_analysis_status(
         "raw_data_dump": analysis.raw_data_dump,
         "error_message": analysis.error_message
     }
+
+@router.delete("/analyze/{analysis_id}")
+def delete_analysis(
+    analysis_id: uuid.UUID,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Rimuove un'analisi dalla cronologia dell'utente.
+    """
+    analysis = session.get(ProfileAnalysis, analysis_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analisi non trovata")
+    if analysis.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Non autorizzato a eliminare questa analisi")
+    
+    session.delete(analysis)
+    session.commit()
+    return {"message": "Analisi eliminata con successo"}
