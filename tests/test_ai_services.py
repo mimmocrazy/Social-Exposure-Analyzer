@@ -57,8 +57,7 @@ async def test_calculate_risk_fallback(mocker):
     
     mocker.patch('backend.services.risk_engine.get_client', return_value=mock_client_instance)
     
-    report = await calculate_risk([])
+    with pytest.raises(RuntimeError) as exc_info:
+        await calculate_risk([])
     
-    assert report.score == 0
-    assert report.insufficient_data == True
-    assert report.level == "LOW"
+    assert "Errore critico Gemini API / NLP:" in str(exc_info.value)

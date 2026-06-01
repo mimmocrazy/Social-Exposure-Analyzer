@@ -2,7 +2,9 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 from backend.models import ProfileAnalysis, AnalysisStatus
 
-def test_analyze_profile(client: TestClient, session: Session):
+from backend.models.risk import RiskReport
+
+def test_analyze_profile(client: TestClient, session: Session, mocker):
     """
     Verifica il comportamento dell'endpoint principale di ingestion (POST /api/v1/analyze).
     
@@ -12,6 +14,14 @@ def test_analyze_profile(client: TestClient, session: Session):
     - Nel database in-memory venga generato correttamente il record associato.
     - Lo stato dell'analisi appena salvata sia esplicitamente 'PENDING'.
     """
+    
+    # Mockiamo calculate_risk per evitare chiamate di rete reali e test flaky per 503
+    from backend.models.risk import RiskSubScores
+    sub = RiskSubScores(identity_exposure=50, network_exposure=0, routine_exposure=0)
+    mock_report = RiskReport(score=50, score_breakdown=[], sub_scores=sub, level="MEDIUM", threat_vectors=[], mitigation_advice="Test", mitigation_sections=[], insufficient_data=False, pii_extracted=[])
+    mock_calc = mocker.AsyncMock(return_value=mock_report)
+    mocker.patch('backend.services.risk_engine.calculate_risk', new=mock_calc)
+    
     payload = {"target_url": "https://linkedin.com/in/test"}
     response = client.post("/api/v1/analyze", json=payload)
     
