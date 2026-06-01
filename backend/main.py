@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-load_dotenv() # Carica subito le variabili d'ambiente da .env
+load_dotenv(override=True) # Forza l'override delle variabili d'ambiente da .env
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

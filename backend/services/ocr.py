@@ -1,6 +1,10 @@
 import os
+import warnings
 import easyocr
 from backend.core.logger import logger
+
+# Ignora i fastidiosi warning di PyTorch sull'uso della CPU al posto della GPU
+warnings.filterwarnings("ignore", category=UserWarning, module="torch.utils.data.dataloader")
 
 _reader = None
 

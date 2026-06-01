@@ -18,29 +18,48 @@ router = APIRouter()
 async def guess_real_name(username: str) -> str:
     """Usa l'LLM per dedurre il nome reale dall'username per potenziare l'OSINT."""
     try:
-        from backend.services.risk_engine import get_client
-        client = get_client()
+        import os
+        from dotenv import dotenv_values
+        env_config = dotenv_values(".env")
+        ai_provider = env_config.get("AI_PROVIDER", "gemini").lower()
         prompt = f"Data l'username '{username}', deduci il probabile nome e cognome reale. Rispondi SOLO con il nome e cognome testuale, o 'Sconosciuto' se è totalmente impossibile da dedurre. Esempio 1: mario.rossi89 -> Mario Rossi. Esempio 2: tomasmontagna_ -> Tomas Montagna."
         
-        models_to_try = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
-        response = None
-        last_err = None
+        name = ""
         
-        for model_name in models_to_try:
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt
-                )
-                break
-            except Exception as e:
-                logger.warning(f"Errore con {model_name} in guess_real_name: {e}. Provo il fallback...")
-                last_err = e
-                
-        if response is None:
-            raise last_err
+        if ai_provider == "groq":
+            from groq import Groq
+            groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+            completion = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1
+            )
+            name = completion.choices[0].message.content.strip()
+        else:
+            from backend.services.risk_engine import get_client
+            client = get_client()
+            models_to_try = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest']
+            response = None
+            last_err = None
             
-        name = response.text.strip()
+            for model_name in models_to_try:
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt
+                    )
+                    break
+                except Exception as e:
+                    logger.warning(f"Errore con {model_name} in guess_real_name: {e}. Provo il fallback...")
+                    last_err = e
+                    
+            if response is None:
+                raise last_err
+                
+            name = response.text.strip()
+            
         if name and name.lower() != 'sconosciuto':
             return name
     except Exception as e:
@@ -109,12 +128,22 @@ async def run_scraping_task(
         import tempfile
         import os
         from backend.services.ocr import extract_text_from_image
+        from backend.services.risk_engine import summarize_media_context
         
         if images_to_ocr:
-            logger.info(f"Avvio estrazione OCR per {len(images_to_ocr)} immagini trovate.")
+            logger.info(f"Avvio estrazione OCR e AI context per {len(images_to_ocr)} immagini trovate.")
             async with httpx.AsyncClient() as img_client:
-                for idx, img_url in enumerate(images_to_ocr):
+                for idx, img_obj in enumerate(images_to_ocr):
                     try:
+                        # Handle both string (legacy) and dict (new) image formats
+                        img_url = img_obj if isinstance(img_obj, str) else img_obj.get("url")
+                        caption = None if isinstance(img_obj, str) else img_obj.get("caption")
+                        
+                        if not img_url:
+                            continue
+                            
+                        text = None
+                        
                         if img_url.startswith("/mocks/"):
                             local_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../frontend/public", img_url.lstrip("/")))
                             if os.path.exists(local_path):
@@ -122,28 +151,25 @@ async def run_scraping_task(
                                 tmp_mock_path = os.path.join(tempfile.gettempdir(), f"ocr_mock_{analysis_id}_{idx}.png")
                                 shutil.copy(local_path, tmp_mock_path)
                                 text = extract_text_from_image(tmp_mock_path)
-                                if text and len(text.strip()) > 2:
-                                    ocr_texts.append(text)
-                                    ocr_results_payload.append({
-                                        "url": img_url,
-                                        "text_extracted": text
-                                    })
-                            continue
+                        else:
+                            img_resp = await img_client.get(img_url, timeout=10.0)
+                            if img_resp.status_code == 200:
+                                tmp_path = os.path.join(tempfile.gettempdir(), f"ocr_img_{analysis_id}_{idx}.jpg")
+                                with open(tmp_path, "wb") as f:
+                                    f.write(img_resp.content)
+                                text = extract_text_from_image(tmp_path)
+                        
+                        if text and len(text.strip()) > 2:
+                            ocr_texts.append(text)
+                            ai_description = await summarize_media_context(text, caption)
+                            ocr_results_payload.append({
+                                "url": img_url,
+                                "text_extracted": text,
+                                "ai_description": ai_description
+                            })
                             
-                        img_resp = await img_client.get(img_url, timeout=10.0)
-                        if img_resp.status_code == 200:
-                            tmp_path = os.path.join(tempfile.gettempdir(), f"ocr_img_{analysis_id}_{idx}.jpg")
-                            with open(tmp_path, "wb") as f:
-                                f.write(img_resp.content)
-                            text = extract_text_from_image(tmp_path)
-                            if text and len(text.strip()) > 2:
-                                ocr_texts.append(text)
-                                ocr_results_payload.append({
-                                    "url": img_url,
-                                    "text_extracted": text
-                                })
                     except Exception as e:
-                        logger.warning(f"Errore download/OCR immagine: {e}")
+                        logger.warning(f"Errore download ocr o riassunto immagine {idx}: {e}")
 
         # NLP Pipeline classica (SpaCy) come da requisiti universitari
         from backend.services.nlp import extract_pii
@@ -202,13 +228,17 @@ async def run_scraping_task(
             
         import json
         payload_str = json.dumps(osint_payload, ensure_ascii=False)
+        original_length = len(payload_str)
         
-        # Limite di sicurezza Anti-DoS
-        if len(payload_str) > 15000:
-            logger.warning(f"DoS Prevention: Testo troncato da {len(payload_str)} a 15000 caratteri prima dell'NLP.")
-            payload_str = payload_str[:15000]
+        # Limite di sicurezza Anti-DoS ottimizzato per LLM ad ampio contesto
+        max_allowed_length = 60000
+        if original_length > max_allowed_length:
+            logger.warning(f"DoS Prevention: Testo troncato da {original_length} a {max_allowed_length} caratteri prima del Risk Engine.")
+            payload_str = payload_str[:max_allowed_length]
+        else:
+            logger.info(f"Risk Engine Payload preparato con successo. Dimensione: {original_length} caratteri (limite DoS: {max_allowed_length}).")
             
-        # Risk Engine Analysis (Gemini Flash) tramite payload JSON strutturato
+        # Risk Engine Analysis tramite payload JSON strutturato
         from backend.services.risk_engine import calculate_risk
         risk_report = await calculate_risk(payload_str, target, real_name_deduced)
         

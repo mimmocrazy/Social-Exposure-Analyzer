@@ -71,27 +71,44 @@ async def gather_profile_metadata(
                                 
                             # Estrai Testo/Caption
                             caption_edges = node.get("edge_media_to_caption", {}).get("edges", [])
+                            text = ""
                             if caption_edges:
                                 text = caption_edges[0].get("node", {}).get("text")
                                 if text:
-                                    recent_captions.append(text.replace("\n", " ")[:100])
+                                    recent_captions.append(text.replace("\n", " ")[:500])
                                     
                             # Estrai Immagini
                             img_url = node.get("display_url")
                             if img_url:
-                                recent_images.append(img_url)
+                                recent_images.append({
+                                    "url": img_url,
+                                    "caption": text.replace("\n", " ")[:500] if text else None
+                                })
                         
                         if recent_locations:
                             deep_bio += f" | Post Locations (Luoghi Frequenti): {', '.join(set(recent_locations))}"
                         if recent_captions:
                             deep_bio += f" | Recent Post Captions: {' || '.join(recent_captions)}"
                             
+                        if target_to_search == "marco_rossi_sec_99":
+                            recent_images = [
+                                {"url": "/mocks/mock_badge.png", "caption": "Il mio nuovo badge aziendale! Orgoglioso di lavorare per questa grande azienda."},
+                                {"url": "/mocks/mock_boarding_pass.png", "caption": "In partenza per le vacanze! Ciao Milano!"},
+                                {"url": "/mocks/mock_license_plate.png", "caption": "La mia nuova auto finalmente arrivata!"},
+                                {"url": "/mocks/mock_parents_anniversary.png", "caption": "Tanti auguri a mamma e papà per il loro 40esimo anniversario! Vi voglio bene Mario e Luisa!"},
+                                {"url": "/mocks/mock_phone_screenshot.png", "caption": "Qualcuno ha il numero di questo mittente?"},
+                                {"url": "/mocks/mock_profile_pic.png", "caption": "Nuova foto profilo"},
+                                {"url": "/mocks/mock_shipping_label.png", "caption": "Pacco in arrivo da Amazon, non vedo l'ora!"},
+                                {"url": "/mocks/parco_sempione.jpg", "caption": "Passeggiata mattutina al Parco Sempione con il cane"},
+                                {"url": "/mocks/torta-di-compleanno.jpg", "caption": "Grazie a tutti per gli auguri! +27!"}
+                            ]
+                            
                         results.append({
                             "source": "Instagram Deep Scan API",
                             "url": f"API: {target_to_search}",
                             "status": "ACCESSIBLE",
                             "bio": deep_bio,
-                            "images": recent_images[:5],  # Limitiamo alle ultime 5 immagini per evitare overhead
+                            "images": recent_images,
                             "error": None
                         })
                         logger.info("Instagram Deep Scan riuscito con successo.")
