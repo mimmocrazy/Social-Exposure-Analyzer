@@ -51,3 +51,8 @@ export const getAnalysisHistory = async () => {
     const response = await apiClient.get(`/history`);
     return response.data;
 };
+
+export const deleteAnalysis = async (analysis_id) => {
+    const response = await apiClient.delete(`/analyze/${analysis_id}`);
+    return response.data;
+};

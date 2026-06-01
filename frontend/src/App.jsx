@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Text, Metric, Flex, ProgressBar, Title, BarChart, TextInput, Button } from '@tremor/react';
-import { startAnalysis, getAnalysisStatus, getAnalysisHistory, login, register } from './api';
+import { startAnalysis, getAnalysisStatus, getAnalysisHistory, login, register, deleteAnalysis } from './api';
 
 const queryClient = new QueryClient();
 
@@ -116,15 +116,66 @@ const getIconForPII = (label) => {
   );
 };
 
+const getOfficialIcon = (iconName, isActive) => {
+  switch (iconName) {
+    case 'instagram':
+      return (
+        <svg className={`w-12 h-12 transition-all duration-700 ${isActive ? 'drop-shadow-[0_0_15px_rgba(236,72,153,0.5)] animate-pulse' : 'text-gray-500 opacity-50'}`} fill="none" viewBox="0 0 24 24">
+          <defs>
+            <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#f09433" />
+              <stop offset="25%" stopColor="#e6683c" />
+              <stop offset="50%" stopColor="#dc2743" />
+              <stop offset="75%" stopColor="#cc2366" />
+              <stop offset="100%" stopColor="#bc1888" />
+            </linearGradient>
+          </defs>
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke={isActive ? "url(#ig-grad)" : "currentColor"} strokeWidth={1.5} />
+          <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" stroke={isActive ? "url(#ig-grad)" : "currentColor"} strokeWidth={1.5} />
+          <circle cx="17.5" cy="6.5" r="1.5" fill={isActive ? "url(#ig-grad)" : "currentColor"} />
+        </svg>
+      );
+    case 'x':
+      return (
+        <svg className={`w-12 h-12 transition-all duration-700 ${isActive ? 'text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] animate-pulse' : 'text-gray-500'}`} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      );
+    case 'facebook':
+      return (
+        <svg className={`w-12 h-12 transition-all duration-700 ${isActive ? 'text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] animate-pulse' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 24 24">
+          <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z" />
+        </svg>
+      );
+    case 'linkedin':
+      return (
+        <svg className={`w-12 h-12 transition-all duration-700 ${isActive ? 'text-sky-500 drop-shadow-[0_0_15px_rgba(14,165,233,0.5)] animate-pulse' : 'text-gray-500'}`} fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+        </svg>
+      );
+    case 'gears':
+      return <span className="text-4xl md:text-5xl">⚙️</span>;
+    case 'spy':
+      return <span className="text-4xl md:text-5xl">🕵️</span>;
+    case 'brain':
+      return <span className="text-4xl md:text-5xl">🧠</span>;
+    case 'doc':
+      return <span className="text-4xl md:text-5xl">📄</span>;
+    default:
+      return <span className="text-4xl md:text-5xl">🔍</span>;
+  }
+};
+
 const InteractiveLoading = () => {
   const steps = [
-    { text: "Inizializzazione Deep OSINT", icon: "⚙️", delay: 0 },
-    { text: "Scansione Instagram", icon: "📸", delay: 1500 },
-    { text: "Footprint X (Twitter)", icon: "🐦", delay: 3500 },
-    { text: "Verifica LinkedIn & FaceBook", icon: "👥", delay: 5500 },
-    { text: "Estrazione Dati Sensibili", icon: "🕵️", delay: 7500 },
-    { text: "Audit AI in corso", icon: "🧠", delay: 10000 },
-    { text: "Stesura Risk Report", icon: "📄", delay: 13000 }
+    { text: "Inizializzazione Deep OSINT", icon: "gears", delay: 0 },
+    { text: "Scansione Instagram", icon: "instagram", delay: 1500 },
+    { text: "Footprint X (Twitter)", icon: "x", delay: 3500 },
+    { text: "Verifica LinkedIn", icon: "linkedin", delay: 5500 },
+    { text: "Verifica FaceBook", icon: "facebook", delay: 7500 },
+    { text: "Estrazione Dati Sensibili", icon: "spy", delay: 9500 },
+    { text: "Audit AI in corso", icon: "brain", delay: 12000 },
+    { text: "Stesura Risk Report", icon: "doc", delay: 14500 }
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -156,7 +207,7 @@ const InteractiveLoading = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
-                className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all duration-1000 w-36 md:w-44 text-center relative group ${isActive
+                className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all duration-1000 w-40 h-40 md:w-48 md:h-48 aspect-square flex-shrink-0 text-center relative group ${isActive
                     ? 'bg-blue-500/10 border-blue-400/50 shadow-[0_0_40px_rgba(59,130,246,0.3)] z-10 scale-110'
                     : isPast
                       ? 'bg-green-500/5 border-green-500/20 opacity-80 scale-95'
@@ -176,8 +227,8 @@ const InteractiveLoading = () => {
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                   </div>
                 )}
-                <div className={`text-4xl md:text-5xl mb-4 transition-transform duration-700 ${isActive ? 'scale-110 drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]' : ''}`}>
-                  {step.icon}
+                <div className={`flex items-center justify-center mb-4 transition-transform duration-700 ${isActive ? 'scale-110' : ''}`}>
+                  {getOfficialIcon(step.icon, isActive || isPast)}
                 </div>
                 <span className={`text-xs md:text-sm font-semibold tracking-wide transition-colors duration-700 ${isActive ? 'text-white drop-shadow-md' : isPast ? 'text-green-400/80' : 'text-gray-500'}`}>
                   {step.text}
@@ -242,6 +293,7 @@ function Dashboard({ analysisId }) {
 
     const scrapers = data.raw_data_dump?.scraper_results || [];
     const holehe = data.raw_data_dump?.holehe_results || [];
+    const ocrResults = data.raw_data_dump?.ocr_results || [];
     const metadata = data.raw_data_dump?.metadata || {};
 
     const isSherlockActive = metadata.sherlock_attempted !== false;
@@ -373,21 +425,27 @@ function Dashboard({ analysisId }) {
                   <span className="text-gray-300 font-medium">Identità e Contatti</span>
                   <span className="text-white font-bold">{data.llm_report?.sub_scores?.identity_exposure || 0}%</span>
                 </div>
-                <ProgressBar value={data.llm_report?.sub_scores?.identity_exposure || 0} color="red" className="h-1.5" />
+                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.identity_exposure || 0}%` }} transition={{ duration: 1, ease: "easeOut" }} className="bg-red-500 h-1.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.8)]"></motion.div>
+                </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-300 font-medium">Network e Relazioni</span>
                   <span className="text-white font-bold">{data.llm_report?.sub_scores?.network_exposure || 0}%</span>
                 </div>
-                <ProgressBar value={data.llm_report?.sub_scores?.network_exposure || 0} color="orange" className="h-1.5" />
+                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.network_exposure || 0}%` }} transition={{ duration: 1, ease: "easeOut" }} className="bg-orange-500 h-1.5 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"></motion.div>
+                </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-gray-300 font-medium">Routine e Luoghi</span>
                   <span className="text-white font-bold">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
                 </div>
-                <ProgressBar value={data.llm_report?.sub_scores?.routine_exposure || 0} color="amber" className="h-1.5" />
+                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1, ease: "easeOut" }} className="bg-amber-400 h-1.5 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.8)]"></motion.div>
+                </div>
               </div>
             </div>
 
@@ -458,177 +516,56 @@ function Dashboard({ analysisId }) {
           </div>
         </div>
 
-        {/* Dynamic Routine & Tools Analysis Row */}
-        <div className="grid grid-cols-1 gap-6 mt-6">
-          {/* Card 2: Strumenti OSINT Integrati */}
-          <div className="glassmorphism rounded-3xl p-8 flex flex-col relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 -z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
-
-            <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+{/* OCR Media Gallery Widget */}
+        {ocrResults && (
+          <div className="glassmorphism rounded-3xl p-8 flex flex-col mt-6 border border-white/5 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-cyan-500/5 -z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="flex justify-between items-center mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border border-white/10">
-                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
+                <div className="p-2.5 bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 rounded-xl border border-white/10">
+                  <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 </div>
                 <div>
-                  <h3 className="text-white text-lg font-bold tracking-tight">Analizzatore Strumenti OSINT</h3>
-                  <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Stato Telemetria e Payload</p>
+                  <h3 className="text-white text-xl font-bold tracking-tight">Analisi Media & OCR</h3>
+                  <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Testo Estratto da Immagini Post</p>
                 </div>
               </div>
+              <span className="text-xs bg-white/10 text-cyan-400 px-3 py-1 rounded-full font-bold">{ocrResults.length} Rilevamenti</span>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Sherlock */}
-              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isSherlockActive ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10 hover:border-green-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
-                {isSherlockActive && <div className="absolute -top-10 -right-10 w-24 h-24 bg-green-500/10 rounded-full blur-2xl"></div>}
-                <div className="flex items-center justify-between mb-3 relative z-10">
-                  <div className="flex items-center space-x-2">
-                    <div className={`p-2 rounded-lg ${isSherlockActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    </div>
-                    <h4 className="text-white text-sm font-bold font-mono">Sherlock</h4>
-                  </div>
-                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isSherlockActive ? 'bg-green-500/20 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(74,222,128,0.2)]' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                    {isSherlockActive ? 'ATTIVO' : 'NON APPLICATO'}
-                  </span>
-                </div>
-                <div className="relative z-10">
-                  <p className="text-gray-400 text-xs font-light mb-3">Ricerca footprint globale su {isSherlockActive ? '400+' : '0'} network.</p>
-                  {isSherlockActive ? (
-                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-green-500/10">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Hit Trovate</span>
-                      <span className="text-green-400 font-mono font-bold text-sm">
-                        {scrapers.filter(s => s.source === 'Sherlock Username Scan').length > 0 ? scrapers.filter(s => s.source === 'Sherlock Username Scan').length : (scrapers.length > 0 ? Math.floor(Math.random() * 5) + 1 : 0)}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="h-9"></div>
-                  )}
-                </div>
+            
+            {ocrResults.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 border border-white/5 bg-white/[0.02] rounded-2xl">
+                <svg className="w-12 h-12 text-gray-500 opacity-30 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <p className="text-gray-400 text-sm font-medium">Nessun media o testo estratto disponibile.</p>
               </div>
-
-              {/* Instagram */}
-              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isInstagramSuccess ? 'bg-purple-500/5 border-purple-500/20 hover:bg-purple-500/10 hover:border-purple-500/30' : isInstagramRateLimit ? 'bg-red-500/5 border-red-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
-                {isInstagramSuccess && <div className="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>}
-                <div className="flex items-center justify-between mb-3 relative z-10">
-                  <div className="flex items-center space-x-2">
-                    <div className={`p-2 rounded-lg ${isInstagramSuccess ? 'bg-purple-500/20 text-purple-400' : isInstagramRateLimit ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-500'}`}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {ocrResults.map((ocr, idx) => (
+                  <div key={idx} className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden flex flex-col hover:bg-white/[0.05] transition-colors">
+                    <div className="h-40 w-full overflow-hidden bg-black/40 relative group/img">
+                      <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 group-hover/img:scale-105 transition-all duration-500" />
+                      <div className="absolute top-2 right-2 bg-red-500/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold text-white shadow-lg border border-red-400/50 flex items-center space-x-1">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <span>TESTO RILEVATO</span>
+                      </div>
                     </div>
-                    <h4 className="text-white text-sm font-bold font-mono">IG Deep Scan</h4>
+                    <div className="p-4 flex-1 flex flex-col">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-2 block">Testo Estratto in Chiaro (Computer Vision)</span>
+                      <div className="bg-black/30 rounded-xl p-3 border border-white/5 flex-1 overflow-y-auto max-h-32 custom-scrollbar">
+                        <p className="text-gray-300 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap">
+                          {ocr.text_extracted}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isInstagramSuccess ? 'bg-purple-500/20 text-purple-400 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : isInstagramRateLimit ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                    {isInstagramSuccess ? 'ESTRATO' : isInstagramRateLimit ? 'RATE LIMIT' : 'NON APPLICATO'}
-                  </span>
-                </div>
-                <div className="relative z-10">
-                  <p className="text-gray-400 text-xs font-light mb-3">Estrazione meta-dati e followers.</p>
-                  {isInstagramSuccess ? (
-                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-purple-500/10">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Post Analizzati</span>
-                      <span className="text-purple-400 font-mono font-bold text-sm">12</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-gray-700/50">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Status API</span>
-                      <span className="text-gray-500 font-mono font-bold text-xs">{isInstagramRateLimit ? '429 TOO_MANY_REQ' : 'BYPASSED'}</span>
-                    </div>
-                  )}
-                </div>
+                ))}
               </div>
-
-              {/* DuckDuckGo */}
-              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isDdgActive ? 'bg-cyan-500/5 border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
-                {isDdgActive && <div className="absolute -top-10 -right-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl"></div>}
-                <div className="flex items-center justify-between mb-3 relative z-10">
-                  <div className="flex items-center space-x-2">
-                    <div className={`p-2 rounded-lg ${isDdgActive ? 'bg-cyan-500/20 text-cyan-400' : 'bg-gray-800 text-gray-500'}`}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
-                    </div>
-                    <h4 className="text-white text-sm font-bold font-mono">Dork Engine</h4>
-                  </div>
-                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isDdgActive ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                    {isDdgActive ? 'ATTIVO' : 'DISATTIVATO'}
-                  </span>
-                </div>
-                <div className="relative z-10">
-                  <p className="text-gray-400 text-xs font-light mb-3">Ricerca avanzata leak e menzioni.</p>
-                  {isDdgActive ? (
-                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-cyan-500/10">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Query Dorks</span>
-                      <span className="text-cyan-400 font-mono font-bold text-sm">4 Executed</span>
-                    </div>
-                  ) : (
-                    <div className="h-9"></div>
-                  )}
-                </div>
-              </div>
-
-              {/* Holehe */}
-              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isHoleheSuccess ? 'bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10 hover:border-rose-500/30' : isHoleheAttempted ? 'bg-orange-500/5 border-orange-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
-                {isHoleheSuccess && <div className="absolute -top-10 -right-10 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl"></div>}
-                <div className="flex items-center justify-between mb-3 relative z-10">
-                  <div className="flex items-center space-x-2">
-                    <div className={`p-2 rounded-lg ${isHoleheSuccess ? 'bg-rose-500/20 text-rose-400' : isHoleheAttempted ? 'bg-orange-500/20 text-orange-400' : 'bg-gray-800 text-gray-500'}`}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                    </div>
-                    <h4 className="text-white text-sm font-bold font-mono">Holehe Check</h4>
-                  </div>
-                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isHoleheSuccess ? 'bg-rose-500/20 text-rose-400 border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]' : isHoleheAttempted ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                    {isHoleheSuccess ? 'HIT TROVATI' : isHoleheAttempted ? 'NESSUN HIT' : 'DISATTIVATO'}
-                  </span>
-                </div>
-                <div className="relative z-10">
-                  <p className="text-gray-400 text-xs font-light mb-3">Verifica presenza su oltre 120+ piattaforme.</p>
-                  {isHoleheAttempted ? (
-                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-white/5">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Iscrizioni</span>
-                      <span className={`${isHoleheSuccess ? 'text-rose-400' : 'text-gray-500'} font-mono font-bold text-sm`}>
-                        {isHoleheSuccess ? holehe.reduce((acc, h) => acc + (h.registered_sites?.length || 0), 0) : 0}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="h-9"></div>
-                  )}
-                </div>
-              </div>
-
-              {/* Facebook */}
-              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isFbSuccess ? 'bg-blue-600/5 border-blue-600/20 hover:bg-blue-600/10 hover:border-blue-600/30' : isFbAttempted ? 'bg-red-500/5 border-red-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
-                {isFbSuccess && <div className="absolute -top-10 -right-10 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl"></div>}
-                <div className="flex items-center justify-between mb-3 relative z-10">
-                  <div className="flex items-center space-x-2">
-                    <div className={`p-2 rounded-lg ${isFbSuccess ? 'bg-blue-600/20 text-blue-400' : isFbAttempted ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-500'}`}>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" /></svg>
-                    </div>
-                    <h4 className="text-white text-sm font-bold font-mono">FB Deep Scan</h4>
-                  </div>
-                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isFbSuccess ? 'bg-blue-600/20 text-blue-400 border-blue-600/30 shadow-[0_0_10px_rgba(37,99,235,0.2)]' : isFbAttempted ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
-                    {isFbSuccess ? 'ESTRATO' : isFbAttempted ? 'FALLITO' : 'NON APPLICATO'}
-                  </span>
-                </div>
-                <div className="relative z-10">
-                  <p className="text-gray-400 text-xs font-light mb-3">Estrazione meta-dati da Facebook.</p>
-                  {isFbSuccess ? (
-                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-blue-600/10">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Testo Estratto</span>
-                      <span className="text-blue-400 font-mono font-bold text-sm">~2KB</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-gray-700/50">
-                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Status API</span>
-                      <span className="text-gray-500 font-mono font-bold text-xs">{isFbAttempted ? 'AUTH ERROR' : 'BYPASSED'}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-        </div>
+        )}
 
-
-        {/* AI Audit Alert Box */}
+        
+{/* AI Audit Alert Box */}
         {data.llm_report && (
           <div className="relative overflow-hidden rounded-3xl border border-white/10 glassmorphism p-0 flex flex-col md:flex-row">
             <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-500 to-purple-500 hidden md:block"></div>
@@ -740,7 +677,180 @@ function Dashboard({ analysisId }) {
             </div>
           </div>
         )}
-      </div>
+
+{/* Dynamic Routine & Tools Analysis Row */}
+        <div className="grid grid-cols-1 gap-6 mt-6">
+          {/* Card 2: Strumenti OSINT Integrati */}
+          <div className="glassmorphism rounded-3xl p-8 flex flex-col relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 -z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+            <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border border-white/10">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-white text-lg font-bold tracking-tight">Analizzatore Strumenti OSINT</h3>
+                  <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Stato Telemetria e Payload</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Sherlock */}
+              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isSherlockActive ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10 hover:border-green-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
+                {isSherlockActive && <div className="absolute -top-10 -right-10 w-24 h-24 bg-green-500/10 rounded-full blur-2xl"></div>}
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <div className="flex items-center space-x-2">
+                    <div className={`p-2 rounded-lg ${isSherlockActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-800 text-gray-500'}`}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                    <h4 className="text-white text-sm font-bold font-mono">Sherlock</h4>
+                  </div>
+                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isSherlockActive ? 'bg-green-500/20 text-green-400 border-green-500/30 shadow-[0_0_10px_rgba(74,222,128,0.2)]' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                    {isSherlockActive ? 'ATTIVO' : 'NON APPLICATO'}
+                  </span>
+                </div>
+                <div className="relative z-10">
+                  <p className="text-gray-400 text-xs font-light mb-3">Ricerca footprint globale su {isSherlockActive ? '400+' : '0'} network.</p>
+                  {isSherlockActive ? (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-green-500/10">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Hit Trovate</span>
+                      <span className="text-green-400 font-mono font-bold text-sm">
+                        {scrapers.filter(s => s.source === 'Sherlock Username Scan').length > 0 ? scrapers.filter(s => s.source === 'Sherlock Username Scan').length : (scrapers.length > 0 ? Math.floor(Math.random() * 5) + 1 : 0)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="h-9"></div>
+                  )}
+                </div>
+              </div>
+
+              {/* Instagram */}
+              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isInstagramSuccess ? 'bg-purple-500/5 border-purple-500/20 hover:bg-purple-500/10 hover:border-purple-500/30' : isInstagramRateLimit ? 'bg-red-500/5 border-red-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
+                {isInstagramSuccess && <div className="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>}
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <div className="flex items-center space-x-2">
+                    <div className={`p-2 rounded-lg ${isInstagramSuccess ? 'bg-purple-500/20 text-purple-400' : isInstagramRateLimit ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-500'}`}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </div>
+                    <h4 className="text-white text-sm font-bold font-mono">IG Deep Scan</h4>
+                  </div>
+                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isInstagramSuccess ? 'bg-purple-500/20 text-purple-400 border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : isInstagramRateLimit ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                    {isInstagramSuccess ? 'COMPLETATO' : isInstagramRateLimit ? 'RATE LIMIT' : 'NON APPLICATO'}
+                  </span>
+                </div>
+                <div className="relative z-10">
+                  <p className="text-gray-400 text-xs font-light mb-3">Estrazione meta-dati e followers.</p>
+                  {isInstagramSuccess ? (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-purple-500/10">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Post Analizzati</span>
+                      <span className="text-purple-400 font-mono font-bold text-sm">12</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-gray-700/50">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Status API</span>
+                      <span className="text-gray-500 font-mono font-bold text-xs">{isInstagramRateLimit ? '429 TOO_MANY_REQ' : 'BYPASSED'}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* DuckDuckGo */}
+              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isDdgActive ? 'bg-cyan-500/5 border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
+                {isDdgActive && <div className="absolute -top-10 -right-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl"></div>}
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <div className="flex items-center space-x-2">
+                    <div className={`p-2 rounded-lg ${isDdgActive ? 'bg-cyan-500/20 text-cyan-400' : 'bg-gray-800 text-gray-500'}`}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                    </div>
+                    <h4 className="text-white text-sm font-bold font-mono">Dork Engine</h4>
+                  </div>
+                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isDdgActive ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                    {isDdgActive ? 'ATTIVO' : 'DISATTIVATO'}
+                  </span>
+                </div>
+                <div className="relative z-10">
+                  <p className="text-gray-400 text-xs font-light mb-3">Ricerca avanzata leak e menzioni.</p>
+                  {isDdgActive ? (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-cyan-500/10">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Query Dorks</span>
+                      <span className="text-cyan-400 font-mono font-bold text-sm">4 Executed</span>
+                    </div>
+                  ) : (
+                    <div className="h-9"></div>
+                  )}
+                </div>
+              </div>
+
+              {/* Holehe */}
+              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isHoleheSuccess ? 'bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10 hover:border-rose-500/30' : isHoleheAttempted ? 'bg-orange-500/5 border-orange-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
+                {isHoleheSuccess && <div className="absolute -top-10 -right-10 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl"></div>}
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <div className="flex items-center space-x-2">
+                    <div className={`p-2 rounded-lg ${isHoleheSuccess ? 'bg-rose-500/20 text-rose-400' : isHoleheAttempted ? 'bg-orange-500/20 text-orange-400' : 'bg-gray-800 text-gray-500'}`}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <h4 className="text-white text-sm font-bold font-mono">Holehe Check</h4>
+                  </div>
+                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isHoleheSuccess ? 'bg-rose-500/20 text-rose-400 border-rose-500/30 shadow-[0_0_10px_rgba(244,63,94,0.2)]' : isHoleheAttempted ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                    {isHoleheSuccess ? 'HIT TROVATI' : isHoleheAttempted ? 'NESSUN HIT' : 'DISATTIVATO'}
+                  </span>
+                </div>
+                <div className="relative z-10">
+                  <p className="text-gray-400 text-xs font-light mb-3">Verifica presenza su oltre 120+ piattaforme.</p>
+                  {isHoleheAttempted ? (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-white/5">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Iscrizioni</span>
+                      <span className={`${isHoleheSuccess ? 'text-rose-400' : 'text-gray-500'} font-mono font-bold text-sm`}>
+                        {isHoleheSuccess ? holehe.reduce((acc, h) => acc + (h.registered_sites?.length || 0), 0) : 0}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="h-9"></div>
+                  )}
+                </div>
+              </div>
+
+              {/* Facebook */}
+              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isFbSuccess ? 'bg-blue-600/5 border-blue-600/20 hover:bg-blue-600/10 hover:border-blue-600/30' : isFbAttempted ? 'bg-red-500/5 border-red-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
+                {isFbSuccess && <div className="absolute -top-10 -right-10 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl"></div>}
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <div className="flex items-center space-x-2">
+                    <div className={`p-2 rounded-lg ${isFbSuccess ? 'bg-blue-600/20 text-blue-400' : isFbAttempted ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-500'}`}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" /></svg>
+                    </div>
+                    <h4 className="text-white text-sm font-bold font-mono">FB Deep Scan</h4>
+                  </div>
+                  <span className={`text-[9px] px-2 py-1 rounded-md border font-bold tracking-wider ${isFbSuccess ? 'bg-blue-600/20 text-blue-400 border-blue-600/30 shadow-[0_0_10px_rgba(37,99,235,0.2)]' : isFbAttempted ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-gray-800 text-gray-500 border-gray-700'}`}>
+                    {isFbSuccess ? 'COMPLETATO' : isFbAttempted ? 'FALLITO' : 'NON APPLICATO'}
+                  </span>
+                </div>
+                <div className="relative z-10">
+                  <p className="text-gray-400 text-xs font-light mb-3">Estrazione meta-dati da Facebook.</p>
+                  {isFbSuccess ? (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-blue-600/10">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Testo Estratto</span>
+                      <span className="text-blue-400 font-mono font-bold text-sm">~2KB</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-gray-700/50">
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Status API</span>
+                      <span className="text-gray-500 font-mono font-bold text-xs">{isFbAttempted ? 'AUTH ERROR' : 'BYPASSED'}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        
+
+              </div>
     );
   }
 
@@ -852,6 +962,7 @@ function MainApp() {
   const [targetUrl, setTargetUrl] = useState('');
   const [analysisId, setAnalysisId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inputType, setInputType] = useState('generic'); // 'generic', 'instagram', 'facebook'
 
   // OSINT Settings State
   const [enableDdg, setEnableDdg] = useState(true);
@@ -882,10 +993,22 @@ function MainApp() {
         enableFbScan ? fbXs : null
       );
       setAnalysisId(res.analysis_id);
+      queryClient.refetchQueries({ queryKey: ['history'] });
     } catch (err) {
       alert("Errore nell'avvio dell'analisi.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteHistory = async (e, id) => {
+    e.stopPropagation();
+    if (!confirm("Sei sicuro di voler eliminare questa ricerca dalla cronologia?")) return;
+    try {
+      await deleteAnalysis(id);
+      queryClient.refetchQueries({ queryKey: ['history'] });
+    } catch (err) {
+      alert("Errore durante l'eliminazione della ricerca.");
     }
   };
 
@@ -910,6 +1033,31 @@ function MainApp() {
               Mappa istantaneamente l'impronta digitale di un bersaglio per valutare i rischi di <strong className="text-blue-400 font-semibold">social engineering</strong> tramite sensori OSINT avanzati e Intelligenza Artificiale.
             </p>
 
+            {/* Selettore Piattaforma / Tipo di Input per chiarezza */}
+            <div className="flex space-x-2 mb-4 bg-white/5 p-1 rounded-xl border border-white/5 max-w-md backdrop-blur-xl">
+              <button
+                type="button"
+                onClick={() => { setInputType('generic'); setTargetUrl(''); }}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-300 ${inputType === 'generic' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+              >
+                Generico / Username
+              </button>
+              <button
+                type="button"
+                onClick={() => { setInputType('instagram'); setTargetUrl(''); setEnableIgScan(true); }}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-300 ${inputType === 'instagram' ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+              >
+                Instagram
+              </button>
+              <button
+                type="button"
+                onClick={() => { setInputType('facebook'); setTargetUrl(''); setEnableFbScan(true); }}
+                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all duration-300 ${inputType === 'facebook' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+              >
+                Facebook
+              </button>
+            </div>
+
             <form onSubmit={handleSubmit} className="w-full flex flex-col group relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/40 to-purple-500/40 rounded-2xl blur-xl opacity-30 group-hover:opacity-70 transition duration-500 group-hover:duration-200"></div>
               <div className="relative flex items-center bg-surface border border-white/10 rounded-2xl p-2 shadow-2xl backdrop-blur-xl">
@@ -920,7 +1068,13 @@ function MainApp() {
                   type="text"
                   value={targetUrl}
                   onChange={(e) => setTargetUrl(e.target.value)}
-                  placeholder="URL profilo o username..."
+                  placeholder={
+                    inputType === 'instagram'
+                      ? "Es. username o URL profilo Instagram..."
+                      : inputType === 'facebook'
+                        ? "Es. URL profilo Facebook..."
+                        : "Es. username Sherlock o URL generico..."
+                  }
                   className="w-full bg-transparent text-white px-3 py-4 outline-none placeholder-gray-500 text-lg font-medium"
                   disabled={isSubmitting}
                 />
@@ -942,9 +1096,9 @@ function MainApp() {
                     <div key={idx} onClick={() => setAnalysisId(h.id)} className="flex items-center justify-between bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 p-4 rounded-2xl cursor-pointer transition-all duration-300 hover:border-white/10 group hover:shadow-lg">
                       <div className="flex items-center space-x-3 truncate">
                         <div className={`w-2 h-2 rounded-full ${h.status === 'COMPLETED' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : h.status === 'FAILED' ? 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]' : 'bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.5)]'}`}></div>
-                        <span className="text-gray-300 font-medium truncate max-w-[150px] sm:max-w-[200px] group-hover:text-white transition-colors">{h.target_url}</span>
+                        <span className="text-gray-300 font-medium truncate max-w-[120px] sm:max-w-[180px] group-hover:text-white transition-colors">{h.target_url}</span>
                       </div>
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-3">
                         {h.risk_level && (
                           <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-lg border ${h.risk_level === 'CRITICAL' || h.risk_level === 'HIGH' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
                             {h.risk_level}
@@ -953,6 +1107,17 @@ function MainApp() {
                         <div className="bg-white/5 p-1.5 rounded-lg group-hover:bg-white/10 transition-colors">
                           <svg className="w-4 h-4 text-gray-500 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </div>
+                        {/* Bottone Elimina */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteHistory(e, h.id)}
+                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/30 text-red-400/80 hover:text-red-400 transition-colors"
+                          title="Elimina dalla cronologia"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   ))}
