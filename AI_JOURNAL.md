@@ -928,3 +928,27 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Sintesi Prompt:**
 > "Elimina la ricerca specifica su dork sensibili tramite DuckDuckGo, in quanto inadeguata al contesto. Sostituiscila con un modulo dedicato che verifichi l'eventuale compromissione dell'email target in archivi di Data Breach (come Have I Been Pwned o XposedOrNot). Aggiorna la pipeline di orchestrazione per innescare questa verifica contestualmente all'estrazione delle email, documenta la feature in ARCHITECTURE.md e aggiorna l'AI Journal seguendo il pattern consolidato."
 - **Spiegazione Tecnica:** Rimossa la dorking string in `scraper.py` e sostituita con query mirate a leak/pastebin (`pastebin OR dump OR data breach`). È stato poi sviluppato ex-novo il servizio `databreach_service.py` che si aggancia all'API gratuita di XposedOrNot. All'interno di `analyze.py`, il flusso Holehe è stato potenziato per innescare a cascata il check sui data breach su ogni email estratta (regex da web e bio). Infine, aggiornato `ARCHITECTURE.md` con l'introduzione della Fase 5.11 dedicata.
+
+---
+
+### Data: 2026-06-01 (Ore 15:30)
+- **Task Eseguito:** Switch Architetturale AI Provider (Groq Integration).
+- **File Modificati:** `requirements.txt`, `.env`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> Procediamo con il micro-task: 'Switch Architetturale AI Provider'.
+> Durante l'utilizzo intensivo in fase di test, l'API di Google Gemini ha restituito continui errori `429 RESOURCE_EXHAUSTED` e `503 UNAVAILABLE`, specialmente sui payload massivi generati dallo scraper.
+>
+> 1. **Integrazione Groq:**
+>    - Per ovviare definitivamente al problema dei Rate Limits del Free Tier in Europa, introduci il supporto ufficiale a **Groq**.
+>    - Aggiungi la libreria `groq` alle dipendenze.
+>
+> 2. **Refactoring e Switch Dinamico:**
+>    - Modifica `risk_engine.py` e `analyze.py` per non essere più strettamente accoppiati solo a Gemini.
+>    - Implementa una variabile d'ambiente `AI_PROVIDER` (default "groq") nel file `.env`.
+>    - Se il provider è Groq, utilizza i modelli ultra-veloci `llama3-8b-8192` (per identity dedup) e `llama-3.3-70b-versatile` (per il Risk Report).
+>
+> 3. **Structured Outputs Llama 3:**
+>    - Replica la precisione dello schema JSON di Gemini utilizzando il parametro `response_format={"type": "json_object"}` e iniettando lo schema di Pydantic direttamente nel System Prompt per Llama 3.
+>
+> Registra questa operazione nel Journal e aggiorna l'architettura.
+- **Spiegazione Tecnica:** Inserita una modifica architetturale salvavita per garantire la gratuità e la stabilità del servizio in fase di demo. L'integrazione di Groq permette di sfruttare modelli Open Source potenti come Llama 3 bypassando completamente i blocchi regionali e di rate-limit imposti ultimamente da Google. L'implementazione prevede uno switch dinamico controllato da `.env`, rendendo il codice agnostico rispetto al fornitore e abilitando un fallback manuale. È stata adattata la logica di prompting per garantire output JSON rigorosi conformi allo schema Pydantic, richiesti dal backend.

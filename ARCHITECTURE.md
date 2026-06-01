@@ -103,6 +103,11 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Restyling "Premium" della sezione `Analizzatore Strumenti OSINT`: transizione a griglia 2x2 con effetti glassmorphism, contatori dinamici basati sui payload reali (es. numero leak DDG, account Sherlock, hit Holehe) per massima trasparenza telemetrica.
 - [x] Correzione rendering colori `ProgressBar` Tremor (fix da `rose/amber` a `red/amber`).
 
+### Fase 7.2: Risoluzione Definitiva Rate Limits API AI (Gemini + Groq)
+- [x] Integrazione del Provider **Groq** (modelli Llama 3) come alternativa a Google Gemini per aggirare i severi Rate Limit (errore 429) e i blocchi del Free Tier in Europa.
+- [x] Refactoring dei servizi `risk_engine.py` e `analyze.py` con switch dinamico basato su variabile d'ambiente (`AI_PROVIDER="groq"` o `"gemini"`).
+- [x] Implementazione del Parsing JSON per Groq (Structured Outputs).
+
 ### Fase 8: Deploy Cloud Native Reale su Azure
 - [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).
 
