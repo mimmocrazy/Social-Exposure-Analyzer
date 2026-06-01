@@ -82,6 +82,12 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - [x] Strutturazione e correlazione dei Vettori di Minaccia e delle relative Mitigazioni direttamente nel modello `MitigationSection`.
 - [x] Mappatura precisa degli stati dei sensori OSINT nel frontend tramite l'introduzione di un blocco `metadata` inviato dal backend.
 
+### Fase 5.11: Modulo Data Breach (XposedOrNot) & Dorking
+- [x] Sostituzione della dork di ricerca sensibile in `scraper.py` con una dork mirata ai Data Breach (`pastebin OR dump OR data breach`).
+- [x] Sviluppo di un nuovo servizio backend (`databreach_service.py`) per l'interrogazione dell'API pubblica e gratuita XposedOrNot.
+- [x] Integrazione automatica in `analyze.py`: individuazione email estratte e query simultanea per l'elenco dei Data Breach noti.
+- [x] Inserimento di regole di calcolo fittizie nel system prompt del Risk Engine (`risk_engine.py`) per calibrare matematicamente il peso delle email compromesse (es. +30 punti).
+
 ### Fase 6: Azure Deployment & Documentazione
 - [x] Configurazione script e workflow Azure (App Service, GitHub Actions).
 - [x] Deploy Automation Script (`deploy_azure.sh`, `startup.sh`).
@@ -99,3 +105,20 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 
 ### Fase 8: Deploy Cloud Native Reale su Azure
 - [ ] Deploy Cloud Native Reale su Azure (con PostgreSQL).
+
+---
+
+## 3. System Design & Cloud Roadmap
+L'architettura è stata progettata seguendo il paradigma **Event-Driven / Asynchronous** per garantire scalabilità e resilienza su Azure App Service.
+
+### 3.1 Disaccoppiamento Ingestion / Processing
+1. **API Ingestion**: Il router `/api/v1/analyze` (Rest API) in modalità "fire-and-forget" (HTTP 202 Accepted).
+2. **Worker in Background**: L'analisi (Discovery -> Scraping -> OCR -> NLP -> Risk Engine) è delegata a `BackgroundTasks` nativi di FastAPI, prevenendo timeout (es. 230 secondi su Azure App Service).
+
+### 3.2 Sicurezza: Anti-DoS e Rate Limiting
+- **Middleware 413 Payload Too Large**: Qualsiasi richiesta con `Content-Length > 10.000 byte` viene respinta istantaneamente all'ingresso.
+- **Hard Limit NLP**: Truncating del payload OSINT prima del NLP/LLM a max 15.000 caratteri.
+
+### 3.3 Roadmap Scalabilità (Azure)
+- **Database**: Migrazione da SQLite in locale a CosmosDB o Azure SQL.
+- **Worker**: Migrazione da `BackgroundTasks` asincroni in-process a una message queue distribuita (Azure Service Bus) per pool di `Azure Functions`.

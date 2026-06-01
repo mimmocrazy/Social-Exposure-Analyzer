@@ -33,3 +33,31 @@ Questo documento descrive e traccia storicamente gli "Edge Case" dell'ambiente d
 **Risoluzione Architetturale:**
 - Aggiunta una conversione esplicita all'inizio del Background Task per assicurarsi che, se l'ID ricevuto in input (o letto da SQLite) è una stringa, venga trasformato in oggetto `uuid.UUID` prima di interrogare il DB.
 - **Riferimento Codice:** [backend/api/routers/analyze.py](../backend/api/routers/analyze.py) (inizio funzione `run_scraping_task`)
+
+## 5. Disallineamento Exception nel Risk Engine Fallback (`RuntimeError: Errore critico Gemini API`)
+**Sintomo:** Il test `test_calculate_risk_fallback` in `test_ai_services.py` falliva ricevendo una `RuntimeError` anziché un oggetto `RiskReport` vuoto (di salvataggio).
+**Causa:** Durante una revisione architetturale per evitare che il frontend ricevesse falsi report "sicuri" quando l'API Gemini andava in *Quota Exceeded*, il `risk_engine.py` è stato modificato per lanciare esplicitamente una `RuntimeError` che interroga l'errore asincrono, interrompendo la pipeline e scatenando il fallimento della task di orchestrazione. Il test, tuttavia, era rimasto ancorato alle vecchie aspettative (oggetto `RiskReport` generato come mock di fallback con `score=0`).
+**Risoluzione Architetturale:**
+- L'assertion del test in `test_ai_services.py` è stata modificata per usare `with pytest.raises(RuntimeError):` al fine di aspettarsi coerentemente il blocco della pipeline in caso di down o rate limit aspro da parte del LLM.
+- **Riferimenti Codice:** [tests/test_ai_services.py](../tests/test_ai_services.py), [backend/services/risk_engine.py](../backend/services/risk_engine.py)
+
+## 6. Local Import Patching Fallback (`AttributeError: module has no attribute 'calculate_risk'`)
+**Sintomo:** Il test dell'endpoint `analyze_profile` andava in crash durante il patching del mock `mocker.patch('backend.api.routers.analyze.calculate_risk')`.
+**Causa:** All'interno di `analyze.py`, per evitare loop circolari, l'importazione di `calculate_risk` avveniva a runtime (local import) dentro il BackgroundTask `run_scraping_task`. Questo significa che a livello globale il modulo router non possedeva affatto quell'attributo, rendendo inefficace il patching classico dall'esterno.
+**Risoluzione Architetturale:**
+- La strategia di patching è stata reindirizzata alla root source del servizio (`backend.services.risk_engine.calculate_risk`), fornendo un `AsyncMock` esplicito per scavalcare l'invocazione di rete asincrona.
+- **Riferimento Codice:** [tests/test_analyze.py](../tests/test_analyze.py)
+
+## 7. AsyncMock vs HTTPX Sync Properties (`TypeError: object of type 'coroutine' has no len()`)
+**Sintomo:** I test dello Scraper (in particolare Instagram e FB) fallivano quando `BeautifulSoup` tentava di parsarne l'HTML di mock.
+**Causa:** Nel mockare `httpx.AsyncClient.get` tramite un `AsyncMock` standard, Pytest tramutava **ogni** proprietà derivata (`.json()`, `.text`) in ulteriori coroutine. Httpx, al contrario, ha tali proprietà / metodi definiti come del tutto sincroni. `BeautifulSoup` ha ricevuto una coroutine su `.text` e, provando a estrarne la lunghezza (`len()`), ha sollevato l'errore fatale di tipo.
+**Risoluzione Architetturale:**
+- Implementata una definizione ibrida dei Mock: l'oggetto response in sé è un `AsyncMock` (visto che l'HTTP request asincrona prevede un `await`), ma i payload di payload e proprietà ad accesso diretto sono stati convertiti manualmente: `.json = MagicMock(return_value={...})` e `.text = PropertyMock(return_value='<html>...')`.
+- **Riferimento Codice:** [tests/test_scraper.py](../tests/test_scraper.py)
+
+## 8. React Testing Library Selector Ambiguity (`Found multiple elements with the text`)
+**Sintomo:** Fallimento secco del frontend testing su Vitest all'interno di `App.test.jsx`.
+**Causa:** Il componente `App.jsx` presenta una UI complessa con molta copy esplicativa. L'uso generico di `screen.getByText(/Social/i)` (studiato per matchare il Title h1) finiva con il matchare sia il titolo sia paragrafi di copy (es: "rischi di social engineering"). Dato che `getByText` esige obbligatoriamente di trovare uno e un solo elemento (pena crash del test), la doppia occorrenza rompeva l'asserzione.
+**Risoluzione Architetturale:**
+- Sostituzione delle asserzioni di testo generiche con varianti più sicure per l'integrità UI come `getAllByText` (assumendone poi l'array per validare l'esistenza), e query dirette per label o placeholder `getByPlaceholderText`.
+- **Riferimento Codice:** [frontend/src/App.test.jsx](../frontend/src/App.test.jsx)
