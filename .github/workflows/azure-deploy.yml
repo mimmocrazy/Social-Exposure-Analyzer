@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_USERNAME }}.azurecr.io
-  IMAGE_NAME: social-backend
+  IMAGE_NAME: social-exposure-backend
 
 jobs:
   build-and-push:
