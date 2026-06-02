@@ -108,3 +108,7 @@ secrets.json
 social_exposure_analyzer.db
 reports/
 scratch/
+
+# Browser saved pages
+*.htm
+*_files/

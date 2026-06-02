@@ -218,3 +218,4 @@ z3-solver==4.15.3.0
 zope.event==6.2
 zope.interface==8.5
 zstandard==0.25.0
+psycopg2-binary==2.9.9
