@@ -437,6 +437,9 @@ function Dashboard({ analysisId }) {
       'PERSON': 'Persone Coinvolte',
       'EMAIL': 'Indirizzi Email',
       'PHONE': 'Numeri di Telefono',
+      'TELEFONO': 'Numeri di Telefono',
+      'TELEFONO_AZIENDALE': 'Telefono Aziendale',
+      'TELEFONO AZIENDALE': 'Telefono Aziendale',
       'LOCATION': 'Luoghi e Indirizzi',
       'ORGANIZATION': 'Organizzazioni / Aziende',
       'DATE_OF_BIRTH': 'Data di Nascita',
@@ -464,10 +467,16 @@ function Dashboard({ analysisId }) {
       'RUOLO': 'Ruoli e Occupazioni',
       'LAVORO': 'Ruoli e Occupazioni',
       'COMPANY': 'Organizzazioni / Aziende',
-      'NOME_COGNOME': 'Nome e Cognome'
+      'NOME_COGNOME': 'Nome e Cognome Target',
+      'NOME_COGNOME_PADRE': 'Nome e Cognome Padre',
+      'NOME_COGNOME_MADRE': 'Nome e Cognome Madre',
+      'NOME_COGNOME_SORELLA_PARTNER': 'Nome e Cognome Sorella/Partner',
+      'NOME_COGNOME_FRATELLO': 'Nome e Cognome Fratello',
+      'URL_PERSONALE': 'Link / Siti Personali',
+      'URL PERSONALE': 'Link / Siti Personali'
     };
 
-    const coreLabels = ['PERSON', 'EMAIL', 'PHONE', 'TELEFONO', 'NOME', 'COGNOME', 'NOME_COGNOME', 'DATE_OF_BIRTH', 'PLACE_OF_BIRTH', 'AGE', 'IP', 'SOCIAL_MEDIA_HANDLE', 'USERNAME', 'HANDLE'];
+    const coreLabels = ['PERSON', 'EMAIL', 'PHONE', 'TELEFONO', 'TELEFONO_AZIENDALE', 'TELEFONO AZIENDALE', 'NOME', 'COGNOME', 'NOME_COGNOME', 'DATE_OF_BIRTH', 'PLACE_OF_BIRTH', 'AGE', 'IP', 'SOCIAL_MEDIA_HANDLE', 'USERNAME', 'HANDLE', 'URL_PERSONALE', 'URL PERSONALE'];
 
     const corePiiGroups = {};
     const contextualPiiGroups = {};
@@ -476,11 +485,23 @@ function Dashboard({ analysisId }) {
       data.pii_extracted.forEach((pii) => {
         if (!pii || !pii.label) return;
         let labelKey = pii.label.toUpperCase();
-        if (labelKey === 'NOME' || labelKey === 'COGNOME' || labelKey === 'FIRST_NAME' || labelKey === 'LAST_NAME') {
-          labelKey = 'NOME_COGNOME';
+        
+        // Raggruppamento dinamico delle relazioni Nome/Cognome
+        if (labelKey.includes('NOME') || labelKey.includes('COGNOME')) {
+          if (labelKey.includes('PADRE')) {
+            labelKey = 'NOME_COGNOME_PADRE';
+          } else if (labelKey.includes('MADRE')) {
+            labelKey = 'NOME_COGNOME_MADRE';
+          } else if (labelKey.includes('SORELLA') || labelKey.includes('PARTNER')) {
+            labelKey = 'NOME_COGNOME_SORELLA_PARTNER';
+          } else if (labelKey.includes('FRATELLO')) {
+            labelKey = 'NOME_COGNOME_FRATELLO';
+          } else if (labelKey === 'NOME' || labelKey === 'COGNOME' || labelKey === 'FIRST_NAME' || labelKey === 'LAST_NAME') {
+            labelKey = 'NOME_COGNOME';
+          }
         }
         
-        const isCore = coreLabels.some(c => labelKey.includes(c));
+        const isCore = coreLabels.some(c => labelKey.includes(c)) || labelKey.startsWith('NOME_COGNOME_');
         const targetGroup = isCore ? corePiiGroups : contextualPiiGroups;
 
         if (!targetGroup[labelKey]) {
