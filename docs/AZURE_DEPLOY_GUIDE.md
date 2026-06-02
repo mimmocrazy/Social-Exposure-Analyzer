@@ -72,28 +72,31 @@ Tieni questa lunghissima stringa da parte, la useremo nel prossimo step.
    - **Operating System:** Seleziona **Linux**.
    - **Region:** Usa la stessa scelta per il database (es. `Italy North`).
    - **Pricing Plan:** Questa è la parte per non pagare! Clicca su *Explore pricing plans*, vai sulla scheda in alto *Free/Shared* e clicca sulla mattonella blu **F1 (Free)**. Infine clicca sul bottone blu in basso *Select*.
-4. Clicca sul tab **Docker** in alto:
-   - **Options:** Scegli **Single Container**.
-   - **Image Source:** Scegli **GitHub Actions**.
-   - Ti verrà chiesto di autorizzare Azure a collegarsi al tuo profilo GitHub. Clicca su *Authorize* se necessario.
-   - Una volta autorizzato, seleziona la tua `Organization` (il tuo utente GitHub), il `Repository` (il nome del tuo progetto su GitHub) e il `Branch` (solitamente `main`).
-5. Clicca su **Review + create** e poi su **Create**.
-6. Quando ha finito, clicca su **Go to resource**. Il tuo server backend è stato creato! 
-   *(In questo esatto momento, dietro le quinte, GitHub sta costruendo il codice del backend. Ci vorranno circa 5-10 minuti, tu puoi proseguire col punto 7).*
-7. **Inserire le password segrete (Variabili d'ambiente):**
-   Il codice per funzionare ha bisogno di accedere al database e alle Intelligenze Artificiali. Dobbiamo dargli le chiavi.
-   - Nel menu laterale a sinistra del tuo App Service, scorri giù fino alla sezione *Settings* (Impostazioni) e clicca su **Environment variables** (Variabili d'ambiente).
-   - Clicca su **+ Add** per aggiungere una variabile.
+4. Clicca sulla scheda **Contenitore** (o Docker) in alto:
+   - Sotto *Origine immagine*, Azure ti chiederà da dove prendere il codice. Visto che GitHub non lo ha ancora "costruito", usa un rimpiazzo temporaneo: scegli **Avvio rapido** (Quickstart).
+   - In *Opzioni di avvio rapido*, lascia pure **NGINX**. (È solo un'immagine segnaposto che sostituiremo tra poco).
+5. Clicca in basso su **Rivedi e crea** e poi su **Crea**.
+6. Quando ha finito (1-2 minuti), clicca su **Vai alla risorsa** (Go to resource). Il tuo server backend è stato creato, ma per ora mostra solo una pagina di base NGINX.
+7. **Collegare GitHub (La Magia):**
+   Ora diciamo ad Azure di andare su GitHub, prendere il nostro `Dockerfile`, costruire il codice Python e sostituire NGINX.
+   - Nel menù a sinistra della tua Web App appena creata, cerca la voce **Centro di distribuzione** (Deployment Center) e cliccaci.
+   - Sotto *Origine* (Source), seleziona **GitHub**.
+   - Clicca su *Autorizza* se ti chiede di collegare l'account.
+   - Compila le tendine che appaiono: `Organizzazione` (il tuo utente), `Repository` (il nome del progetto) e `Ramo/Branch` (`main`).
+   - Sotto *Impostazioni del registro contenitori*, dovrebbe auto-configurarsi su "Container Registry".
+   - Clicca in alto su **Salva**. In questo esatto momento, Azure sta inviando un file a GitHub per far partire la costruzione (build) del tuo codice. Ci vorranno 5-10 minuti!
+8. **Inserire le password segrete (Variabili d'ambiente):**
+   Mentre GitHub compila, dobbiamo dare al backend le chiavi per funzionare.
+   - Nel menu laterale a sinistra, scorri giù fino a **Variabili d'ambiente** (Environment variables) o *Configurazione*.
+   - Clicca su **+ Aggiungi** per aggiungere una variabile.
    - Aggiungi il database: 
-     - Name: `DATABASE_URL`
-     - Value: *incolla la lunga stringa di connessione a PostgreSQL che hai creato alla fine del Passo 1*.
-   - Clicca su *Apply* nella finestra laterale. Ora clicca di nuovo su **+ Add**.
+     - Nome: `DATABASE_URL`
+     - Valore: *incolla la lunga stringa di connessione a PostgreSQL che hai creato alla fine del Passo 1*.
    - Aggiungi Gemini:
-     - Name: `GEMINI_API_KEY`
-     - Value: *incolla la tua chiave API di Google Gemini*.
-   - *(Opzionale)* Aggiungi `GROQ_API_KEY` se vuoi usare i modelli Groq come fallback.
-   - Una volta aggiunte tutte, clicca sul bottone **Apply** in fondo alla pagina e poi su **Confirm**. Il server si riavvierà per inglobare le nuove chiavi segrete.
-8. Salva il link del tuo backend. Lo trovi nella pagina "Overview" sotto la voce "Default domain" (sarà simile a `https://social-backend-tuonome.azurewebsites.net`). Tientelo segnato.
+     - Nome: `GEMINI_API_KEY`
+     - Valore: *incolla la tua chiave API di Google Gemini*.
+   - Una volta aggiunte tutte, clicca sul bottone **Applica** e poi **Conferma**.
+9. Salva il link del tuo backend. Lo trovi nella pagina "Panoramica" (Overview) sotto la voce "Dominio predefinito" (sarà simile a `https://social-backend-tuonome.azurewebsites.net`). Tientelo segnato.
 
 ---
 
