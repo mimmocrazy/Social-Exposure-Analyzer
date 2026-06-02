@@ -1138,6 +1138,7 @@ function MainApp() {
   const [analysisId, setAnalysisId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inputType, setInputType] = useState('generic'); // 'generic', 'instagram', 'facebook'
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // OSINT Settings State
   const [enableDdg, setEnableDdg] = useState(true);
@@ -1190,7 +1191,7 @@ function MainApp() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-4 md:py-8 px-6 font-sans relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center py-12 md:py-24 px-6 font-sans relative overflow-hidden" onClick={() => setIsHistoryOpen(false)}>
 
 
       {/* Background Decorativo Esteso */}
@@ -1199,14 +1200,14 @@ function MainApp() {
 
       {/* Layout Principale a due righe se non in analisi */}
       {!analysisId ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-5xl z-10 flex flex-col items-center mt-4 space-y-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-5xl z-10 flex flex-col items-center mt-8 space-y-16">
 
           {/* Riga Superiore: Hero & Search (Centrato) */}
           <div className="flex flex-col text-center items-center w-full">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-200 to-purple-400 pb-2 tracking-tight drop-shadow-2xl leading-[1.1]">
+            <h1 className="text-5xl md:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-200 to-purple-400 pb-4 tracking-tight drop-shadow-2xl leading-[1.1]">
               Social Exposure Analyzer
             </h1>
-            <p className="text-gray-400 mt-2 mb-6 text-base md:text-lg font-light max-w-2xl leading-relaxed">
+            <p className="text-gray-400 mt-4 mb-10 text-lg md:text-xl font-light max-w-2xl leading-relaxed">
               Mappa istantaneamente l'impronta digitale di un bersaglio per valutare i rischi di <strong className="text-blue-400 font-semibold">social engineering</strong> tramite sensori OSINT avanzati e Intelligenza Artificiale.
             </p>
 
@@ -1237,14 +1238,15 @@ function MainApp() {
 
             <form onSubmit={handleSubmit} className="w-full max-w-3xl flex flex-col group relative mx-auto">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/40 to-purple-500/40 rounded-2xl blur-xl opacity-30 group-hover:opacity-70 transition duration-500 group-hover:duration-200"></div>
-              <div className="relative flex items-center bg-surface border border-white/10 rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
-                <div className="pl-4 pr-2 text-blue-400/80">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <div className="relative flex items-center bg-surface border border-white/10 rounded-2xl p-2 shadow-2xl backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
+                <div className="pl-5 pr-2 text-blue-400/80">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
                 <input
                   type="text"
                   value={targetUrl}
                   onChange={(e) => setTargetUrl(e.target.value)}
+                  onFocus={() => setIsHistoryOpen(true)}
                   placeholder={
                     inputType === 'instagram'
                       ? "Es. username o URL Instagram..."
@@ -1252,51 +1254,69 @@ function MainApp() {
                         ? "Es. URL profilo Facebook..."
                         : "Es. username o URL generico..."
                   }
-                  className="w-full bg-transparent text-white px-2 py-3 outline-none placeholder-gray-500 text-lg font-medium"
+                  className="w-full bg-transparent text-white px-3 py-5 outline-none placeholder-gray-500 text-xl font-medium"
                   disabled={isSubmitting}
                 />
-                <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 px-8 rounded-xl transition-all flex-shrink-0 text-lg shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transform hover:-translate-y-0.5 active:translate-y-0">
+                
+                {historyData && historyData.length > 0 && (
+                  <button type="button" onClick={() => setIsHistoryOpen(!isHistoryOpen)} className="p-3 text-gray-500 hover:text-white transition-colors">
+                    <svg className={`w-5 h-5 transform transition-transform ${isHistoryOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                )}
+
+                <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-5 px-10 rounded-xl transition-all flex-shrink-0 text-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transform hover:-translate-y-0.5 active:translate-y-0 ml-2">
                   {isSubmitting ? 'Avvio...' : 'Scansiona'}
                 </button>
               </div>
+
+              {/* Ultime Ricerche Dropdown */}
+              <AnimatePresence>
+                {isHistoryOpen && historyData && historyData.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-[105%] left-0 w-full bg-[#0a0a0f] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="p-3 bg-white/[0.02] border-b border-white/5 flex items-center space-x-2">
+                      <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">Ricerche Recenti</span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                      {historyData.map((h, idx) => (
+                        <div key={idx} onClick={() => { setAnalysisId(h.id); setIsHistoryOpen(false); }} className="flex items-center justify-between p-4 hover:bg-white/[0.05] border-b border-white/[0.02] cursor-pointer transition-colors text-left group">
+                          <div className="flex items-center space-x-3 truncate">
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${h.status === 'COMPLETED' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : h.status === 'FAILED' ? 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]' : 'bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.5)]'}`}></div>
+                            <span className="text-gray-300 font-medium truncate group-hover:text-white transition-colors">{h.target_url}</span>
+                          </div>
+                          <div className="flex items-center space-x-3 flex-shrink-0">
+                            {h.risk_level && (
+                              <span className={`text-[9px] font-bold uppercase px-2 py-1 rounded-lg border hidden sm:block ${h.risk_level === 'CRITICAL' || h.risk_level === 'HIGH' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                {h.risk_level}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteHistory(e, h.id); }}
+                              className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/30 text-red-400/80 hover:text-red-400 transition-colors"
+                              title="Elimina"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </form>
 
-            {/* Ultime Ricerche */}
-            {historyData && historyData.length > 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-12 w-full max-w-3xl mx-auto">
-                <div className="flex items-center justify-center space-x-3 mb-4">
-                  <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest">Ultime Ricerche</h3>
-                </div>
-                <div className="space-y-3">
-                  {historyData.map((h, idx) => (
-                    <div key={idx} onClick={() => setAnalysisId(h.id)} className="flex items-center justify-between bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 p-4 rounded-2xl cursor-pointer transition-all duration-300 hover:border-white/10 group hover:shadow-lg text-left">
-                      <div className="flex items-center space-x-3 truncate">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${h.status === 'COMPLETED' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : h.status === 'FAILED' ? 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]' : 'bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.5)]'}`}></div>
-                        <span className="text-gray-300 font-medium truncate group-hover:text-white transition-colors">{h.target_url}</span>
-                      </div>
-                      <div className="flex items-center space-x-3 flex-shrink-0">
-                        {h.risk_level && (
-                          <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-lg border hidden sm:block ${h.risk_level === 'CRITICAL' || h.risk_level === 'HIGH' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
-                            {h.risk_level}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteHistory(e, h.id)}
-                          className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/30 text-red-400/80 hover:text-red-400 transition-colors"
-                          title="Elimina dalla cronologia"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+
           </div>
 
           {/* Colonna Destra: Switches OSINT (Design Premium) */}
