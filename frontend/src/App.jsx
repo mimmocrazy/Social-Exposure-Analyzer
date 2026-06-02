@@ -52,7 +52,7 @@ const RadialProgress = ({ score, isCritical }) => {
           cy="80"
           r={radius}
           stroke="currentColor"
-          strokeWidth="4"
+          strokeWidth="10"
           fill="transparent"
           className="text-white/5"
         />
@@ -64,7 +64,7 @@ const RadialProgress = ({ score, isCritical }) => {
           cy="80"
           r={radius}
           stroke="currentColor"
-          strokeWidth="4"
+          strokeWidth="10"
           fill="transparent"
           strokeDasharray={circumference}
           strokeLinecap="round"
@@ -72,8 +72,8 @@ const RadialProgress = ({ score, isCritical }) => {
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center text-white">
-        <span className="text-5xl font-light tracking-tighter" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{score}</span>
-        <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mt-1">Score</span>
+        <span className="text-5xl font-bold tracking-tighter" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{score}</span>
+        <span className="text-[10px] text-gray-300 uppercase tracking-[0.2em] mt-1 font-semibold">Score</span>
       </div>
     </div>
   );
@@ -322,11 +322,13 @@ const TerminalLoading = ({ isCompleted, onFinish }) => {
 
 function Dashboard({ analysisId }) {
     const [showDashboard, setShowDashboard] = useState(false);
+    const [showContextualPii, setShowContextualPii] = useState(false);
 
     // Reset showDashboard if a new analysis starts
     useEffect(() => {
       if (analysisId) {
         setShowDashboard(false);
+        setShowContextualPii(false);
       }
     }, [analysisId]);
 
@@ -445,27 +447,45 @@ function Dashboard({ analysisId }) {
       'SOCIAL_MEDIA_HANDLE': 'Account Social',
       'USERNAME': 'Account Social',
       'HANDLE': 'Account Social',
+      'TARGA': 'Targa Veicolo',
+      'LICENSE': 'Targa Veicolo',
+      'VOLO': 'Biglietto Aereo / Volo',
+      'FLIGHT': 'Biglietto Aereo / Volo',
+      'TICKET': 'Biglietto / Prenotazione',
+      'BIGLIETTO': 'Biglietto / Prenotazione',
+      'ANNIVERSARI': 'Ricorrenze / Anniversari',
+      'GENITOR': 'Relazioni Familiari',
+      'FAMIGLIA': 'Relazioni Familiari',
+      'FAMILY': 'Relazioni Familiari',
+      'PARENT': 'Relazioni Familiari',
+      'RELAZION': 'Relazioni Familiari',
+      'RELATION': 'Relazioni Familiari',
+      'LUOGO': 'Luoghi e Indirizzi',
+      'RUOLO': 'Ruoli e Occupazioni',
+      'LAVORO': 'Ruoli e Occupazioni',
+      'COMPANY': 'Organizzazioni / Aziende'
     };
 
-    const piiGroups = {};
+    const coreLabels = ['PERSON', 'EMAIL', 'PHONE', 'TELEFONO', 'NOME', 'COGNOME', 'DATE_OF_BIRTH', 'PLACE_OF_BIRTH', 'AGE', 'IP', 'SOCIAL_MEDIA_HANDLE', 'USERNAME', 'HANDLE'];
+
+    const corePiiGroups = {};
+    const contextualPiiGroups = {};
+
     if (data.pii_extracted && Array.isArray(data.pii_extracted)) {
       data.pii_extracted.forEach((pii) => {
         if (!pii || !pii.label) return;
         const labelKey = pii.label.toUpperCase();
         
-        // Escludiamo etichette contestuali ai post per lasciarle solo sotto le immagini
-        const excluded = ['TARGA', 'VOLO', 'LICENSE', 'FLIGHT', 'BIGLIETTO', 'TICKET', 'ANNIVERSARI', 'GENITOR', 'FAMIGLIA', 'FAMILY', 'PARENT', 'RELAZION', 'RELATION', 'LUOGO', 'LOCATION', 'ORGANIZATION', 'OCCUPATION', 'RUOLO', 'LAVORO', 'COMPANY', 'PERSON'];
-        if (excluded.some(ex => labelKey.includes(ex))) {
-            return;
-        }
+        const isCore = coreLabels.some(c => labelKey.includes(c));
+        const targetGroup = isCore ? corePiiGroups : contextualPiiGroups;
 
-        if (!piiGroups[labelKey]) {
-          piiGroups[labelKey] = [];
+        if (!targetGroup[labelKey]) {
+          targetGroup[labelKey] = [];
         }
         if (pii.value) {
-          const exists = piiGroups[labelKey].some(item => item.value === pii.value);
+          const exists = targetGroup[labelKey].some(item => item.value === pii.value);
           if (!exists) {
-            piiGroups[labelKey].push({
+            targetGroup[labelKey].push({
               value: pii.value,
               source: pii.source || "Scansione OSINT",
               confidence: pii.confidence_score
@@ -475,13 +495,18 @@ function Dashboard({ analysisId }) {
       });
     }
 
+    const visiblePiiGroups = { ...corePiiGroups };
+    if (showContextualPii) {
+      Object.assign(visiblePiiGroups, contextualPiiGroups);
+    }
+
     const realName = metadata?.real_name_deduced;
     const targetUsername = metadata?.target || data.target_url;
     const displayName = (realName && realName !== "Sconosciuto") ? realName : targetUsername;
     const hasAlias = (realName && realName !== "Sconosciuto" && targetUsername !== realName);
 
     return (
-      <div className="mt-12 space-y-8 w-full max-w-7xl mx-auto text-left">
+      <div className="mt-2 space-y-6 w-full max-w-7xl mx-auto text-left">
         {/* Top Row: Risk Index (Full Width Horizontal) */}
         <div className="glass-card p-8 relative overflow-hidden group">
           <div className={`absolute -inset-2 bg-gradient-to-tr ${isCritical ? 'from-red-500/10 to-orange-500/5' : 'from-blue-500/10 to-cyan-500/5'} blur-3xl -z-10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000`}></div>
@@ -500,29 +525,29 @@ function Dashboard({ analysisId }) {
             <div className="w-full space-y-5">
               <div>
                 <div className="flex justify-between text-xs mb-2">
-                  <span className="text-gray-400 font-light">Identità e Contatti</span>
-                  <span className="text-white/90 font-medium">{data.llm_report?.sub_scores?.identity_exposure || 0}%</span>
+                  <span className="text-gray-300 font-semibold">Identità e Contatti</span>
+                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.identity_exposure || 0}%</span>
                 </div>
-                <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.identity_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-red-400 h-1 rounded-full shadow-[0_0_10px_rgba(248,113,113,0.8)]"></motion.div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="text-gray-400 font-light">Network e Relazioni</span>
-                  <span className="text-white/90 font-medium">{data.llm_report?.sub_scores?.network_exposure || 0}%</span>
-                </div>
-                <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.network_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-orange-400 h-1 rounded-full shadow-[0_0_10px_rgba(251,146,60,0.8)]"></motion.div>
+                <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.identity_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-red-400 h-3 rounded-full shadow-[0_0_12px_rgba(248,113,113,0.9)]"></motion.div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-2">
-                  <span className="text-gray-400 font-light">Routine e Luoghi</span>
-                  <span className="text-white/90 font-medium">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
+                  <span className="text-gray-300 font-semibold">Network e Relazioni</span>
+                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.network_exposure || 0}%</span>
                 </div>
-                <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-emerald-400 h-1 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.8)]"></motion.div>
+                <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.network_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-orange-400 h-3 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.9)]"></motion.div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs mb-2">
+                  <span className="text-gray-300 font-semibold">Routine e Luoghi</span>
+                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
+                </div>
+                <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-emerald-400 h-3 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.9)]"></motion.div>
                 </div>
               </div>
             </div>
@@ -550,63 +575,80 @@ function Dashboard({ analysisId }) {
         <div className="w-full glass-card p-10 flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-end mb-8 border-b border-white/[0.05] pb-6">
               <div>
-                <h3 className="text-white/90 text-2xl font-light tracking-tight mb-1">Dati Sensibili Estrapolati</h3>
-                <p className="text-gray-400 text-xs font-light">Informazioni personali (PII) individuate tramite OSINT e AI</p>
+                <h3 className="text-white/90 text-2xl font-semibold tracking-tight mb-1">Dati Sensibili Estrapolati</h3>
+                <p className="text-gray-300 text-xs font-medium">Informazioni personali (PII) individuate tramite OSINT e AI</p>
               </div>
-              <span className="text-[11px] glass-pill px-4 py-2 font-medium tracking-widest uppercase text-white/70">{data.pii_extracted?.length || 0} Tracce</span>
+              <span className="text-[11px] glass-pill px-4 py-2 font-bold tracking-widest uppercase text-white/80">{data.pii_extracted?.length || 0} Tracce</span>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[200px]">
-              {(Object.keys(piiGroups).length === 0) ? (
+              {(Object.keys(corePiiGroups).length === 0 && Object.keys(contextualPiiGroups).length === 0) ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
                   <svg className="w-16 h-16 opacity-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                   <p className="text-sm font-bold tracking-widest uppercase">Nessuna vulnerabilità rilevata</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {Object.entries(piiGroups).map(([label, values], idx) => (
-                    <motion.div
-                      key={label}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className="flex flex-col p-6 rounded-3xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.05] transition-all duration-300 group"
-                    >
-                      <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-white/[0.05]">
-                        <div className="p-3 bg-white/[0.03] rounded-2xl border border-white/[0.05] shadow-[0_0_15px_rgba(255,255,255,0.02)]">
-                          {getIconForPII(label)}
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                    {Object.entries(visiblePiiGroups).map(([label, values], idx) => (
+                      <motion.div
+                        key={label}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className="flex flex-col p-5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] hover:border-white/[0.12] transition-all duration-300 group shadow-md"
+                      >
+                        <div className="flex items-center space-x-3 mb-3 pb-3 border-b border-white/[0.05]">
+                          <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.08] shadow-[0_0_12px_rgba(255,255,255,0.02)]">
+                            {getIconForPII(label)}
+                          </div>
+                          <div>
+                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-[0.2em]">{label}</p>
+                            <h4 className="text-white text-[14px] font-semibold tracking-tight mt-0.5">
+                              {labelMapping[label] || label}
+                            </h4>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-gray-500 text-[9px] font-bold uppercase tracking-[0.2em]">{label}</p>
-                          <h4 className="text-white/90 text-[15px] font-light tracking-tight mt-0.5">
-                            {labelMapping[label] || label}
-                          </h4>
-                        </div>
-                      </div>
 
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {values.map((valObj, valIdx) => (
-                          <span
-                            key={valIdx}
-                            className="glass-pill text-gray-300 text-[13px] px-4 py-2 font-mono inline-flex items-center gap-2 group/item hover:text-white hover:bg-white/10 transition-all cursor-default"
-                          >
-                            <span>{valObj.value}</span>
-                            <span className="relative group/tooltip inline-flex items-center text-white/30 hover:text-white/80 transition-colors">
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-56 p-4 glass-panel text-[11px] text-gray-300 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-all duration-300 z-50 text-center font-sans font-light leading-relaxed">
-                                <strong className="text-white block font-medium mb-1">Fonte del Dato</strong>
-                                {valObj.source || 'Scansione OSINT'}
-                                {valObj.confidence && <span className="block text-gray-400 mt-2 text-[10px] uppercase tracking-widest">Confidenza: {Math.round(valObj.confidence * 100)}%</span>}
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {values.map((valObj, valIdx) => (
+                            <span
+                              key={valIdx}
+                              className="glass-pill text-gray-200 text-[12px] px-3 py-1.5 font-mono inline-flex items-center gap-1.5 group/item hover:text-white hover:bg-white/10 transition-all cursor-default"
+                            >
+                              <span className="break-all">{valObj.value}</span>
+                              <span className="relative group/tooltip inline-flex items-center text-white/30 hover:text-white/80 transition-colors">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-56 p-4 glass-panel text-[11px] text-gray-300 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-all duration-300 z-50 text-center font-sans font-normal leading-relaxed">
+                                  <strong className="text-white block font-semibold mb-1">Fonte del Dato</strong>
+                                  {valObj.source || 'Scansione OSINT'}
+                                  {valObj.confidence && <span className="block text-gray-400 mt-2 text-[10px] uppercase tracking-widest font-semibold">Confidenza: {Math.round(valObj.confidence * 100)}%</span>}
+                                </span>
                               </span>
                             </span>
-                          </span>
-                        ))}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {Object.keys(contextualPiiGroups).length > 0 && (
+                    <div className="flex justify-center mt-8 pt-4 border-t border-white/[0.03]">
+                      <button
+                        type="button"
+                        onClick={() => setShowContextualPii(!showContextualPii)}
+                        className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] transition-all text-gray-300 hover:text-white flex items-center space-x-2 shadow-md hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+                      >
+                        <span>{showContextualPii ? 'Nascondi Dati di Contesto' : `Mostra Altri Dati di Contesto (${Object.keys(contextualPiiGroups).length} Categorie)`}</span>
+                        <svg className={`w-4 h-4 transform transition-transform duration-300 ${showContextualPii ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -1540,7 +1582,7 @@ function MainApp() {
         </motion.div>
       ) : (
         /* Intestazione Compattata quando in analisi */
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-7xl z-10 flex flex-col md:flex-row items-center justify-between mt-4 mb-8 glassmorphism p-6 rounded-3xl border-white/5">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-7xl z-10 flex flex-col md:flex-row items-center justify-between mt-4 mb-4 glassmorphism p-5 rounded-2xl border border-white/10 shadow-lg">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Social Exposure Analyzer</h2>
             <p className="text-lg text-gray-400 font-medium mt-1 flex items-center">

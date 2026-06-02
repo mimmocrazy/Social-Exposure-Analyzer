@@ -13,15 +13,19 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/[0.03] backdrop-blur-2xl border border-white/[0.05] shadow-[0_8px_32px_rgba(0,0,0,0.5)];
+    @apply bg-white/[0.04] backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.5)];
   }
   
   .glass-pill {
-    @apply bg-white/[0.05] backdrop-blur-xl border border-white/[0.08] shadow-[0_4px_16px_rgba(0,0,0,0.2)] rounded-full;
+    @apply bg-white/[0.06] backdrop-blur-xl border border-white/[0.1] shadow-[0_4px_16px_rgba(0,0,0,0.2)] rounded-full;
   }
 
   .glass-card {
-    @apply bg-white/[0.02] backdrop-blur-3xl border border-white/[0.04] shadow-[0_8px_24px_rgba(0,0,0,0.4)] rounded-3xl;
+    @apply bg-white/[0.035] backdrop-blur-3xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-3xl;
+  }
+
+  .glassmorphism {
+    @apply bg-white/[0.035] backdrop-blur-3xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-3xl;
   }
 
   .text-gradient {
