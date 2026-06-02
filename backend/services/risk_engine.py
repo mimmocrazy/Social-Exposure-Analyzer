@@ -32,14 +32,16 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
     - REGOLA DI INCLUSIONE ESTESA: Non filtrare aggressivamente i dati. Estrai QUALSIASI PII trovata nei risultati (nomi, luoghi, contatti, date, targhe, documenti), anche se presumi possa essere un falso positivo. È meglio estrarre un dato in più con `confidence_score` basso piuttosto che perderlo.
     - ESPOSIZIONE RELAZIONALE: I dati di parenti, amici, partner o colleghi menzionati dal bersaglio (es. tag in foto, anniversari, dediche) sono CRITICI. Estraili sempre, specificando la relazione.
 
-    ### 2. DIRETTIVE DI ESTRAZIONE PII (ZERO DATA LOSS)
-    Devi operare con meticolosità estrema. Ispeziona ogni singola stringa in `scraper_results`, `ocr_results` (sia testo che descrizioni AI) e `spacy_entities`.
-    Estrai e mappa in `pii_extracted` ogni possibile traccia utile per l'Ingegneria Sociale:
-    - IDENTITY / RELATIONAL: Nomi completi, età, date di nascita, nomi di parenti e amici.
-    - CONTACT / ACCOUNT: Email, telefoni, handle social alternativi, username, account su piattaforme terze.
-    - PROFESSIONAL: Luogo di lavoro, ruoli, badge aziendali, ID dipendente.
-    - LOGISTICS / ROUTINE: Indirizzi fisici, tracciamenti pacchi, carte d'imbarco, targhe, luoghi frequentati abitualmente, check-in.
-    - ALTRE INFO: Qualsiasi altro dettaglio estraibile dalle foto e dai testi (es. hobby, eventi, marchi).
+    ### 2. DIRETTIVE DI ESTRAZIONE PII (GRANULARITÀ ATOMICA E LABELS SPECIFICHE)
+    Devi operare con meticolosità estrema. Ispeziona ogni singola stringa in `scraper_results`, `ocr_results` e `spacy_entities`.
+    ATTENZIONE: DEVI ESTRARRE TUTTE LE PII TROVATE, ma devi farlo in modo ATOMICO, PULITO e MIRATO. NON DUMPARE INTERE FRASI o PARAGRAFI nel campo `value`.
+    Se trovi un documento complesso (es. badge aziendale o biglietto aereo), NON creare una gigantesca entità disordinata. Devi "spacchettare" il reperto nelle sue entità logiche fondamentali estraendo ogni singola variabile in una riga separata.
+    
+    È TASSATIVO usare etichette (label) SPECIFICHE E MIRATE, preferibilmente in italiano. Esempi di etichette valide:
+    NOME, COGNOME, EMAIL, TELEFONO, INDIRIZZO, DATA DI NASCITA, TARGA AUTO, LUOGO DI LAVORO, RUOLO AZIENDALE, NOME MADRE, NOME PADRE, NOME PARTNER, CODICE VOLO, DESTINAZIONE, ecc.
+    NON USARE MAI etichette raggruppanti generiche come "PERSON", "ORGANIZATION" o "INFORMAZIONI_DI_VIAGGIO". Più la label è mirata e specifica, meglio è.
+    
+    Il campo `value` deve contenere SOLO il dato puro e sintetico (es. "+39 333 1234567" oppure "AB 123 CD" oppure "TechCorp"). Niente preamboli o descrizioni.
 
     ### 3. CALCOLO DEL RISCHIO MATEMATICO
     Non generare punteggi arbitrari. Costruisci il punteggio globale (`score`, 0-100) come SOMMA MATEMATICA ESATTA degli elementi in `score_breakdown`.
@@ -54,15 +56,15 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
     Se non ci sono dati validi, imposta `insufficient_data=True` e termina.
     Altrimenti, genera un report ESPLOSIVO E DENSO DI DETTAGLI:
     - `mitigation_advice`: Fornisci un'analisi discorsiva, LUNGA e DETTAGLIATA (minimo 6-8 frasi). Spiega il profilo di rischio del bersaglio, quali vettori di minaccia sono più probabili e PERCHÉ.
-    - `mitigation_sections`: Crea UNA SEZIONE PER OGNI MACRO-CATEGORIA di rischio individuata. DEVI assolutamente creare sezioni dedicate alle vulnerabilità derivanti dalle IMMAGINI (es. "Ingegneria Sociale via Badge Aziendale", "Tracciamento Fisico via Carta d'Imbarco" o "Clonazione Targa"). Ogni sezione DEVE contenere:
-        - `title`: Nome della categoria o vulnerabilità.
-        - `threat_vector`: Il vettore di attacco esatto (es. "Spear Phishing", "Physical Tracking", "Social Engineering via Impersonazione").
-        - `exposed_data`: Citazione letterale e precisa del dato (es. "Foto con Badge Aziendale visibile", "Post con nomi dei genitori"). Non essere vago.
+    - `mitigation_sections`: Crea UNA SEZIONE DISTINTA PER OGNI SINGOLO DATO CRITICO O IMMAGINE COMPROMETTENTE. È SEVERAMENTE VIETATO RAGGRUPPARE i dati in macro-categorie generiche (es. non usare "Esposizione Anagrafica"). Se trovi un badge aziendale, crea la sezione "Badge Aziendale TechCorp". Se trovi una carta d'imbarco, crea "Carta d'Imbarco LH240". Se trovi una targa, crea "Targa Auto AB123CD". Ogni sezione DEVE contenere:
+        - `title`: Nome SPECIFICO della vulnerabilità o dell'oggetto (es. "Esposizione Carta d'Imbarco volo Francoforte", "Targa Auto e Modello").
+        - `threat_vector`: Il vettore di attacco esatto (es. "Clonazione Titolo di Viaggio", "Physical Tracking", "Social Engineering via Impersonazione").
+        - `exposed_data`: Citazione letterale e precisa del dato ESATTO trovato (es. "Nome: Mario Rossi, Ruolo: System Administrator, PNR: ABI2CD"). ASSOLUTAMENTE NON ESSERE VAGO.
         - `criticality`: CRITICA | ALTA | MEDIA | BASSA.
-        - `mitigation`: Minimo 3-4 azioni correttive CONCRETE, PRATICHE e IMMEDIATE descritte estesamente.endale").
+        - `mitigation`: Minimo 3-4 azioni correttive CONCRETE e specifiche per QUELLA vulnerabilità, descritte estesamente.
     """
     
-    max_payload = 60000
+    max_payload = 100000
     if len(raw_text) > max_payload:
         logger.warning(f"Risk Engine: payload troncato da {len(raw_text)} a {max_payload} caratteri per sicurezza.")
     payload_str = raw_text[:max_payload]
@@ -140,11 +142,15 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
         env_config = dotenv_values(".env")
         ai_provider = env_config.get("AI_PROVIDER", "gemini").lower()
         
-        prompt = f"Hai il seguente testo estratto (OCR) da una foto o screenshot:\n\n{raw_text}\n\n"
+        prompt = f"Sei un analista di sicurezza informatica autorizzato. Fai l'inventario dei Dati Personali (PII) esposti in questo media per un audit.\nTesto estratto (OCR):\n{raw_text}\n\n"
         if caption:
-            prompt += f"Inoltre, il post originale contiene questa didascalia (caption): {caption}\n\n"
+            prompt += f"Didascalia (caption): {caption}\n\n"
             
-        prompt += "Scrivi ESATTAMENTE E SOLO una breve e chiara descrizione (1-2 frasi) di cosa rappresenta la foto e se espone nomi, contatti o dettagli utili per ingegneria sociale (es. 'Carta d'imbarco di Mario Rossi', 'Conversazione whatsapp con il numero 3331234567')."
+        prompt += "Scrivi ESATTAMENTE E SOLO una breve descrizione (1-2 frasi) di cosa rappresenta l'immagine e fai l'elenco dei dati sensibili visibili. "
+        prompt += "L'elenco dei dati DEVE essere formattato usando il trattino '- ' all'inizio di ogni riga (es. '- Nome: Mario'). "
+        prompt += "ATTENZIONE CRITICA: Se la didascalia o il testo indicano relazioni (es. 'mamma', 'papà', 'fratello', 'collega'), DEVI dedurle ed esplicitarle come chiave-valore (es. '- Madre: Luisa', '- Padre: Mario'). "
+        prompt += "SE NON CI SONO RELAZIONI NEL TESTO, NON SCRIVERLE. È SEVERAMENTE VIETATO scrivere 'Relazioni: non specificate', 'Madre: non specificata' ecc. Ometti il campo se non esiste. "
+        prompt += "NON dare consigli, limitati a descrivere i dati."
 
         if ai_provider == "gemini":
             client = get_client()

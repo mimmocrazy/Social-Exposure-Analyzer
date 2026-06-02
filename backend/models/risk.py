@@ -3,7 +3,7 @@ from typing import List
 from backend.models import RiskLevel
 
 class Entity(BaseModel):
-    label: str = Field(description="Il tipo di PII (es. EMAIL, PERSON, LOCATION, ORGANIZATION)")
+    label: str = Field(description="Il tipo specifico di PII (es. NOME, COGNOME, EMAIL, TELEFONO, INDIRIZZO, DATA DI NASCITA, TARGA AUTO, ecc.)")
     value: str = Field(description="Il valore esatto estratto dal testo")
     confidence_score: float = Field(description="Un punteggio da 0.0 a 1.0 basato sulla tua certezza dell'estrazione")
     source: str = Field(description="La fonte da cui è stato ricavato questo dato esatto (es. 'Instagram Deep Scan API', 'Holehe (Cross-Check)', 'DuckDuckGo Dorking', 'Scraping Web', ecc.). Sii specifico leggendo i log e i risultati forniti.")

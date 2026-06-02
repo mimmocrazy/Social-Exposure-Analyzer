@@ -20,6 +20,7 @@ class ProfileAnalysis(SQLModel, table=True):
     target_url: str = Field(index=True)
     platform: Optional[str] = Field(default=None)
     status: AnalysisStatus = Field(default=AnalysisStatus.PENDING)
+    current_phase: Optional[str] = Field(default=None)
     scan_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     raw_data_dump: Optional[dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
     pii_extracted: Optional[dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
