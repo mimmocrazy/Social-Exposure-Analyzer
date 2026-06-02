@@ -112,3 +112,6 @@ scratch/
 # Browser saved pages
 *.htm
 *_files/
+
+# Thinking files
+docs/thinking.txt

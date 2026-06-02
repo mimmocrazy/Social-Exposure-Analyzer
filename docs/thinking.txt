@@ -38,3 +38,11 @@ di quello che fa il backend per ottenere quei risultati
 
 capire come utilizzare la sezione testing di antigravity per fare i /test
 
+dove si vedono le email trovate da holele (Cross check mail abilitato)
+
+controllare costi azure
+
+nella pagina iniziale non ci deve essere una colonna di sinistra e una di destra ma devono essere messi in 
+righe in modo da poter scrivere il titolo piu esteso e centrale, ovviamente fai uno stiling adeguato, bastera solo spostare e ridimensionare non cambiare font o cose cosi
+
+mettere in pausa servizio cloud quando finito

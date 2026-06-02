@@ -1190,7 +1190,7 @@ function MainApp() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center py-12 md:py-24 px-6 font-sans relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center py-4 md:py-8 px-6 font-sans relative overflow-hidden">
 
 
       {/* Background Decorativo Esteso */}
@@ -1199,14 +1199,14 @@ function MainApp() {
 
       {/* Layout Principale a due righe se non in analisi */}
       {!analysisId ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-5xl z-10 flex flex-col items-center mt-8 space-y-16">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-5xl z-10 flex flex-col items-center mt-4 space-y-8">
 
           {/* Riga Superiore: Hero & Search (Centrato) */}
           <div className="flex flex-col text-center items-center w-full">
-            <h1 className="text-5xl md:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-200 to-purple-400 pb-4 tracking-tight drop-shadow-2xl leading-[1.1]">
+            <h1 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-white via-blue-200 to-purple-400 pb-2 tracking-tight drop-shadow-2xl leading-[1.1]">
               Social Exposure Analyzer
             </h1>
-            <p className="text-gray-400 mt-4 mb-10 text-lg md:text-xl font-light max-w-2xl leading-relaxed">
+            <p className="text-gray-400 mt-2 mb-6 text-base md:text-lg font-light max-w-2xl leading-relaxed">
               Mappa istantaneamente l'impronta digitale di un bersaglio per valutare i rischi di <strong className="text-blue-400 font-semibold">social engineering</strong> tramite sensori OSINT avanzati e Intelligenza Artificiale.
             </p>
 
@@ -1214,32 +1214,32 @@ function MainApp() {
             <div className="flex space-x-2 mb-6 bg-white/5 p-1 rounded-xl border border-white/5 w-full max-w-xl backdrop-blur-xl mx-auto">
               <button
                 type="button"
-                onClick={() => { setInputType('generic'); setTargetUrl(''); }}
-                className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all duration-300 ${inputType === 'generic' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
-              >
-                Generico / Username
-              </button>
-              <button
-                type="button"
                 onClick={() => { setInputType('instagram'); setTargetUrl(''); setEnableIgScan(true); }}
-                className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all duration-300 ${inputType === 'instagram' ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all duration-300 ${inputType === 'instagram' ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
               >
                 Instagram
               </button>
               <button
                 type="button"
                 onClick={() => { setInputType('facebook'); setTargetUrl(''); setEnableFbScan(true); }}
-                className={`flex-1 py-3 px-4 rounded-lg text-sm font-bold transition-all duration-300 ${inputType === 'facebook' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all duration-300 ${inputType === 'facebook' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
               >
                 Facebook
+              </button>
+              <button
+                type="button"
+                onClick={() => { setInputType('generic'); setTargetUrl(''); }}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold transition-all duration-300 ${inputType === 'generic' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+              >
+                Generico
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="w-full max-w-3xl flex flex-col group relative mx-auto">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/40 to-purple-500/40 rounded-2xl blur-xl opacity-30 group-hover:opacity-70 transition duration-500 group-hover:duration-200"></div>
-              <div className="relative flex items-center bg-surface border border-white/10 rounded-2xl p-2 shadow-2xl backdrop-blur-xl">
-                <div className="pl-5 pr-2 text-blue-400/80">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <div className="relative flex items-center bg-surface border border-white/10 rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl">
+                <div className="pl-4 pr-2 text-blue-400/80">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
                 <input
                   type="text"
@@ -1247,15 +1247,15 @@ function MainApp() {
                   onChange={(e) => setTargetUrl(e.target.value)}
                   placeholder={
                     inputType === 'instagram'
-                      ? "Es. username o URL profilo Instagram..."
+                      ? "Es. username o URL Instagram..."
                       : inputType === 'facebook'
                         ? "Es. URL profilo Facebook..."
-                        : "Es. username Sherlock o URL generico..."
+                        : "Es. username o URL generico..."
                   }
-                  className="w-full bg-transparent text-white px-3 py-5 outline-none placeholder-gray-500 text-xl font-medium"
+                  className="w-full bg-transparent text-white px-2 py-3 outline-none placeholder-gray-500 text-lg font-medium"
                   disabled={isSubmitting}
                 />
-                <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-5 px-10 rounded-xl transition-all flex-shrink-0 text-xl shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transform hover:-translate-y-0.5 active:translate-y-0">
+                <button type="submit" disabled={isSubmitting} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 px-8 rounded-xl transition-all flex-shrink-0 text-lg shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transform hover:-translate-y-0.5 active:translate-y-0">
                   {isSubmitting ? 'Avvio...' : 'Scansiona'}
                 </button>
               </div>
