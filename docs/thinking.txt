@@ -46,3 +46,5 @@ nella pagina iniziale non ci deve essere una colonna di sinistra e una di destra
 righe in modo da poter scrivere il titolo piu esteso e centrale, ovviamente fai uno stiling adeguato, bastera solo spostare e ridimensionare non cambiare font o cose cosi
 
 mettere in pausa servizio cloud quando finito
+
+aggiungere i a instagram deep s

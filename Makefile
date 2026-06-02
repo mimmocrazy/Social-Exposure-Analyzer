@@ -10,3 +10,4 @@ b:
 frontend: f
 f:
 	cd frontend && npm run dev
+ 
