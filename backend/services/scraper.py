@@ -11,6 +11,7 @@ async def gather_profile_metadata(
     ig_sessionid: str = None,
     enable_fb_scan: bool = False,
     fb_sessionid: str = None,
+    analysis_depth: str = "standard",
     update_phase_callback=None
 ) -> List[Dict[str, Any]]:
     """
@@ -57,13 +58,34 @@ async def gather_profile_metadata(
                     if user_data:
                         deep_bio = f"Full Name: {user_data.get('full_name')} | Followers: {user_data.get('edge_followed_by', {}).get('count')} | Bio: {user_data.get('biography')} | Business Email: {user_data.get('business_email')} | Business Phone: {user_data.get('business_phone_number')} | Profile Pic: {user_data.get('profile_pic_url_hd')}"
                         
-                        # Estrazione Luoghi e Testi dagli ultimi post
                         timeline = user_data.get("edge_owner_to_timeline_media", {}).get("edges", [])
+                        
+                        # Fallback: Se la timeline è vuota ma abbiamo usato un sessionid, 
+                        # Instagram potrebbe aver bloccato i media per le richieste autenticate.
+                        # Riproviamo senza sessionid per i profili pubblici.
+                        if not timeline and ig_sessionid:
+                            logger.info("Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...")
+                            fallback_headers = ig_headers.copy()
+                            if "Cookie" in fallback_headers:
+                                del fallback_headers["Cookie"]
+                                
+                            ig_resp_fallback = await client.get(ig_api_url, headers=fallback_headers, follow_redirects=True)
+                            if ig_resp_fallback.status_code == 200:
+                                user_data_fb = ig_resp_fallback.json().get("data", {}).get("user", {})
+                                if user_data_fb:
+                                    timeline = user_data_fb.get("edge_owner_to_timeline_media", {}).get("edges", [])
+                                    
                         recent_locations = []
                         recent_captions = []
                         recent_images = []
                         
-                        for edge in timeline[:12]: # Analizza gli ultimi 12 post
+                        post_limit = 12
+                        if analysis_depth == "fast":
+                            post_limit = 5
+                        elif analysis_depth == "deep":
+                            post_limit = 20
+                            
+                        for edge in timeline[:post_limit]: # Analizza gli ultimi N post in base alla profondità
                             node = edge.get("node", {})
                             
                             # Estrai Luogo (Location tag)
@@ -92,19 +114,7 @@ async def gather_profile_metadata(
                         if recent_captions:
                             deep_bio += f" | Recent Post Captions: {' || '.join(recent_captions)}"
                             
-                        if target_to_search == "marco_rossi_sec_99":
-                            recent_images = [
-                                {"url": "/mocks/mock_badge.png", "caption": "Il mio nuovo badge aziendale! Orgoglioso di lavorare per questa grande azienda."},
-                                {"url": "/mocks/mock_boarding_pass.png", "caption": "In partenza per le vacanze! Ciao Milano!"},
-                                {"url": "/mocks/mock_license_plate.png", "caption": "La mia nuova auto finalmente arrivata!"},
-                                {"url": "/mocks/mock_parents_anniversary.png", "caption": "Tanti auguri a mamma e papà per il loro 40esimo anniversario! Vi voglio bene Mario e Luisa!"},
-                                {"url": "/mocks/mock_phone_screenshot.png", "caption": "Qualcuno ha il numero di questo mittente?"},
-                                {"url": "/mocks/mock_profile_pic.png", "caption": "Nuova foto profilo"},
-                                {"url": "/mocks/mock_shipping_label.png", "caption": "Pacco in arrivo da Amazon, non vedo l'ora!"},
-                                {"url": "/mocks/parco_sempione.jpg", "caption": "Passeggiata mattutina al Parco Sempione con il cane"},
-                                {"url": "/mocks/torta-di-compleanno.jpg", "caption": "Grazie a tutti per gli auguri! +27!"}
-                            ]
-                            
+                        
                         results.append({
                             "source": "Instagram Deep Scan API",
                             "url": f"API: {target_to_search}",

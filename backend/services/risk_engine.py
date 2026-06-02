@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from google import genai
 from google.genai import types
 from backend.models.risk import RiskReport
@@ -13,6 +14,25 @@ def get_client():
     if _client is None:
         _client = genai.Client()
     return _client
+
+# Dictionary to track temporary model failures: model_name -> expiration timestamp
+_disabled_models = {}
+_DISABLE_DURATION = 300  # 5 minutes
+
+def _is_model_available(model_name: str) -> bool:
+    """Controlla se il modello è disponibile o se è stato disabilitato temporaneamente."""
+    if model_name in _disabled_models:
+        disabled_until = _disabled_models[model_name]
+        if time.time() < disabled_until:
+            return False
+        else:
+            _disabled_models.pop(model_name, None)
+    return True
+
+def _mark_model_failed(model_name: str):
+    """Disabilita temporaneamente un modello dopo un errore."""
+    _disabled_models[model_name] = time.time() + _DISABLE_DURATION
+    logger.warning(f"Modello {model_name} contrassegnato come temporaneamente non disponibile per {_DISABLE_DURATION} secondi.")
 
 async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: str = None) -> RiskReport:
     """
@@ -100,11 +120,20 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
             logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...")
             client = get_client()
             
-            models_to_try = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest']
+            models_to_try = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest']
+            
+            # Filtra i modelli disabilitati temporaneamente
+            active_models = [m for m in models_to_try if _is_model_available(m)]
+            
+            # Se tutti i modelli sono temporaneamente disabilitati, tenta comunque la lista intera come ultima spiaggia
+            if not active_models:
+                logger.warning("Tutti i modelli Gemini sono temporaneamente disabilitati. Tento comunque con tutti i modelli come fallback estremo.")
+                active_models = models_to_try
+                
             response = None
             last_err = None
             
-            for model_name in models_to_try:
+            for model_name in active_models:
                 try:
                     logger.info(f"Tentativo di generazione report con modello {model_name}...")
                     response = client.models.generate_content(
@@ -120,7 +149,10 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
                     logger.info(f"Successo con il modello {model_name}!")
                     break
                 except Exception as e:
-                    logger.warning(f"Errore con il modello {model_name}: {e}. Provo il prossimo modello di fallback...")
+                    err_str = str(e)
+                    short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
+                    logger.warning(f"Errore con il modello {model_name}: {short_err}. Provo il prossimo modello di fallback...")
+                    _mark_model_failed(model_name)
                     last_err = e
                     
             if response is None:
@@ -130,11 +162,15 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
             return report
             
     except Exception as e:
-        logger.error(f"Errore critico durante l'analisi Risk Engine: {e}")
-        # Rilancia l'eccezione per far fallire correttamente l'analisi asincrona
-        raise e
+        err_str = str(e)
+        short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
+        logger.error(f"Errore critico durante l'analisi Risk Engine: {short_err}")
+        raise RuntimeError(f"Errore critico Gemini API / NLP: {short_err}") from e
+
+_gemini_is_down = False
 
 async def summarize_media_context(raw_text: str, caption: str = None) -> str:
+    global _gemini_is_down
     """Genera una descrizione contestuale chiara da OCR e caption."""
     try:
         import os
@@ -152,10 +188,18 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
         prompt += "SE NON CI SONO RELAZIONI NEL TESTO, NON SCRIVERLE. È SEVERAMENTE VIETATO scrivere 'Relazioni: non specificate', 'Madre: non specificata' ecc. Ometti il campo se non esiste. "
         prompt += "NON dare consigli, limitati a descrivere i dati."
 
-        if ai_provider == "gemini":
+        # Controlla dinamicamente se abbiamo modelli Gemini disponibili
+        gemini_available = any(_is_model_available(m) for m in ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'])
+
+        if ai_provider == "gemini" and gemini_available and not _gemini_is_down:
             client = get_client()
-            models_to_try = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-flash-latest']
-            for model_name in models_to_try:
+            models_to_try = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash']
+            
+            # Filtra i modelli disabilitati temporaneamente
+            active_models = [m for m in models_to_try if _is_model_available(m)]
+            
+            response = None
+            for model_name in active_models:
                 try:
                     response = client.models.generate_content(
                         model=model_name,
@@ -163,10 +207,17 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
                     )
                     return response.text.strip()
                 except Exception as e:
-                    logger.debug(f"Gemini {model_name} fallito per image summary: {e}")
+                    err_str = str(e)
+                    short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
+                    logger.debug(f"Gemini {model_name} fallito per image summary: {short_err}")
+                    _mark_model_failed(model_name)
                     continue
             
-            logger.warning("Tutti i modelli Gemini hanno fallito per image summary. Fallback a Groq...")
+            # Se tutti i modelli tentati in questo giro hanno fallito, controlliamo se sono tutti disabilitati ora
+            if all(not _is_model_available(m) for m in models_to_try):
+                logger.warning("Tutti i modelli Gemini hanno fallito per image summary. Fallback a Groq e disabilitazione temporanea di Gemini per media context...")
+                _gemini_is_down = True
+            
             # Fallback a Groq se Gemini fallisce (es. Rate Limit o Safety)
             from groq import Groq
             groq_api_key = env_config.get("GROQ_API_KEY")

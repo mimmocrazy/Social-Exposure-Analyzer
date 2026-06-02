@@ -11,3 +11,4 @@ class AnalyzeRequest(BaseModel):
     enable_fb_scan: bool = Field(default=False)
     fb_c_user: Optional[str] = Field(default=None)
     fb_xs: Optional[str] = Field(default=None)
+    analysis_depth: str = Field(default="standard")

@@ -52,7 +52,9 @@ async def guess_real_name(username: str) -> str:
                     )
                     break
                 except Exception as e:
-                    logger.warning(f"Errore con {model_name} in guess_real_name: {e}. Provo il fallback...")
+                    err_str = str(e)
+                    short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
+                    logger.warning(f"[{model_name}] fallito in guess_real_name: {short_err}. Provo il fallback...")
                     last_err = e
                     
             if response is None:
@@ -88,7 +90,8 @@ async def run_scraping_task(
     enable_holehe: bool = True,
     ig_sessionid: str = None,
     enable_fb_scan: bool = False,
-    fb_sessionid: str = None
+    fb_sessionid: str = None,
+    analysis_depth: str = "standard"
 ):
     """
     Orchestra l'esecuzione di Discovery (se username) e Scraping dei metadati.
@@ -108,7 +111,6 @@ async def run_scraping_task(
             logger.info("Target identificato come URL diretto.")
         else:
             update_analysis_phase(analysis_id, "Discovery Sherlock")
-            logger.info(f"Avvio Discovery tramite Sherlock per username: {target}")
             discovery_adapter = SherlockAdapter()
             urls_to_scrape = discovery_adapter.discover_profiles(target)
             
@@ -130,6 +132,7 @@ async def run_scraping_task(
             ig_sessionid=ig_sessionid,
             enable_fb_scan=enable_fb_scan,
             fb_sessionid=fb_sessionid,
+            analysis_depth=analysis_depth,
             update_phase_callback=lambda p: update_analysis_phase(analysis_id, p)
         )
         
@@ -165,27 +168,44 @@ async def run_scraping_task(
                             
                         text = None
                         
-                        if img_url.startswith("/mocks/"):
-                            local_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../frontend/public", img_url.lstrip("/")))
-                            if os.path.exists(local_path):
-                                import shutil
-                                tmp_mock_path = os.path.join(tempfile.gettempdir(), f"ocr_mock_{analysis_id}_{idx}.png")
-                                shutil.copy(local_path, tmp_mock_path)
-                                text = extract_text_from_image(tmp_mock_path)
-                        else:
-                            img_resp = await img_client.get(img_url, timeout=10.0)
-                            if img_resp.status_code == 200:
-                                tmp_path = os.path.join(tempfile.gettempdir(), f"ocr_img_{analysis_id}_{idx}.jpg")
+                        headers = {
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+                        }
+                        img_resp = await img_client.get(img_url, headers=headers, follow_redirects=True, timeout=15.0)
+                        if img_resp.status_code == 200:
+                            content = img_resp.content
+                            tmp_path = os.path.join(tempfile.gettempdir(), f"ocr_img_{analysis_id}_{idx}.jpg")
+                            try:
                                 with open(tmp_path, "wb") as f:
-                                    f.write(img_resp.content)
+                                    f.write(content)
                                 text = extract_text_from_image(tmp_path)
+                            finally:
+                                if os.path.exists(tmp_path):
+                                    os.remove(tmp_path)
+                        else:
+                            logger.warning(f"Impossibile scaricare l'immagine OCR {idx}, status: {img_resp.status_code}")
+                            continue
                         
-                        if text and len(text.strip()) > 2:
-                            ocr_texts.append(text)
-                            ai_description = await summarize_media_context(text, caption)
+                        has_text = text and len(text.strip()) > 2
+                        has_caption = caption and len(caption.strip()) > 2
+                        
+                        if has_text or has_caption:
+                            if has_text:
+                                ocr_texts.append(text)
+                            
+                            safe_text = text if has_text else "Nessun testo rilevato all'interno dell'immagine."
+                            ai_description = await summarize_media_context(safe_text, caption)
+                            
+                            # Encode as base64 for frontend to prevent CORS/block issues
+                            import base64
+                            b64_img = base64.b64encode(content).decode('utf-8')
+                            frontend_url = f"data:image/jpeg;base64,{b64_img}"
+
                             ocr_results_payload.append({
-                                "url": img_url,
-                                "text_extracted": text,
+                                "url": frontend_url,
+                                "original_url": img_url,
+                                "text_extracted": safe_text,
                                 "ai_description": ai_description
                             })
                             
@@ -251,8 +271,14 @@ async def run_scraping_task(
                         })
                         logger.warning(f"[OSINT BREACH] {em} è esposta in {len(breaches)} databreaches!")
             
+        import copy
+        llm_payload = copy.deepcopy(osint_payload)
+        for item in llm_payload.get("ocr_results", []):
+            item["url"] = item.get("original_url", "")
+            item.pop("original_url", None)
+
         import json
-        payload_str = json.dumps(osint_payload, ensure_ascii=False)
+        payload_str = json.dumps(llm_payload, ensure_ascii=False)
         original_length = len(payload_str)
         
         # Limite di sicurezza Anti-DoS ottimizzato per LLM ad ampio contesto
@@ -290,7 +316,9 @@ async def run_scraping_task(
                 logger.info(f"Task asincrono di OSINT e Risk Engine concluso per {analysis_id}")
                 
     except Exception as e:
-        logger.error(f"Fallimento durante l'orchestrazione asincrona {analysis_id}: {e}")
+        err_str = str(e)
+        short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
+        logger.error(f"Fallimento durante l'orchestrazione asincrona {analysis_id}: {short_err}")
         with Session(backend.database.engine) as session:
             analysis = session.get(ProfileAnalysis, analysis_id)
             if analysis:
@@ -331,7 +359,8 @@ def start_analysis(
         request.enable_holehe,
         request.ig_sessionid,
         request.enable_fb_scan,
-        fb_cookie
+        fb_cookie,
+        request.analysis_depth
     )
     
     return {
