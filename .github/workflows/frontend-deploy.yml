@@ -28,6 +28,8 @@ jobs:
 
       - name: Build React App
         working-directory: ./frontend
+        env:
+          VITE_API_URL: https://social-exposure-backend.azurewebsites.net/api/v1
         run: npm run build
 
       - name: Upload to Azure Storage
