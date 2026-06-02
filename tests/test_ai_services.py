@@ -61,3 +61,29 @@ async def test_calculate_risk_fallback(mocker):
         await calculate_risk([])
     
     assert "Errore critico Gemini API / NLP:" in str(exc_info.value)
+
+@pytest.mark.asyncio
+async def test_model_temporary_disabling(mocker):
+    from backend.services.risk_engine import _disabled_models, _is_model_available
+    # Svuota i modelli disabilitati prima del test
+    _disabled_models.clear()
+    
+    mock_client_instance = mocker.MagicMock()
+    # Primo modello fallisce con eccezione, secondo modello ha successo
+    mock_generate = mocker.MagicMock()
+    mock_generate.text = '{"score": 10, "score_breakdown": [], "sub_scores": {"identity_exposure": 10, "network_exposure": 0, "routine_exposure": 0}, "level": "LOW", "threat_vectors": [], "mitigation_advice": "Advice", "mitigation_sections": [], "insufficient_data": false, "pii_extracted": []}'
+    
+    mock_client_instance.models.generate_content.side_effect = [
+        Exception("503 Service Unavailable"),
+        mock_generate
+    ]
+    
+    mocker.patch('backend.services.risk_engine.get_client', return_value=mock_client_instance)
+    
+    # Esegue la chiamata: il primo modello ('gemini-flash-latest') dovrebbe fallire ed essere disabilitato,
+    # poi il secondo ('gemini-2.5-flash') dovrebbe avere successo.
+    await calculate_risk("test payload")
+    
+    # Verifica che 'gemini-flash-latest' sia ora disabilitato
+    assert not _is_model_available('gemini-flash-latest')
+    assert _is_model_available('gemini-2.5-flash')
