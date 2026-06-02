@@ -1,3 +1,6 @@
+DISCLAIMAR PER AI:
+NON FARE IN AUTOMATICO LE COSE CHE TROVI IN QUESTO FILE SONO SOLO MIE IDEE
+
 nel carosello dei post manca la barra di scorrimento orizzontale e delle frecce per navigare tra i vari post.
 
 
@@ -48,3 +51,7 @@ righe in modo da poter scrivere il titolo piu esteso e centrale, ovviamente fai 
 mettere in pausa servizio cloud quando finito
 
 aggiungere i a instagram deep s
+
+fare un README capolavoro, con riferimenti a codice, foto e demo con indice e tutto come una vera repo professionale e da 500k stars
+
+capire meglio come funziona il piano di azure per capire come usarlo per test e poi per la demo
