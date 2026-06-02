@@ -335,13 +335,14 @@ function Dashboard({ analysisId }) {
     const { data, isLoading, isError } = useQuery({
       queryKey: ['analysis', analysisId],
       queryFn: () => getAnalysisStatus(analysisId),
+      enabled: !!analysisId,
       refetchInterval: (query) => {
         if (!query.state.data) return 800;
         return query.state.data.status === 'PENDING' ? 800 : false;
       },
     });
   
-    if (isLoading || (data && data.status === 'PENDING') || (data?.status === 'COMPLETED' && !showDashboard)) {
+    if (!data || isLoading || (data && data.status === 'PENDING') || (data?.status === 'COMPLETED' && !showDashboard)) {
       return (
         <TerminalLoading 
           isCompleted={data?.status === 'COMPLETED'}
@@ -1225,7 +1226,7 @@ function MainApp() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50rem] h-[50rem] bg-purple-600/10 rounded-full blur-3xl -z-10 mix-blend-screen animate-[pulse_12s_ease-in-out_infinite_reverse]"></div>
 
       {/* Layout Principale a due righe se non in analisi */}
-      {!analysisId ? (
+      {!(analysisId || isSubmitting) ? (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-5xl z-10 flex flex-col items-center mt-8 space-y-16">
 
           {/* Riga Superiore: Hero & Search (Centrato) */}
@@ -1556,8 +1557,8 @@ function MainApp() {
       )}
 
       <AnimatePresence mode="wait">
-        {analysisId && (
-          <ErrorBoundary key={analysisId}>
+        {(analysisId || isSubmitting) && (
+          <ErrorBoundary key="dashboard">
             <Dashboard analysisId={analysisId} />
           </ErrorBoundary>
         )}
