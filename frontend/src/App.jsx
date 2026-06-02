@@ -1322,39 +1322,35 @@ function MainApp() {
           {/* Settings OSINT (Design Premium) */}
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="w-full relative mt-12">
             
-            {/* Profondità di Scansione Selettore Interattivo */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-8 relative overflow-hidden group backdrop-blur-md w-full max-w-2xl mx-auto">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative z-10">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">Profondità Scansione (Post Social)</h4>
-                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                    <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                  </div>
-                </div>
-                <div className="flex bg-black/40 rounded-xl p-1 border border-white/5 shadow-inner">
-                  <button 
-                    type="button" 
-                    onClick={() => setAnalysisDepth('fast')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${analysisDepth === 'fast' ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
-                  >
-                    FAST (5 Post)
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setAnalysisDepth('standard')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${analysisDepth === 'standard' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
-                  >
-                    STD (12 Post)
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setAnalysisDepth('deep')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${analysisDepth === 'deep' ? 'bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
-                  >
-                    DEEP (20 Post)
-                  </button>
-                </div>
+            {/* Profondità di Scansione Selettore Interattivo (Redesigned) */}
+            <div className="flex flex-col items-center justify-center mb-10 w-full relative z-20">
+              <h4 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3 flex items-center space-x-2">
+                <svg className="w-4 h-4 text-blue-500/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                <span>Profondità Scansione Social</span>
+              </h4>
+              <div className="flex bg-white/5 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl max-w-md w-full relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full opacity-50"></div>
+                <button 
+                  type="button" 
+                  onClick={() => setAnalysisDepth('fast')}
+                  className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-full transition-all duration-300 relative z-10 ${analysisDepth === 'fast' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-gray-400 hover:text-white'}`}
+                >
+                  FAST (5 Post)
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setAnalysisDepth('standard')}
+                  className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-full transition-all duration-300 relative z-10 ${analysisDepth === 'standard' ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'text-gray-400 hover:text-white'}`}
+                >
+                  STD (12 Post)
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setAnalysisDepth('deep')}
+                  className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-full transition-all duration-300 relative z-10 ${analysisDepth === 'deep' ? 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'text-gray-400 hover:text-white'}`}
+                >
+                  DEEP (20 Post)
+                </button>
               </div>
             </div>
 
@@ -1411,8 +1407,24 @@ function MainApp() {
                   <div className={`p-3.5 rounded-xl transition-colors ${enableIgScan ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
-                  <div>
-                    <h4 className="text-white font-bold text-base">Instagram Deep Scan</h4>
+                  <div className="flex flex-col items-start z-20">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="text-white font-bold text-base">Instagram Deep Scan</h4>
+                      <div className="relative group/tooltip">
+                        <svg className="w-4 h-4 text-gray-500 hover:text-purple-400 transition-colors cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[300px] bg-[#0a0a0f] border border-purple-500/30 text-gray-300 text-xs rounded-xl p-4 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 backdrop-blur-md font-light leading-relaxed">
+                          <strong className="text-purple-400 block mb-2 text-[13px]">Come ottenere il sessionid:</strong>
+                          <ol className="list-decimal pl-4 space-y-1">
+                            <li>Apri Instagram dal PC e fai login.</li>
+                            <li>Premi <kbd className="bg-white/10 px-1 py-0.5 rounded font-mono text-[10px]">F12</kbd> (Strumenti Sviluppatore).</li>
+                            <li>Vai nella scheda <strong>Application</strong> (o Storage) {'>'} <strong>Cookies</strong>.</li>
+                            <li>Copia il valore della riga <code className="text-purple-300 bg-purple-500/20 px-1 rounded">sessionid</code>.</li>
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
                     <p className="text-gray-400 text-xs mt-1 font-light">Estrazione avanzata follower e routine/luoghi.</p>
                   </div>
                 </div>
