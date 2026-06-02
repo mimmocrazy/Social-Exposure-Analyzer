@@ -168,116 +168,129 @@ const getOfficialIcon = (iconName, isActive) => {
   }
 };
 
-const InteractiveLoading = ({ currentPhase, isCompleted, onFinish }) => {
-  const steps = [
-    { match: "Inizializzazione", text: "Inizializzazione Sistema", icon: "gears" },
-    { match: "Sherlock", text: "Discovery Sherlock", icon: "spy" },
-    { match: "Deduzione", text: "Deduzione Identità LLM", icon: "brain" },
-    { match: "Instagram", text: "Instagram Deep Scan", icon: "instagram" },
-    { match: "Facebook", text: "Facebook Deep Scan", icon: "facebook" },
-    { match: "DuckDuckGo", text: "OSINT DuckDuckGo", icon: "spy" },
-    { match: "Estrazione", text: "Estrazione Media (OCR)", icon: "doc", dynamic: true },
-    { match: "Analisi Media", text: "Elaborazione Media AI", icon: "brain", dynamic: true },
-    { match: "NLP", text: "Correlazione NLP (SpaCy)", icon: "brain" },
-    { match: "Holehe", text: "Controllo Breach Holehe", icon: "spy" },
-    { match: "Risk Engine", text: "Analisi Risk Engine AI", icon: "brain" },
-    { match: "Report", text: "Generazione Report", icon: "gears" }
+const TerminalLoading = ({ isCompleted, onFinish }) => {
+  const allLogs = [
+    "[SYSTEM] Booting OSINT kernel v3.2.1...",
+    "[SHERLOCK OSINT] Avvio Discovery tramite Sherlock per username: target_user",
+    "[SHERLOCK OSINT] Nessun URL trovato tramite Sherlock. Applica fallback a Instagram.",
+    "[LLM IDENTITY] Avvio deduzione identità tramite LLM per target_user",
+    "[NETWORK] Handshake SSL completato. Connessione cifrata 256-bit stabilita.",
+    "[ORCHESTRATOR] Nome reale dedotto con successo.",
+    "[INSTAGRAM API] Avvio Instagram Deep Scan (sessionid fornito: True)",
+    "[logging] - 127.0.0.1:51932 - \"OPTIONS /api/v1/analyze HTTP/1.1\" 200",
+    "[logging] - 127.0.0.1:51932 - \"GET /api/v1/analyze HTTP/1.1\" 200",
+    "[OSINT SCRAPER] Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...",
+    "[INSTAGRAM API] Instagram Deep Scan riuscito con successo.",
+    "[OSINT SCRAPER] Skipping standard scraping in quanto il Deep Scan è andato a buon fine.",
+    "[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo...",
+    "[DUCKDUCKGO OSINT] Avvio OSINT profondo per alias pastebin OR dump OR data breach",
+    "[ORCHESTRATOR] Avvio estrazione OCR e AI context per le immagini trovate.",
+    "[COMPUTE] Allocazione Tensor stream su CPU. Note: This module is much faster con GPU.",
+    "[RISK ENGINE AI] Gemini gemini-flash-latest fallito per image summary: 503 UNAVAILABLE",
+    "[RISK ENGINE AI] WARNING: Modello gemini-flash-latest contrassegnato come temporaneamente non disponibile per 300 secondi.",
+    "[RISK ENGINE AI] Fallback trasparente avviato su instanza di backup...",
+    "[ORCHESTRATOR] Avvio estrazione PII tramite SpaCy...",
+    "[NLP] Modello it_core_news_sm caricato in RAM. Esecuzione pipeline NER avanzata.",
+    "[ORCHESTRATOR] Trovate 1 email per Holehe OSINT: ['[EMAIL-MASKED]']",
+    "[HOLEHE OSINT] Avvio ricerca OSINT Holehe per leak check...",
+    "[HOLEHE OSINT] Holehe completato per [EMAIL-MASKED] Siti trovati: 0",
+    "[ORCHESTRATOR] Risk Engine Payload preparato con successo. Dimensione: 13426 caratteri (limite DoS: 100000).",
+    "[ORCHESTRATOR] Avvio analisi Risk Engine tramite LLM...",
+    "[RISK ENGINE AI] Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...",
+    "[RISK ENGINE AI] Tentativo di generazione report con modello gemini-2.5-flash...",
+    "[RISK ENGINE AI] Successo con il modello gemini-2.5-flash!",
+    "[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso."
   ];
 
-  const targetIndex = steps.findLastIndex(s => currentPhase?.includes(s.match));
-  const safeTargetIndex = isCompleted ? steps.length - 1 : (targetIndex === -1 ? 0 : targetIndex);
-
-  const [displayedIndex, setDisplayedIndex] = useState(0);
-
-  useEffect(() => {
-    if (displayedIndex < safeTargetIndex) {
-      const timer = setTimeout(() => {
-        setDisplayedIndex(prev => Math.min(prev + 1, safeTargetIndex));
-      }, 1000); // 1.0s ritardo fittizio
-      return () => clearTimeout(timer);
-    } else if (displayedIndex > safeTargetIndex) {
-      setDisplayedIndex(safeTargetIndex);
-    }
-  }, [displayedIndex, safeTargetIndex]);
+  const [visibleLogs, setVisibleLogs] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
-    if (isCompleted && displayedIndex === steps.length - 1) {
+    if (!isCompleted && currentIndex < allLogs.length) {
+      // Ritardo logico simulato
+      let delay = Math.random() * 400 + 100;
+      const logText = allLogs[currentIndex];
+      if (logText.includes("OSINT profondo") || logText.includes("estrazione OCR") || logText.includes("generazione report")) {
+        delay = Math.random() * 800 + 600;
+      } else if (logText.includes("logging")) {
+        delay = 50;
+      }
+      
       const timer = setTimeout(() => {
-        if (onFinish) onFinish();
-      }, 600);
+        setVisibleLogs(prev => [...prev, logText]);
+        setCurrentIndex(prev => prev + 1);
+      }, delay);
+      return () => clearTimeout(timer);
+    } else if (isCompleted) {
+      // Se completato dal server, velocizza la stampa dei restanti
+      if (currentIndex < allLogs.length) {
+         setVisibleLogs(prev => [...prev, allLogs[currentIndex]]);
+         setCurrentIndex(prev => prev + 1);
+      }
+    }
+  }, [currentIndex, allLogs.length, isCompleted, allLogs]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [visibleLogs]);
+
+  useEffect(() => {
+    if (isCompleted && currentIndex >= allLogs.length) {
+      const timer = setTimeout(() => {
+        setVisibleLogs(prev => [...prev, "[SYSTEM] Elaborazione completata. Generazione UI in corso..."]);
+        setTimeout(() => {
+          if (onFinish) onFinish();
+        }, 800);
+      }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isCompleted, displayedIndex, onFinish]);
-
-  const safeIndex = displayedIndex;
+  }, [isCompleted, currentIndex, allLogs.length, onFinish]);
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 w-full px-4">
-      <div className="max-w-xl w-full">
-        <h2 className="text-center text-white/90 text-2xl md:text-3xl font-light tracking-[0.2em] mb-12">
-          Analisi in Corso
-        </h2>
-
-        <div className="space-y-4">
-          {steps.map((step, idx) => {
-            const isPast = idx < safeIndex;
-            const isActive = idx === safeIndex;
-            const isFuture = idx > safeIndex;
-            
-            // Nascondi gli step dinamici se non sono attivi e non sono stati completati
-            if (step.dynamic && isFuture && !currentPhase?.includes("Media") && !currentPhase?.includes("Estrazione")) {
-                if (idx === 7) return null; // skip se step precedente non toccato
-            }
-
+    <div className="flex flex-col items-center justify-center py-10 w-full px-4 relative">
+      <h2 className="text-center text-white/90 text-2xl md:text-3xl font-light tracking-[0.2em] mb-6 animate-pulse">
+        Analisi in Corso
+      </h2>
+      <div className="max-w-4xl w-full bg-[#0a0a0a] rounded-lg border border-gray-800 shadow-[0_0_40px_rgba(6,182,212,0.1)] overflow-hidden font-mono text-xs md:text-sm relative">
+        <div className="flex items-center px-4 py-2 bg-[#1a1a1a] border-b border-gray-800 shadow-md">
+          <div className="flex space-x-2">
+            <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+          </div>
+          <div className="mx-auto text-gray-500 text-xs tracking-wider flex items-center">
+            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            kernel_tty1 — root@osint-server
+          </div>
+        </div>
+        <div className="p-6 h-[400px] overflow-y-auto text-emerald-400/90 space-y-1 md:space-y-2 font-semibold">
+          {visibleLogs.map((log, i) => {
+            const timeStr = new Date(Date.now() - (visibleLogs.length - i) * 1000).toISOString().substring(11, 19);
+            const isError = log.includes("fallito") || log.includes("WARNING");
+            const isSuccess = log.includes("successo") || log.includes("completato");
+            const isInfo = log.includes("INFO");
             return (
-              <motion.div 
-                key={idx}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: isFuture ? 0.4 : 1, x: 0 }}
-                transition={{ duration: 0.5, delay: idx * 0.05 }}
-                className={`flex items-center p-4 rounded-2xl border transition-all duration-500 ${
-                  isActive 
-                    ? 'bg-cyan-900/20 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.15)]' 
-                    : isPast 
-                      ? 'bg-white/5 border-white/10' 
-                      : 'bg-transparent border-transparent'
-                }`}
-              >
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-4 ${
-                  isActive ? 'bg-cyan-500/20 text-cyan-400' : isPast ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-gray-500'
-                }`}>
-                  {isActive ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                  ) : isPast ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  ) : (
-                    <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  )}
-                </div>
-                
-                <div className="flex-shrink-0 mr-4 transform scale-75 opacity-80">
-                  {getOfficialIcon(step.icon, isActive)}
-                </div>
-                
-                <div className="flex-1">
-                  <h3 className={`font-medium tracking-wide ${isActive ? 'text-white' : isPast ? 'text-gray-300' : 'text-gray-500'}`}>
-                    {isActive && (step.dynamic || currentPhase?.includes(step.match)) ? currentPhase : step.text}
-                  </h3>
-                  {isActive && (
-                    <div className="w-full bg-gray-800 rounded-full h-1 mt-3 overflow-hidden">
-                      <motion.div 
-                        className="bg-cyan-500 h-1 rounded-full"
-                        initial={{ width: "0%" }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+              <div key={i} className="flex flex-col md:flex-row md:items-start break-all md:break-normal">
+                <span className="text-gray-600 mr-4 shrink-0">[{timeStr}]</span>
+                <span className={isError ? "text-red-400" : isSuccess ? "text-cyan-400" : isInfo ? "text-blue-400" : ""}>
+                  {log}
+                </span>
+              </div>
             );
           })}
+          {!isCompleted && (
+            <div className="flex mt-2 items-center">
+              <span className="text-gray-600 mr-4 shrink-0">[{new Date().toISOString().substring(11, 19)}]</span>
+              <span className="animate-pulse bg-emerald-400 w-2 h-4"></span>
+            </div>
+          )}
+          <div ref={scrollRef} className="h-4" />
         </div>
+        {/* CRT Scanline */}
+        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-50 opacity-30"></div>
       </div>
     </div>
   );
@@ -304,8 +317,7 @@ function Dashboard({ analysisId }) {
   
     if (isLoading || (data && data.status === 'PENDING') || (data?.status === 'COMPLETED' && !showDashboard)) {
       return (
-        <InteractiveLoading 
-          currentPhase={data?.current_phase} 
+        <TerminalLoading 
           isCompleted={data?.status === 'COMPLETED'}
           onFinish={() => setShowDashboard(true)}
         />
@@ -415,6 +427,13 @@ function Dashboard({ analysisId }) {
       data.pii_extracted.forEach((pii) => {
         if (!pii || !pii.label) return;
         const labelKey = pii.label.toUpperCase();
+        
+        // Escludiamo etichette contestuali ai post per lasciarle solo sotto le immagini
+        const excluded = ['TARGA', 'VOLO', 'LICENSE', 'FLIGHT', 'BIGLIETTO', 'TICKET', 'ANNIVERSARI', 'GENITOR', 'FAMIGLIA', 'FAMILY', 'PARENT', 'RELAZION', 'RELATION'];
+        if (excluded.some(ex => labelKey.includes(ex))) {
+            return;
+        }
+
         if (!piiGroups[labelKey]) {
           piiGroups[labelKey] = [];
         }
@@ -438,30 +457,22 @@ function Dashboard({ analysisId }) {
 
     return (
       <div className="mt-12 space-y-8 w-full max-w-7xl mx-auto text-left">
-        {/* Top Row: Score & Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-1 glass-card p-8 flex flex-col relative overflow-hidden group">
-            <div className={`absolute -inset-2 bg-gradient-to-tr ${isCritical ? 'from-red-500/10 to-orange-500/5' : 'from-blue-500/10 to-cyan-500/5'} blur-3xl -z-10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000`}></div>
-            <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-8 text-center">Indice di Rischio</h3>
-            <div className="flex justify-center mb-8">
+        {/* Top Row: Risk Index (Full Width Horizontal) */}
+        <div className="glass-card p-8 relative overflow-hidden group">
+          <div className={`absolute -inset-2 bg-gradient-to-tr ${isCritical ? 'from-red-500/10 to-orange-500/5' : 'from-blue-500/10 to-cyan-500/5'} blur-3xl -z-10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000`}></div>
+          <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-6 text-center md:text-left">Indice di Rischio</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            {/* Radial Score & Level Pill */}
+            <div className="flex flex-col items-center justify-center space-y-6">
               <RadialProgress score={score} isCritical={isCritical} />
+              <div className={`px-8 py-2.5 rounded-full text-[11px] font-bold tracking-[0.2em] uppercase border backdrop-blur-md ${isCritical ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.15)]' : 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.15)]'}`}>
+                {data.risk_level}
+              </div>
             </div>
 
-            {data.llm_report?.score_breakdown && (
-              <div className="w-full mt-2 mb-6 bg-white/[0.02] rounded-2xl p-5 border border-white/[0.05] overflow-y-auto max-h-40 custom-scrollbar">
-                <h4 className="text-[9px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Score Breakdown</h4>
-                <div className="space-y-3">
-                  {data.llm_report.score_breakdown.map((sb, idx) => (
-                    <div key={idx} className="flex justify-between items-start text-xs">
-                      <span className="text-gray-300/80 mr-3 leading-relaxed font-light">{sb.reason}</span>
-                      <span className="text-white/90 font-medium whitespace-nowrap px-2 py-1 bg-white/10 rounded-full text-[10px]">+{sb.points_added}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="w-full space-y-5 mt-2 border-t border-white/5 pt-6">
+            {/* Sub Scores */}
+            <div className="w-full space-y-5">
               <div>
                 <div className="flex justify-between text-xs mb-2">
                   <span className="text-gray-400 font-light">Identità e Contatti</span>
@@ -491,13 +502,27 @@ function Dashboard({ analysisId }) {
               </div>
             </div>
 
-            <div className={`mt-8 px-8 py-2.5 mx-auto rounded-full text-[11px] font-bold tracking-[0.2em] uppercase border backdrop-blur-md ${isCritical ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.15)]' : 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.15)]'}`}>
-              {data.risk_level}
-            </div>
+            {/* Score Breakdown */}
+            {data.llm_report?.score_breakdown ? (
+              <div className="w-full bg-white/[0.02] rounded-2xl p-5 border border-white/[0.05] overflow-y-auto max-h-48 custom-scrollbar">
+                <h4 className="text-[9px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Score Breakdown</h4>
+                <div className="space-y-3">
+                  {data.llm_report.score_breakdown.map((sb, idx) => (
+                    <div key={idx} className="flex justify-between items-start text-xs">
+                      <span className="text-gray-300/80 mr-3 leading-relaxed font-light">{sb.reason}</span>
+                      <span className="text-white/90 font-medium whitespace-nowrap px-2 py-1 bg-white/10 rounded-full text-[10px]">+{sb.points_added}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="hidden md:block"></div>
+            )}
           </div>
+        </div>
 
-          {/* PII Grid Widget */}
-          <div className="md:col-span-2 glass-card p-10 flex flex-col relative overflow-hidden">
+        {/* PII Grid Widget (Full Width Horizontal) */}
+        <div className="w-full glass-card p-10 flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-end mb-8 border-b border-white/[0.05] pb-6">
               <div>
                 <h3 className="text-white/90 text-2xl font-light tracking-tight mb-1">Dati Sensibili Estrapolati</h3>
@@ -560,9 +585,8 @@ function Dashboard({ analysisId }) {
               )}
             </div>
           </div>
-        </div>
 
-{/* OCR Media Gallery Widget */}
+
         {ocrResults && (
           <div className="glass-card p-10 flex flex-col mt-6 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-cyan-500/5 -z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-1000"></div>
@@ -585,9 +609,24 @@ function Dashboard({ analysisId }) {
                 <p className="text-gray-400 text-sm font-bold tracking-widest uppercase">Nessun media scansionato</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pt-4 w-full">
-                {ocrResults.map((ocr, idx) => (
-                  <div key={idx} className="relative rounded-[2rem] overflow-hidden group/card shadow-[0_15px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex flex-col h-full">
+              <div className="relative group/carousel">
+                {/* Scroll Buttons */}
+                <button 
+                  onClick={() => document.getElementById('ocr-carousel').scrollBy({ left: -window.innerWidth / 2, behavior: 'smooth' })}
+                  className="absolute left-2 md:left-4 top-[40%] -translate-y-1/2 z-20 bg-black/60 hover:bg-cyan-500/80 text-white p-3 md:p-4 rounded-full backdrop-blur-md opacity-0 group-hover/carousel:opacity-100 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] border border-white/10"
+                >
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <button 
+                  onClick={() => document.getElementById('ocr-carousel').scrollBy({ left: window.innerWidth / 2, behavior: 'smooth' })}
+                  className="absolute right-2 md:right-4 top-[40%] -translate-y-1/2 z-20 bg-black/60 hover:bg-cyan-500/80 text-white p-3 md:p-4 rounded-full backdrop-blur-md opacity-0 group-hover/carousel:opacity-100 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] border border-white/10"
+                >
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+
+                <div id="ocr-carousel" className="flex overflow-x-auto gap-8 pt-4 pb-12 w-full snap-x snap-mandatory scroll-smooth custom-scrollbar">
+                  {ocrResults.map((ocr, idx) => (
+                  <div key={idx} className="relative rounded-[2rem] overflow-hidden group/card shadow-[0_15px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex flex-col shrink-0 snap-center w-[85vw] sm:w-[60vw] md:w-[45vw] lg:w-[35vw] xl:w-[28vw]">
                     <div className="w-full h-72 md:h-80 relative overflow-hidden bg-black">
                       <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 group-hover/card:scale-105 transition-all duration-700" />
                     </div>
@@ -694,6 +733,7 @@ function Dashboard({ analysisId }) {
                     </div>
                   </div>
                 ))}
+              </div>
               </div>
             )}
           </div>
@@ -1107,6 +1147,7 @@ function MainApp() {
   const [enableFbScan, setEnableFbScan] = useState(false);
   const [fbCUser, setFbCUser] = useState('');
   const [fbXs, setFbXs] = useState('');
+  const [analysisDepth, setAnalysisDepth] = useState('standard');
 
   const { data: historyData } = useQuery({
     queryKey: ['history'],
@@ -1125,7 +1166,8 @@ function MainApp() {
         enableIgScan ? igSessionId : null,
         enableFbScan,
         enableFbScan ? fbCUser : null,
-        enableFbScan ? fbXs : null
+        enableFbScan ? fbXs : null,
+        analysisDepth
       );
       setAnalysisId(res.analysis_id);
       queryClient.refetchQueries({ queryKey: ['history'] });
@@ -1264,21 +1306,38 @@ function MainApp() {
           {/* Colonna Destra: Switches OSINT (Design Premium) */}
           <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="flex flex-col space-y-4 relative">
             
-            {/* Profondità di Analisi Widget */}
+            {/* Profondità di Scansione Selettore Interattivo */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-2 relative overflow-hidden group backdrop-blur-md">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="flex justify-between items-center relative z-10">
-                <div>
-                  <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Profondità di Analisi</h4>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-white text-xl font-extrabold tracking-tight">
-                      {enableDdg && enableHolehe && (enableIgScan || enableFbScan) ? 'MILITARE (OSINT Esteso)' : 
-                       (enableDdg || enableHolehe || enableIgScan || enableFbScan) ? 'AVANZATA (Deep Web)' : 'STANDARD (Superficie)'}
-                    </span>
+              <div className="relative z-10">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-gray-400 text-xs font-bold uppercase tracking-widest">Profondità Scansione (Post Social)</h4>
+                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   </div>
                 </div>
-                <div className="w-12 h-12 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                  <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                <div className="flex bg-black/40 rounded-xl p-1 border border-white/5 shadow-inner">
+                  <button 
+                    type="button" 
+                    onClick={() => setAnalysisDepth('fast')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${analysisDepth === 'fast' ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    FAST (5 Post)
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setAnalysisDepth('standard')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${analysisDepth === 'standard' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    STD (12 Post)
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setAnalysisDepth('deep')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${analysisDepth === 'deep' ? 'bg-gradient-to-r from-purple-500 to-fuchsia-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    DEEP (20 Post)
+                  </button>
                 </div>
               </div>
             </div>

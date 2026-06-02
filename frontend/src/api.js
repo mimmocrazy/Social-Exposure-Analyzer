@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -29,7 +29,7 @@ export const register = async (email, password) => {
     return response.data;
 };
 
-export const startAnalysis = async (target_url, enable_ddg = true, enable_holehe = true, ig_sessionid = null, enable_fb_scan = false, fb_c_user = null, fb_xs = null) => {
+export const startAnalysis = async (target_url, enable_ddg = true, enable_holehe = true, ig_sessionid = null, enable_fb_scan = false, fb_c_user = null, fb_xs = null, analysis_depth = 'standard') => {
     const response = await apiClient.post(`/analyze`, { 
         target_url,
         enable_ddg,
@@ -37,7 +37,8 @@ export const startAnalysis = async (target_url, enable_ddg = true, enable_holehe
         ig_sessionid,
         enable_fb_scan,
         fb_c_user,
-        fb_xs
+        fb_xs,
+        analysis_depth
     });
     return response.data;
 };
