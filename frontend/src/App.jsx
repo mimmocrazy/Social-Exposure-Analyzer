@@ -463,10 +463,11 @@ function Dashboard({ analysisId }) {
       'LUOGO': 'Luoghi e Indirizzi',
       'RUOLO': 'Ruoli e Occupazioni',
       'LAVORO': 'Ruoli e Occupazioni',
-      'COMPANY': 'Organizzazioni / Aziende'
+      'COMPANY': 'Organizzazioni / Aziende',
+      'NOME_COGNOME': 'Nome e Cognome'
     };
 
-    const coreLabels = ['PERSON', 'EMAIL', 'PHONE', 'TELEFONO', 'NOME', 'COGNOME', 'DATE_OF_BIRTH', 'PLACE_OF_BIRTH', 'AGE', 'IP', 'SOCIAL_MEDIA_HANDLE', 'USERNAME', 'HANDLE'];
+    const coreLabels = ['PERSON', 'EMAIL', 'PHONE', 'TELEFONO', 'NOME', 'COGNOME', 'NOME_COGNOME', 'DATE_OF_BIRTH', 'PLACE_OF_BIRTH', 'AGE', 'IP', 'SOCIAL_MEDIA_HANDLE', 'USERNAME', 'HANDLE'];
 
     const corePiiGroups = {};
     const contextualPiiGroups = {};
@@ -474,7 +475,10 @@ function Dashboard({ analysisId }) {
     if (data.pii_extracted && Array.isArray(data.pii_extracted)) {
       data.pii_extracted.forEach((pii) => {
         if (!pii || !pii.label) return;
-        const labelKey = pii.label.toUpperCase();
+        let labelKey = pii.label.toUpperCase();
+        if (labelKey === 'NOME' || labelKey === 'COGNOME' || labelKey === 'FIRST_NAME' || labelKey === 'LAST_NAME') {
+          labelKey = 'NOME_COGNOME';
+        }
         
         const isCore = coreLabels.some(c => labelKey.includes(c));
         const targetGroup = isCore ? corePiiGroups : contextualPiiGroups;
