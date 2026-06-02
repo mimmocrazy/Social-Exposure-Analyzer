@@ -1,133 +1,76 @@
-# Guida Completa e Dettagliata al Deploy su Microsoft Azure (Free Tier)
+# Guida Completa al Deploy su Microsoft Azure e Automazione CI/CD
 
-Questa guida è pensata per accompagnarti passo-passo nella pubblicazione del tuo progetto **Social Exposure Analyzer** su Microsoft Azure, usando l'interfaccia aggiornata del portale. 
+Questa guida documenta l'architettura Cloud Native e il processo di deployment automatizzato del progetto **Social Exposure Analyzer**.
+Tutta l'infrastruttura è ospitata su Microsoft Azure sfruttando il piano gratuito per studenti (Azure for Students).
 
-Tutto il processo sfrutta il **piano gratuito per studenti (Azure for Students)** o i tier gratuiti standard.
+## 🏗️ Panoramica dell'Architettura Cloud
+- **Database:** Azure Database for PostgreSQL (Flexible Server, B1ms).
+- **Backend:** Azure App Service (Linux, F1 Free Tier) in esecuzione tramite un'immagine Docker personalizzata.
+- **Image Registry:** Azure Container Registry (Basic Tier) per archiviare le immagini Docker del backend.
+- **Frontend:** Azure Storage Account (Static Website Hosting) per servire l'applicazione React SPA.
+- **CI/CD Pipeline:** GitHub Actions con due workflow separati per la Continuous Integration e Continuous Deployment di Backend e Frontend.
 
 ---
 
 ## 🗄️ Passo 1: Creare il Database (PostgreSQL)
-
-1. Accedi al portale Azure e cerca **"Azure Database for PostgreSQL servers"**.
-2. Clicca su **+ Crea** e scegli la scheda **Flexible server**.
-3. Compila la sezione *Basics*:
-   - **Resource group:** Crea nuovo (es. `SocialExposure-RG`).
-   - **Server name:** Scegli un nome (es. `social-exposure-db`).
-   - **Region:** `Italy North` o `West Europe`.
-   - **Workload type:** Seleziona **Development** (Sviluppo).
-   - **Compute + storage:** Clicca su *Configure server*, scegli la scheda **Burstable** e l'opzione **B1ms**.
-   - **Administrator account:** Scegli un *Admin username* e una *Password*. **Segnateli!**
-4. Clicca sul tab **Networking** in alto:
-   - Spunta **"Consenti l'accesso pubblico a questo server da qualsiasi servizio di Azure in Azure"** (vitale).
-   - Clicca sulla scritta blu **"+ Aggiungere l'indirizzo IP client corrente"** per poter usare il DB da casa.
-   - *Non* spuntare la disponibilità elevata e lascia l'autenticazione su "Solo PostgreSQL".
-5. Clicca su **Rivedi e crea** e poi su **Crea**. 
-
-*(La tua Connection String finale sarà simile a: `postgresql://<USERNAME>:<PASSWORD>@social-exposure-db.postgres.database.azure.com:5432/postgres?sslmode=require`)*
+1. Cerca **Azure Database for PostgreSQL servers**.
+2. Clicca su **+ Crea** -> **Flexible server**.
+3. **Resource group:** `SocialExposure-RG`.
+4. **Server name:** `social-exposure-db`.
+5. **Region:** `Italy North` o `West Europe`.
+6. **Workload type:** `Development` (Sviluppo).
+7. **Compute + storage:** `Burstable` -> `B1ms`.
+8. **Networking:** Spunta "Consenti l'accesso pubblico a questo server da qualsiasi servizio di Azure" e aggiungi il tuo IP corrente.
+9. Rivedi e Crea. *(Salva la Connection String).*
 
 ---
 
-## 📦 Passo 2: Creare il Registro Contenitori (Il "Disco" per Docker)
-
-Poiché il nostro codice richiede l'installazione di pacchetti di sistema (come Tesseract-OCR), Azure ha bisogno di un'immagine Docker pre-compilata. Creeremo un registro privato per ospitarla.
-
-1. Cerca **Registri contenitori** (Container registries) nella barra in alto.
-2. Clicca su **+ Crea**.
-3. Scegli il tuo Gruppo di Risorse (`SocialExposure-RG`).
-4. **Nome registro:** Inventa un nome tutto minuscolo (es. `socialexposureregistry`).
-5. **Località:** La stessa di prima (`Italy North`).
-6. **SKU:** Seleziona **Basic** (Fondamentale). Costa pochi spiccioli scalati dai 100$ gratuiti.
-7. Clicca su **Rivedi e crea** e **Crea**.
-8. Quando ha finito, vai alla risorsa. Nel menu a sinistra cerca **Chiavi di accesso** (Access keys).
-9. Spunta la voce **Utente amministratore** (Admin user). Azure genererà due password. **Copia la password 1 e tienila da parte**, ci servirà a breve su GitHub!
+## 📦 Passo 2: Creare il Registro Contenitori (Docker Registry)
+1. Cerca **Registri contenitori** (Container registries) e clicca **+ Crea**.
+2. **Nome registro:** es. `socialexposureregistry`.
+3. **SKU:** `Basic`.
+4. Crea la risorsa, poi vai in **Chiavi di accesso** (Access keys).
+5. **Abilita "Utente amministratore"** e copia la **Password 1**. (Servirà per GitHub Actions).
 
 ---
 
-## ⚙️ Passo 3: Creare il Backend (App Service)
-
-1. Cerca **App Services** in alto e clicca su **+ Crea -> Web App**.
-2. Compila la scheda *Basics*:
-   - **Resource Group:** Il solito (`SocialExposure-RG`).
-   - **Name:** Scegli un nome (es. `social-exposure-backend`).
-   - **Publish:** Scegli **Docker Container**.
-   - **Operating System:** **Linux**.
-   - **Pricing Plan:** Vai in *Explore pricing plans*, scheda *Free/Shared*, scegli **F1 (Free)** e selezionalo.
-3. Clicca sulla scheda **Contenitore** in alto:
-   - Sotto *Origine immagine*, seleziona **Avvio rapido** (Quickstart).
-   - In *Opzioni di avvio rapido*, lascia **NGINX**.
-4. Clicca su **Rivedi e crea** e poi **Crea**. Attendi la fine e clicca su **Vai alla risorsa**.
-
-### 3.1 Collegare il Backend al Registro Contenitori
-Ora diciamo all'App Service di abbandonare NGINX e prepararsi a ricevere la vera app dal Registro creato al Passo 2:
-1. Dal menu a sinistra dell'App Service, clicca su **Centro distribuzione** (Deployment Center).
-2. Clicca sulla scritta blu **`main`** nella tabella in basso (sotto *Nome*).
-3. Nel pannello laterale, alla voce **Origine immagine**, scegli **Registro Azure Container**.
-4. Seleziona il tuo registro (es. `socialexposureregistry`).
-5. **Autenticazione:** Scegli **Identità gestita** e seleziona **Assegnata dal sistema**.
-6. **Immagine:** Scrivi a mano `social-exposure-backend`
-7. **Tag dell'immagine:** Scrivi a mano `latest`
-8. Clicca su **Applica**.
-
-### 3.2 Inserire le Chiavi (Variabili d'ambiente)
-1. Nel menu laterale a sinistra dell'App Service, scorri giù fino a **Variabili d'ambiente** (Environment variables).
-2. Clicca su **+ Aggiungi**.
-   - Nome: `DATABASE_URL` | Valore: *la connection string di PostgreSQL creata al passo 1*.
-   - Nome: `GEMINI_API_KEY` | Valore: *la tua chiave di Google Gemini*.
-3. Clicca **Applica** e poi **Conferma**.
+## ⚙️ Passo 3: Creare il Backend (Azure App Service)
+1. Cerca **App Services** -> **+ Crea -> Web App**.
+2. **Publish:** `Docker Container` su OS `Linux`.
+3. **Pricing Plan:** `F1 (Free)`.
+4. Crea la risorsa. Poi dal menu a sinistra, vai in **Centro distribuzione** (Deployment Center).
+5. **Origine immagine:** `Registro Azure Container`. Scegli il tuo registro e imposta l'immagine su `social-exposure-backend` con tag `latest`.
+6. Salva e applica.
+7. Vai in **Variabili d'ambiente** (Environment variables) e aggiungi:
+   - `DATABASE_URL`: La connection string di PostgreSQL.
+   - `GEMINI_API_KEY`: La tua chiave di Google Gemini.
 
 ---
 
-## 🤖 Passo 4: GitHub Actions (Automazione CI/CD)
-
-Il file di automazione per GitHub (`.github/workflows/azure-deploy.yml`) è **già presente nel codice**. Tu devi solo inserire la password del Registro su GitHub per autorizzarlo.
-
-1. Vai sul tuo repository su GitHub.
-2. Clicca su **Settings** -> **Secrets and variables** -> **Actions**.
-3. Clicca su **New repository secret**.
-   - Nome: `REGISTRY_USERNAME`
-   - Secret: *Il nome esatto del tuo registro (es. `socialexposureregistry`)*
-4. Clicca di nuovo su **New repository secret**.
-   - Nome: `REGISTRY_PASSWORD`
-   - Secret: *La password copiata al Passo 2, punto 9*.
-5. Fatto! Al prossimo push su GitHub, la tab *Actions* si illuminerà e il codice verrà inviato automaticamente ad Azure.
+## 🌐 Passo 4: Pubblicare il Frontend (Storage Account)
+Per bypassare le restrizioni della policy universitaria sulle Static Web Apps globali, usiamo lo Storage Account.
+1. Cerca **Account di archiviazione** e clicca **+ Crea**.
+2. **Nome account:** es. `socialfrontend123` (solo lettere minuscole e numeri).
+3. **Ridondanza:** `LRS` (Archiviazione con ridondanza locale).
+4. Crea la risorsa. Nel menù a sinistra cerca **Gestione dei dati -> Sito Web statico**.
+5. Clicca su **Abilitato**, scrivi `index.html` sia come "Documento di indice" che come "Documento di errore" (vitale per React).
+6. Salva e copia l'**Endpoint primario** (questo sarà l'URL pubblico del tuo sito web).
+7. Nel menù a sinistra vai su **Sicurezza e rete -> Chiavi di accesso** e copia la **Stringa di connessione** (Connection string).
 
 ---
 
-## 🎨 Passo 5: Pubblicare il Frontend (Storage Account)
+## 🚀 Passo 5: Automazione CI/CD con GitHub Actions
+Tutto il processo di caricamento (build e deploy) è completamente automatizzato. Non dovrai mai spostare file a mano, né collegarti via FTP.
 
-A causa delle policy universitarie che bloccano risorse globali come le Static Web Apps, utilizzeremo un metodo Cloud Native 100% Azure altrettanto valido ed economico: un **Account di archiviazione (Storage Account)** con funzionalità "Sito Web statico".
+### 5.1 Configurare i Segreti su GitHub
+Vai sul repository GitHub in **Settings -> Secrets and variables -> Actions** e aggiungi questi tre "New repository secret":
+1. `REGISTRY_USERNAME`: Il nome del tuo registro Docker (es. `socialexposureregistry`).
+2. `REGISTRY_PASSWORD`: La password del registro (copiata al Passo 2).
+3. `AZURE_STORAGE_CONNECTION_STRING`: La stringa di connessione dello Storage Account (copiata al Passo 4).
 
-### 5.1 Creare lo Storage Account su Azure
-1. Cerca **Account di archiviazione** (Storage accounts) nella barra in alto e clicca **+ Crea**.
-2. **Resource Group:** `SocialExposure-RG` (o `Frontend-RG`).
-3. **Nome account di archiviazione:** Scegli un nome tutto minuscolo e senza spazi (es. `socialfrontendtuonome`). *Attenzione: deve essere unico in tutto il mondo.*
-4. **Area:** `Italy North` (o `West Europe`).
-5. **Prestazioni:** Lascia Standard.
-6. **Ridondanza:** Scegli **Archiviazione con ridondanza locale (LRS)** (è l'opzione più economica).
-7. Clicca su **Rivedi e crea** e poi **Crea**.
+### 5.2 Come funziona l'automazione
+Nel codice del progetto ci sono due file YAML che "ascoltano" i tuoi salvataggi:
+- `.github/workflows/azure-deploy.yml`: Ogni volta che fai un `git push`, questo motore ricostruisce l'immagine Docker del backend in ambiente Linux, la invia ad Azure Container Registry e Azure aggiorna automaticamente l'App Service (azzerando il downtime).
+- `.github/workflows/frontend-deploy.yml`: Questo motore controlla se hai fatto modifiche alla cartella `/frontend`. Se sì, avvia Node.js, compila il sito React (`npm run build`) e lo inietta automaticamente nel tuo Storage Account Azure nella cartella speciale `$web`.
 
-### 5.2 Abilitare il Sito Web Statico
-1. Una volta creato, vai alla risorsa.
-2. Nel menù di sinistra, scorri giù fino alla sezione *Gestione dei dati* (Data management) e clicca su **Sito Web statico** (Static website).
-3. Clicca su **Abilitato**.
-4. **Nome documento di indice:** Scrivi `index.html`
-5. **Percorso del documento di errore:** Scrivi `index.html` *(Questo è fondamentale affinché la navigazione interna di React funzioni correttamente).*
-6. Clicca su **Salva**.
-7. Apparirà un link chiamato **Endpoint primario**. Copialo e salvalo: **quello sarà l'indirizzo pubblico del tuo sito web finale!**
-
-### 5.3 Compilare e Caricare il Codice
-Poiché non usiamo GitHub Actions per il frontend, compileremo il codice dal nostro computer per poi inviarlo al Cloud.
-
-1. Sul tuo computer, apri la cartella `frontend` del progetto.
-2. Crea (o modifica se esiste già) il file chiamato `.env`. Inserisci questa riga:
-   `VITE_API_URL=https://<NOME-DEL-TUO-BACKEND>.azurewebsites.net/api/v1`
-   *(Assicurati che sia l'URL esatto del backend che hai creato al Passo 3).*
-3. Apri il terminale nella cartella `frontend` e lancia il comando:
-   `npm run build`
-4. React creerà una nuova cartella chiamata `dist` contenente il sito ottimizzato e pronto.
-5. Torna sul portale Azure, nel tuo Storage Account.
-6. Nel menù a sinistra clicca su **Browser di archiviazione** (Storage browser).
-7. Clicca su **Contenitori BLOB** (Blob containers) e poi sulla cartella speciale chiamata **`$web`**.
-8. Clicca sul pulsante **Carica** (Upload). Trascina dentro tutti i file contenuti nella tua cartella locale `frontend/dist` (trascina *i file*, non la cartella stessa) e caricali.
-
-**Fine! Il tuo progetto è ora interamente ospitato su Microsoft Azure.** Vai al tuo *Endpoint primario* per vederlo funzionare.
+*Basta un singolo `git push` e l'intera infrastruttura Cloud si aggiornerà da sola in pochi minuti.*
