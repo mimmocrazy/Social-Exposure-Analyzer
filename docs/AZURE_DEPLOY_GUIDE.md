@@ -93,20 +93,41 @@ Il file di automazione per GitHub (`.github/workflows/azure-deploy.yml`) è **gi
 
 ---
 
-## 🎨 Passo 5: Pubblicare il Frontend (Static Web Apps)
+## 🎨 Passo 5: Pubblicare il Frontend (Storage Account)
 
-1. Cerca **Static Web Apps** su Azure e clicca **+ Crea**.
-2. **Resource Group:** `SocialExposure-RG`.
-3. **Name:** es. `social-frontend`.
-4. **Plan type:** **Free** (Gratuito per sempre).
-5. **Source:** **GitHub**. Collega il tuo account e scegli repo e branch `main`.
-6. **Build Presets:** Scegli **React**.
-   - **App location:** `/frontend`
-   - **Output location:** `dist`
-7. Clicca su **Rivedi e crea** e **Crea**.
-8. Una volta creato, vai su **Environment variables** (nel menu a sinistra della Static Web App).
-   - Nome: `VITE_API_URL`
-   - Valore: L'indirizzo del tuo backend con `/api/v1` alla fine (es. `https://social-exposure-backend.azurewebsites.net/api/v1`).
-   - Applica e salva.
+A causa delle policy universitarie che bloccano risorse globali come le Static Web Apps, utilizzeremo un metodo Cloud Native 100% Azure altrettanto valido ed economico: un **Account di archiviazione (Storage Account)** con funzionalità "Sito Web statico".
 
-**Fine! Il sito è interamente nel cloud.**
+### 5.1 Creare lo Storage Account su Azure
+1. Cerca **Account di archiviazione** (Storage accounts) nella barra in alto e clicca **+ Crea**.
+2. **Resource Group:** `SocialExposure-RG` (o `Frontend-RG`).
+3. **Nome account di archiviazione:** Scegli un nome tutto minuscolo e senza spazi (es. `socialfrontendtuonome`). *Attenzione: deve essere unico in tutto il mondo.*
+4. **Area:** `Italy North` (o `West Europe`).
+5. **Prestazioni:** Lascia Standard.
+6. **Ridondanza:** Scegli **Archiviazione con ridondanza locale (LRS)** (è l'opzione più economica).
+7. Clicca su **Rivedi e crea** e poi **Crea**.
+
+### 5.2 Abilitare il Sito Web Statico
+1. Una volta creato, vai alla risorsa.
+2. Nel menù di sinistra, scorri giù fino alla sezione *Gestione dei dati* (Data management) e clicca su **Sito Web statico** (Static website).
+3. Clicca su **Abilitato**.
+4. **Nome documento di indice:** Scrivi `index.html`
+5. **Percorso del documento di errore:** Scrivi `index.html` *(Questo è fondamentale affinché la navigazione interna di React funzioni correttamente).*
+6. Clicca su **Salva**.
+7. Apparirà un link chiamato **Endpoint primario**. Copialo e salvalo: **quello sarà l'indirizzo pubblico del tuo sito web finale!**
+
+### 5.3 Compilare e Caricare il Codice
+Poiché non usiamo GitHub Actions per il frontend, compileremo il codice dal nostro computer per poi inviarlo al Cloud.
+
+1. Sul tuo computer, apri la cartella `frontend` del progetto.
+2. Crea (o modifica se esiste già) il file chiamato `.env`. Inserisci questa riga:
+   `VITE_API_URL=https://<NOME-DEL-TUO-BACKEND>.azurewebsites.net/api/v1`
+   *(Assicurati che sia l'URL esatto del backend che hai creato al Passo 3).*
+3. Apri il terminale nella cartella `frontend` e lancia il comando:
+   `npm run build`
+4. React creerà una nuova cartella chiamata `dist` contenente il sito ottimizzato e pronto.
+5. Torna sul portale Azure, nel tuo Storage Account.
+6. Nel menù a sinistra clicca su **Browser di archiviazione** (Storage browser).
+7. Clicca su **Contenitori BLOB** (Blob containers) e poi sulla cartella speciale chiamata **`$web`**.
+8. Clicca sul pulsante **Carica** (Upload). Trascina dentro tutti i file contenuti nella tua cartella locale `frontend/dist` (trascina *i file*, non la cartella stessa) e caricali.
+
+**Fine! Il tuo progetto è ora interamente ospitato su Microsoft Azure.** Vai al tuo *Endpoint primario* per vederlo funzionare.
