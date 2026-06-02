@@ -1,3 +1,4 @@
 Capire dove viene generato il prompt e il passaggio dei dati ai modelli di ai.
 migliorare animazioni per attesa e grafica ui tipo carosello con risoluzione alta
 specificare la profondita di analisi nella schermata principale
+
