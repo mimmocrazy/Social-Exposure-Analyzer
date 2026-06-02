@@ -952,3 +952,63 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 >
 > Registra questa operazione nel Journal e aggiorna l'architettura.
 - **Spiegazione Tecnica:** Inserita una modifica architetturale salvavita per garantire la gratuità e la stabilità del servizio in fase di demo. L'integrazione di Groq permette di sfruttare modelli Open Source potenti come Llama 3 bypassando completamente i blocchi regionali e di rate-limit imposti ultimamente da Google. L'implementazione prevede uno switch dinamico controllato da `.env`, rendendo il codice agnostico rispetto al fornitore e abilitando un fallback manuale. È stata adattata la logica di prompting per garantire output JSON rigorosi conformi allo schema Pydantic, richiesti dal backend.
+
+
+---
+
+### Data: 2026-06-02 (Ore 14:35)
+- **Task Eseguito:** Fase 7.3: Risoluzione Broken Images CORS e Ottimizzazione Rate Limits LLM.
+- **File Modificati:** `frontend/src/App.jsx`, `backend/api/routers/analyze.py`, `backend/services/risk_engine.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> "Procediamo con il micro-task: 'Fase 7.3: CORS Bypass & Rate Limit Optimization'. 
+> A causa delle restrizioni CORS imposte dalle CDN di Instagram, il frontend non riesce a renderizzare le immagini raw estratte. Inoltre, le rigide quote del Free Tier di Gemini rallentano l'orchestrazione con timeout ripetuti (429/503).
+> 
+> 1. **Pass-through Base64:** Scarica localmente l'immagine durante l'OCR e iniettala nel JSON in formato Base64 per inviarla al client, bypassando le policy CORS.
+> 2. **Context Window Protection:** Assicurati di fare una deep copy del payload ed eliminare la stringa Base64 prima di inviarla al Risk Engine LLM per evitare l'esaurimento dei token.
+> 3. **Gemini Failover Caching:** Implementa in `risk_engine.py` un ban in memoria di 5 minuti per i modelli API Google che restituiscono errori 429 o 503, forzando un fallback reattivo istantaneo.
+> 4. **Dashboard Layout & Clean Logs:** Tronca i log eccessivamente verbosi di LLM Identity. Nel frontend, riprogetta il Risk Index estendendolo in orizzontale (full-width) e rimuovi i dati ultra-contestuali (Targhe, Voli) dalla griglia PII, mantenendoli confinati alle card dei rispettivi post.
+> 
+> Aggiorna l'architettura in ARCHITECTURE.md e archivia l'istruzione nell'AI Journal seguendo il consueto pattern."
+- **Spiegazione Tecnica:** Implementato un pass-through Base64 per le immagini estratte: per evitare blocchi CORS dal frontend verso le CDN social, il backend scarica l'immagine durante l'OCR e la inietta nel payload JSON in formato `data:image/jpeg;base64`. Per proteggere il context window e il token count dell'LLM (Gemini/Llama), la stringa base64 viene rimossa chirurgicamente dal clone del payload inviato per l'analisi del Risk Engine. È stato inoltre introdotto un meccanismo di tolleranza ai guasti (Failover Caching) in `risk_engine.py`: se un modello AI supera le quote gratuite (429/503) durante lo scanning OCR/Image, viene contrassegnato come "inattivo" in memoria per 300 secondi. Infine, la Dashboard React è stata ottimizzata rimuovendo il layout a griglia e impilando verticalmente il Risk Score orizzontale esteso, introducendo filtri intelligenti per escludere PII ad alta contestualità (Targhe, Voli) dalla grid principale, preservandole solo sotto i rispettivi post.
+
+
+---
+
+### Data: 2026-06-02 (Ore 14:55)
+- **Task Eseguito:** Fase 7.4: UX Premium & Deep Scan Controls.
+- **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/schemas.py`, `backend/api/routers/analyze.py`, `backend/services/scraper.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> "Procediamo con il micro-task: 'Fase 7.4: UX Premium & Deep Scan Controls' in vista della demo finale del progetto.
+> Il progetto deve brillare in originalità, pertanto abbiamo bisogno di alzare il livello della UI:
+> 
+> 1. **Controllo Profondità Scansione:** Nel frontend (`App.jsx`) sostituisci il widget testuale della profondità con uno slider/selettore interattivo (FAST=5 post, STD=12 post, DEEP=20 post). Mappa la nuova variabile `analysis_depth` attraverso `api.js` fino al router FastAPI (`analyze.py`) e usala in `scraper.py` per limitare le iterazioni della timeline in base al volere dell'utente.
+> 2. **Carosello OCR:** La griglia statica dei risultati OCR occupa troppo spazio. Trasformala in uno slick carousel orizzontale full-width utilizzando le classi Tailwind `flex overflow-x-auto snap-x snap-mandatory`.
+> 3. **Animazioni di Caricamento:** Nel componente `InteractiveLoading`, aggiungi un elemento animato tramite `framer-motion` (come uno scanner beam verticale stile 'laser') per dare un look cyber-investigativo più accattivante durante l'attesa.
+> 
+> Aggiorna `ARCHITECTURE.md` includendo questa nuova Fase 7.4 e inserisci questa direttiva nell'AI Journal."
+- **Spiegazione Tecnica:** Inserita una feature di calibrazione delle performance per la demo. Permettendo all'utente di selezionare la profondità della scansione, si controlla attivamente la pipeline OCR e LLM risparmiando tempo prezioso (FAST = max 5 immagini analizzate, abbattendo drasticamente la latenza API di Gemini). Il refactoring della Galleria Media in carosello (`snap-center shrink-0`) ha liberato notevolmente l'overhead visivo della dashboard. Infine, il Beam Tracker animato in background distrae l'utente durante la fase critica di elaborazione AI asincrona.
+
+
+
+---
+
+### Data: 2026-06-02 (Ore 15:30)
+- **Task Eseguito:** Fase 8: Deploy Cloud Native su Azure (Costo Zero) & Terminal UX Overhaul.
+- **File Modificati:** `backend/database.py`, `backend/requirements.txt`, `Dockerfile`, `frontend/staticwebapp.config.json`, `frontend/src/api.js`, `frontend/src/App.jsx`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
+- **Sintesi Prompt:**
+> "Procediamo con il macro-task conclusivo: 'Fase 8: Deploy Cloud Native & Terminal UX Overhaul'.
+> Affinché il progetto ottemperi rigorosamente ai vincoli del `TRACCIA.pdf`, dobbiamo predisporre l'infrastruttura per Microsoft Azure, garantendo che non vi sia alcun addebito su carta di credito (Strict Free Tier).
+> 
+> 1. **Virtualizzazione & Database (Azure Readiness):**
+>    - Crea un `Dockerfile` multistage (`python:3.11-slim`) nella root, ottimizzato per limitare i cold-start su Azure App Service for Linux (F1 Free). Assicurati che i modelli NLP di SpaCy (`it_core_news_sm`) vengano pre-scaricati in fase di build.
+>    - Modifica l'ORM SQLAlchemy in `database.py`: integra un parsing dinamico tramite `os.getenv("DATABASE_URL")` per agganciare istantaneamente un server PostgreSQL in cloud, mantenendo il fallback su SQLite locale. Aggiungi il driver `psycopg2-binary` alle dipendenze.
+> 
+> 2. **Static Web Apps Routing:**
+>    - Genera il file `staticwebapp.config.json` per istruire il global CDN di Azure Static Web Apps (Free Plan) all'url-rewriting (`/index.html`), indispensabile per il client-side routing di React. Dinamizza l'endpoint API usando `import.meta.env.VITE_API_URL`.
+> 
+> 3. **Terminal UX (Hacker UI):**
+>    - La schermata di caricamento `InteractiveLoading` è esteticamente superata. Sostituiscila con un nuovo componente `TerminalLoading`.
+>    - Implementa un simulatore di console in tempo reale (sfondo nero, font monospace verde) che faccia lo stream temporizzato di un array di log realistici dell'OSINT (es. Sherlock discovery, NLP parsing, Failover LLM) che facciano percepire la complessità ingegneristica dell'orchestrazione backend.
+> 
+> Redigi infine un manuale `AZURE_DEPLOY_GUIDE.md` con i passaggi manuali di deployment, aggiorna `ARCHITECTURE.md` e consolida la sessione nell'AI Journal."
+- **Spiegazione Tecnica:** Eseguita l'astrazione finale del codice per renderlo "Azure-ready" senza intaccare il workflow di sviluppo locale. L'iniezione del `Dockerfile` e l'aggiornamento di `database.py` per PostgreSQL garantiscono la portabilità del backend sui container di Azure App Service, soddisfacendo il requisito di scalabilità e database relazionale. Parallelamente, la UI React è stata dotata del config nativo per Azure Static Web Apps, svincolandola dall'hardcoding degli URL. Infine, per valorizzare visivamente i log generati dall'architettura ad eventi asincroni (OSINT, OCR, Risk Engine), la schermata di attesa statica è stata rimpiazzata con `TerminalLoading`: un componente React reattivo che simula fedelmente lo stream stdout di una shell (attraverso un parsing stocastico temporizzato di array log-style), elevando drasticamente il percepito "cyber" e professionale dell'applicativo durante l'elaborazione dei dati sensibili.

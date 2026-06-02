@@ -1,4 +1,42 @@
-Capire dove viene generato il prompt e il passaggio dei dati ai modelli di ai.
-migliorare animazioni per attesa e grafica ui tipo carosello con risoluzione alta
-specificare la profondita di analisi nella schermata principale
+nel carosello dei post manca la barra di scorrimento orizzontale e delle frecce per navigare tra i vari post.
 
+
+2026-06-02 15:05:23 | INFO    | [SHERLOCK OSINT] - Avvio Discovery tramite Sherlock per username: marco_rossi_sec_99
+2026-06-02 15:05:24 | INFO    | [SHERLOCK OSINT] - Nessun URL trovato tramite Sherlock. Applica fallback a Instagram.
+2026-06-02 15:05:24 | INFO    | [LLM IDENTITY] - Avvio deduzione identità tramite LLM per l'username: marco_rossi_sec_99
+2026-06-02 15:05:32 | INFO    | [ORCHESTRATOR] - Nome reale dedotto con successo: Marco Rossi
+2026-06-02 15:05:32 | INFO    | [INSTAGRAM API] - Avvio Instagram Deep Scan per marco_rossi_sec_99 (sessionid fornito: True)
+2026-06-02 15:05:33 | INFO    | [logging] - 127.0.0.1:51932 - "OPTIONS /api/v1/analyze/88188900-8db4-42fd-8c6b-a6deeeea4734 HTTP/1.1" 200
+2026-06-02 15:05:33 | INFO    | [logging] - 127.0.0.1:51932 - "GET /api/v1/analyze/88188900-8db4-42fd-8c6b-a6deeeea4734 HTTP/1.1" 200
+2026-06-02 15:05:33 | INFO    | [OSINT SCRAPER] - Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...
+2026-06-02 15:05:33 | INFO    | [INSTAGRAM API] - Instagram Deep Scan riuscito con successo.
+2026-06-02 15:05:33 | INFO    | [OSINT SCRAPER] - Skipping standard scraping per https://instagram.com/marco_rossi_sec_99 in quanto il Deep Scan è andato a buon fine.
+2026-06-02 15:05:33 | INFO    | [DUCKDUCKGO OSINT] - Avvio OSINT profondo su DuckDuckGo per: marco_rossi_sec_99
+2026-06-02 15:05:34 | INFO    | [DUCKDUCKGO OSINT] - Avvio OSINT profondo su DuckDuckGo per: "Marco Rossi"
+2026-06-02 15:05:35 | INFO    | [DUCKDUCKGO OSINT] - Avvio OSINT profondo su DuckDuckGo per: "Marco Rossi" pastebin OR dump OR "data breach"
+2026-06-02 15:06:11 | INFO    | [ORCHESTRATOR] - Avvio estrazione OCR e AI context per 5 immagini trovate.
+Using CPU. Note: This module is much faster with a GPU.
+2026-06-02 15:06:48 | DEBUG   | [RISK ENGINE AI] - Gemini gemini-flash-latest fallito per image summary: 503 UNAVAILABLE
+2026-06-02 15:06:48 | WARNING | [RISK ENGINE AI] - Modello gemini-flash-latest contrassegnato come temporaneamente non disponibile per 300 secondi.
+2026-06-02 15:07:11 | INFO    | [ORCHESTRATOR] - Avvio estrazione PII tramite SpaCy...
+2026-06-02 15:07:11 | INFO    | [ORCHESTRATOR] - Trovate 1 email per Holehe OSINT: ['[EMAIL-MASKED]']
+2026-06-02 15:07:11 | INFO    | [HOLEHE OSINT] - Avvio ricerca OSINT Holehe per l'email: [EMAIL-MASKED]
+2026-06-02 15:07:30 | INFO    | [HOLEHE OSINT] - Holehe completato per [EMAIL-MASKED] Siti trovati: 0
+2026-06-02 15:07:30 | INFO    | [ORCHESTRATOR] - Risk Engine Payload preparato con successo. Dimensione: 13426 caratteri (limite DoS: 100000).
+2026-06-02 15:07:30 | INFO    | [ORCHESTRATOR] - Avvio analisi Risk Engine tramite LLM...
+2026-06-02 15:07:30 | INFO    | [RISK ENGINE AI] - Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...
+2026-06-02 15:07:30 | INFO    | [RISK ENGINE AI] - Tentativo di generazione report con modello gemini-2.5-flash...
+2026-06-02 15:08:08 | INFO    | [RISK ENGINE AI] - Successo con il modello gemini-2.5-flash!
+2026-06-02 15:08:08 | INFO    | [ORCHESTRATOR] - Task asincrono di OSINT e Risk Engine concluso per 88188900-8db4-42fd-8c6b-a6deeeea4734
+
+
+sostituire la parte di animazione con una schermata di un terminale che riflette esattamente gli stessi log che vedo runnando make b
+rendendo tutto piu esplicativo, realistico e figo
+ovviamente con la scusa li rendiamo piu carini ed esplicativi e magari ne aggiungiamo anche qualcuno che non e loggato per una cosa piu completato
+di quello che fa il backend per ottenere quei risultati
+
+
+capire come utilizzare la sezione testing di antigravity per fare i /test
+
+aggiustare il file architecture perche confusionario, alcune fasi sono mischiate, non fa niente se esce fittizio, l importante e che sia allineato
+all ai journal.md
