@@ -177,8 +177,6 @@ const TerminalLoading = ({ isCompleted, onFinish }) => {
     "[NETWORK] Handshake SSL completato. Connessione cifrata 256-bit stabilita.",
     "[ORCHESTRATOR] Nome reale dedotto con successo.",
     "[INSTAGRAM API] Avvio Instagram Deep Scan (sessionid fornito: True)",
-    "[logging] - 127.0.0.1:51932 - \"OPTIONS /api/v1/analyze HTTP/1.1\" 200",
-    "[logging] - 127.0.0.1:51932 - \"GET /api/v1/analyze HTTP/1.1\" 200",
     "[OSINT SCRAPER] Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...",
     "[INSTAGRAM API] Instagram Deep Scan riuscito con successo.",
     "[OSINT SCRAPER] Skipping standard scraping in quanto il Deep Scan è andato a buon fine.",
@@ -456,7 +454,7 @@ function Dashboard({ analysisId }) {
         const labelKey = pii.label.toUpperCase();
         
         // Escludiamo etichette contestuali ai post per lasciarle solo sotto le immagini
-        const excluded = ['TARGA', 'VOLO', 'LICENSE', 'FLIGHT', 'BIGLIETTO', 'TICKET', 'ANNIVERSARI', 'GENITOR', 'FAMIGLIA', 'FAMILY', 'PARENT', 'RELAZION', 'RELATION'];
+        const excluded = ['TARGA', 'VOLO', 'LICENSE', 'FLIGHT', 'BIGLIETTO', 'TICKET', 'ANNIVERSARI', 'GENITOR', 'FAMIGLIA', 'FAMILY', 'PARENT', 'RELAZION', 'RELATION', 'LUOGO', 'LOCATION', 'ORGANIZATION', 'OCCUPATION', 'RUOLO', 'LAVORO', 'COMPANY', 'PERSON'];
         if (excluded.some(ex => labelKey.includes(ex))) {
             return;
         }
