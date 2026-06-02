@@ -14,6 +14,9 @@ RUN apt-get update \
 # Crea e imposta la working directory
 WORKDIR /app
 
+# Installa PyTorch versione CPU per risparmiare 2.5GB di spazio ed evitare crash su Azure Free
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
 # Copia i requirement e installali
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
