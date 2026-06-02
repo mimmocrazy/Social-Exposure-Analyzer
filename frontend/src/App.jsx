@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Text, Metric, Flex, ProgressBar, Title, BarChart, TextInput, Button } from '@tremor/react';
