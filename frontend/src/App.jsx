@@ -266,17 +266,43 @@ const TerminalLoading = ({ isCompleted, onFinish }) => {
             kernel_tty1 — root@osint-server
           </div>
         </div>
-        <div className="p-6 h-[400px] overflow-y-auto text-emerald-400/90 space-y-1 md:space-y-2 font-semibold">
+        <div className="p-6 h-[400px] overflow-y-auto bg-[#0a0a0f] space-y-1 md:space-y-2 font-mono text-[13px]">
           {visibleLogs.map((log, i) => {
             const timeStr = new Date(Date.now() - (visibleLogs.length - i) * 1000).toISOString().substring(11, 19);
-            const isError = log.includes("fallito") || log.includes("WARNING");
-            const isSuccess = log.includes("successo") || log.includes("completato");
-            const isInfo = log.includes("INFO");
+            
+            const match = log.match(/^(\[[^\]]+\])(.*)$/);
+            let tag = "";
+            let rest = log;
+            if (match) {
+              tag = match[1];
+              rest = match[2];
+            }
+            
+            let tagColor = "text-emerald-400";
+            if (tag.includes("SHERLOCK")) tagColor = "text-cyan-400";
+            else if (tag.includes("LLM IDENTITY")) tagColor = "text-emerald-400";
+            else if (tag.includes("ORCHESTRATOR")) tagColor = "text-blue-400";
+            else if (tag.includes("INSTAGRAM")) tagColor = "text-fuchsia-400";
+            else if (tag.includes("DUCKDUCKGO")) tagColor = "text-yellow-400";
+            else if (tag.includes("RISK ENGINE AI")) tagColor = "text-orange-400";
+            else if (tag.includes("HOLEHE")) tagColor = "text-rose-400";
+            else if (tag.includes("COMPUTE")) tagColor = "text-indigo-400";
+            else if (tag.includes("NLP")) tagColor = "text-teal-400";
+            else if (tag.includes("SYSTEM")) tagColor = "text-gray-400";
+            else if (tag.includes("logging")) tagColor = "text-gray-500";
+            
+            // Aggiunge il trattino se mancante per coerenza visiva con lo screen
+            let formattedRest = rest.trim();
+            if (!formattedRest.startsWith("-") && tag !== "") {
+              formattedRest = `- ${formattedRest}`;
+            }
+
             return (
-              <div key={i} className="flex flex-col md:flex-row md:items-start break-all md:break-normal">
+              <div key={i} className="flex flex-col md:flex-row md:items-start break-all md:break-normal leading-relaxed">
                 <span className="text-gray-600 mr-4 shrink-0">[{timeStr}]</span>
-                <span className={isError ? "text-red-400" : isSuccess ? "text-cyan-400" : isInfo ? "text-blue-400" : ""}>
-                  {log}
+                <span className="flex-1">
+                  {tag && <span className={`${tagColor} font-bold mr-2`}>{tag}</span>}
+                  <span className="text-white/90">{formattedRest}</span>
                 </span>
               </div>
             );
