@@ -1319,11 +1319,11 @@ function MainApp() {
 
           </div>
 
-          {/* Colonna Destra: Switches OSINT (Design Premium) */}
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="flex flex-col space-y-4 relative">
+          {/* Settings OSINT (Design Premium) */}
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="w-full relative mt-12">
             
             {/* Profondità di Scansione Selettore Interattivo */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-2 relative overflow-hidden group backdrop-blur-md">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-8 relative overflow-hidden group backdrop-blur-md w-full max-w-2xl mx-auto">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="relative z-10">
                 <div className="flex justify-between items-center mb-4">
@@ -1358,14 +1358,15 @@ function MainApp() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 mb-4">
+            <div className="flex items-center space-x-4 mb-6">
               <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1"></div>
               <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest px-4">Configurazione Sensori</h3>
               <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent flex-1"></div>
             </div>
 
-            {/* DDG Sensor */}
-            <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group ${enableDdg ? 'bg-blue-500/10 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableDdg(!enableDdg)}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* DDG Sensor */}
+              <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group h-full flex flex-col ${enableDdg ? 'bg-blue-500/10 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableDdg(!enableDdg)}>
               {enableDdg && <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>}
               <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center space-x-4">
@@ -1384,7 +1385,7 @@ function MainApp() {
             </motion.div>
 
             {/* Holehe Sensor */}
-            <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group ${enableHolehe ? 'bg-rose-500/10 border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableHolehe(!enableHolehe)}>
+            <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group h-full flex flex-col ${enableHolehe ? 'bg-rose-500/10 border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableHolehe(!enableHolehe)}>
               {enableHolehe && <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/20 rounded-full blur-3xl"></div>}
               <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center space-x-4">
@@ -1403,7 +1404,7 @@ function MainApp() {
             </motion.div>
 
             {/* Instagram Sensor */}
-            <motion.div className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 backdrop-blur-md ${enableIgScan ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
+            <motion.div className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 backdrop-blur-md flex flex-col h-full justify-start ${enableIgScan ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
               {enableIgScan && <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl"></div>}
               <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableIgScan(!enableIgScan)}>
                 <div className="flex items-center space-x-4">
@@ -1444,7 +1445,7 @@ function MainApp() {
             </motion.div>
 
             {/* Configurazione Avanzata FB */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-4 p-5 glassmorphism rounded-2xl border border-white/5 relative overflow-hidden group">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="p-5 glassmorphism rounded-2xl border border-white/5 relative overflow-hidden group flex flex-col h-full justify-start">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -z-10 group-hover:bg-blue-500/20 transition-colors"></div>
               
               <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableFbScan(!enableFbScan)}>
@@ -1496,6 +1497,7 @@ function MainApp() {
                 )}
               </AnimatePresence>
             </motion.div>
+            </div>
           </motion.div>
 
         </motion.div>
