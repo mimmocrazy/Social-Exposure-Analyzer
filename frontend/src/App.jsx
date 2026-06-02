@@ -35,12 +35,14 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// Custom Radial Progress Component
+// Custom Radial Progress Component (Apple Glass Style)
 const RadialProgress = ({ score, isCritical }) => {
-  const radius = 60;
+  const radius = 64;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score / 100) * circumference;
-  const color = isCritical ? '#ef4444' : '#3b82f6'; // red-500 or blue-500
+  
+  const colorClass = score > 75 ? 'text-red-500' : score > 40 ? 'text-orange-500' : 'text-emerald-400';
+  const dropShadowClass = score > 75 ? 'drop-shadow-[0_0_12px_rgba(239,68,68,0.6)]' : score > 40 ? 'drop-shadow-[0_0_12px_rgba(249,115,22,0.6)]' : 'drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]';
 
   return (
     <div className="relative flex items-center justify-center">
@@ -50,28 +52,28 @@ const RadialProgress = ({ score, isCritical }) => {
           cy="80"
           r={radius}
           stroke="currentColor"
-          strokeWidth="12"
+          strokeWidth="4"
           fill="transparent"
-          className="text-gray-800"
+          className="text-white/5"
         />
         <motion.circle
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
+          transition={{ duration: 2, ease: "easeOut" }}
           cx="80"
           cy="80"
           r={radius}
-          stroke={color}
-          strokeWidth="12"
+          stroke="currentColor"
+          strokeWidth="4"
           fill="transparent"
           strokeDasharray={circumference}
           strokeLinecap="round"
-          className="drop-shadow-lg"
+          className={`${colorClass} ${dropShadowClass} transition-colors duration-1000`}
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center text-white">
-        <span className="text-4xl font-extrabold">{score}</span>
-        <span className="text-xs text-gray-400 uppercase tracking-widest mt-1">Score</span>
+        <span className="text-5xl font-light tracking-tighter" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{score}</span>
+        <span className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mt-1">Score</span>
       </div>
     </div>
   );
@@ -166,119 +168,149 @@ const getOfficialIcon = (iconName, isActive) => {
   }
 };
 
-const InteractiveLoading = () => {
+const InteractiveLoading = ({ currentPhase, isCompleted, onFinish }) => {
   const steps = [
-    { text: "Inizializzazione Deep OSINT", icon: "gears", delay: 0 },
-    { text: "Scansione Target (Web & Social)", icon: "spy", delay: 1500 },
-    { text: "Footprint Esteso (Instagram/X)", icon: "instagram", delay: 3500 },
-    { text: "Cross-check Data Breaches", icon: "linkedin", delay: 5500 },
-    { text: "Estrazione Media & OCR", icon: "doc", delay: 7500 },
-    { text: "Analisi Relazionale (NLP)", icon: "facebook", delay: 9500 },
-    { text: "Audit AI Vulnerabilità in corso", icon: "brain", delay: 12000 },
-    { text: "Generazione Risk Report", icon: "gears", delay: 14500 }
+    { match: "Inizializzazione", text: "Inizializzazione Sistema", icon: "gears" },
+    { match: "Sherlock", text: "Discovery Sherlock", icon: "spy" },
+    { match: "Deduzione", text: "Deduzione Identità LLM", icon: "brain" },
+    { match: "Instagram", text: "Instagram Deep Scan", icon: "instagram" },
+    { match: "Facebook", text: "Facebook Deep Scan", icon: "facebook" },
+    { match: "DuckDuckGo", text: "OSINT DuckDuckGo", icon: "spy" },
+    { match: "Estrazione", text: "Estrazione Media (OCR)", icon: "doc", dynamic: true },
+    { match: "Analisi Media", text: "Elaborazione Media AI", icon: "brain", dynamic: true },
+    { match: "NLP", text: "Correlazione NLP (SpaCy)", icon: "brain" },
+    { match: "Holehe", text: "Controllo Breach Holehe", icon: "spy" },
+    { match: "Risk Engine", text: "Analisi Risk Engine AI", icon: "brain" },
+    { match: "Report", text: "Generazione Report", icon: "gears" }
   ];
 
-  const [currentStep, setCurrentStep] = useState(0);
+  const targetIndex = steps.findLastIndex(s => currentPhase?.includes(s.match));
+  const safeTargetIndex = isCompleted ? steps.length - 1 : (targetIndex === -1 ? 0 : targetIndex);
+
+  const [displayedIndex, setDisplayedIndex] = useState(0);
 
   useEffect(() => {
-    const timers = steps.map((step, index) =>
-      setTimeout(() => setCurrentStep(index), step.delay)
-    );
-    return () => timers.forEach(t => clearTimeout(t));
-  }, []);
+    if (displayedIndex < safeTargetIndex) {
+      const timer = setTimeout(() => {
+        setDisplayedIndex(prev => Math.min(prev + 1, safeTargetIndex));
+      }, 1000); // 1.0s ritardo fittizio
+      return () => clearTimeout(timer);
+    } else if (displayedIndex > safeTargetIndex) {
+      setDisplayedIndex(safeTargetIndex);
+    }
+  }, [displayedIndex, safeTargetIndex]);
+
+  useEffect(() => {
+    if (isCompleted && displayedIndex === steps.length - 1) {
+      const timer = setTimeout(() => {
+        if (onFinish) onFinish();
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [isCompleted, displayedIndex, onFinish]);
+
+  const safeIndex = displayedIndex;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-10 md:py-16 w-full max-w-5xl mx-auto relative mt-4 md:mt-10">
-      
-      <h2 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 text-xl md:text-3xl font-mono tracking-[0.3em] uppercase mb-12 md:mb-16 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse text-center">
-        System Processing
-      </h2>
+    <div className="flex flex-col items-center justify-center py-20 w-full px-4">
+      <div className="max-w-xl w-full">
+        <h2 className="text-center text-white/90 text-2xl md:text-3xl font-light tracking-[0.2em] mb-12">
+          Analisi in Corso
+        </h2>
 
-      <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-16 md:gap-32 w-full">
-        
-        {/* Central Radar Orb (Left Column on Desktop) */}
-        <div className="relative w-64 h-64 md:w-72 md:h-72 flex items-center justify-center flex-shrink-0">
-          <motion.div 
-            animate={{ rotate: 360 }} 
-            transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-            className="absolute inset-0 rounded-full border border-blue-500/30 border-t-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.1)]"
-          ></motion.div>
-          <motion.div 
-            animate={{ rotate: -360 }} 
-            transition={{ repeat: Infinity, duration: 12, ease: "linear" }}
-            className="absolute inset-6 rounded-full border border-purple-500/20 border-b-purple-400 opacity-60"
-          ></motion.div>
-          <motion.div 
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }} 
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-            className="w-40 h-40 bg-gradient-to-tr from-blue-600/10 to-purple-600/10 rounded-full blur-2xl absolute"
-          ></motion.div>
-          
-          <div className="z-10 bg-black/60 backdrop-blur-xl rounded-full w-28 h-28 md:w-32 md:h-32 flex items-center justify-center border border-white/10 shadow-[0_0_40px_rgba(59,130,246,0.3)]">
-             <motion.div 
-               key={currentStep}
-               initial={{ scale: 0, opacity: 0 }}
-               animate={{ scale: 1, opacity: 1 }}
-               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-             >
-               {getOfficialIcon(steps[currentStep].icon, true)}
-             </motion.div>
-          </div>
-        </div>
-
-        {/* Stepper List (Right Column on Desktop) */}
-        <div className="w-full max-w-sm flex flex-col space-y-6 relative pl-4 md:pl-0">
-          <div className="absolute left-[34px] md:left-[24px] top-4 bottom-4 w-px bg-white/10"></div>
-          {steps.map((step, index) => {
-            const isActive = index === currentStep;
-            const isPast = index < currentStep;
+        <div className="space-y-4">
+          {steps.map((step, idx) => {
+            const isPast = idx < safeIndex;
+            const isActive = idx === safeIndex;
+            const isFuture = idx > safeIndex;
             
+            // Nascondi gli step dinamici se non sono attivi e non sono stati completati
+            if (step.dynamic && isFuture && !currentPhase?.includes("Media") && !currentPhase?.includes("Estrazione")) {
+                if (idx === 7) return null; // skip se step precedente non toccato
+            }
+
             return (
-              <div key={index} className="flex items-center space-x-6 relative z-10">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                  isActive ? 'bg-blue-500/20 border border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)]' : 
-                  isPast ? 'bg-green-500/10 border border-green-500/30' : 'bg-black border border-white/5'
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: isFuture ? 0.4 : 1, x: 0 }}
+                transition={{ duration: 0.5, delay: idx * 0.05 }}
+                className={`flex items-center p-4 rounded-2xl border transition-all duration-500 ${
+                  isActive 
+                    ? 'bg-cyan-900/20 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.15)]' 
+                    : isPast 
+                      ? 'bg-white/5 border-white/10' 
+                      : 'bg-transparent border-transparent'
+                }`}
+              >
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-4 ${
+                  isActive ? 'bg-cyan-500/20 text-cyan-400' : isPast ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-gray-500'
                 }`}>
-                  {isPast ? (
-                    <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                  ) : isActive ? (
-                    <div className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-ping"></div>
+                  {isActive ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  ) : isPast ? (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   ) : (
-                    <div className="w-2 h-2 bg-white/20 rounded-full"></div>
+                    <svg className="w-4 h-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   )}
                 </div>
-                <div className="flex flex-col flex-1">
-                  <span className={`text-sm md:text-base font-mono tracking-widest uppercase transition-all duration-500 ${
-                    isActive ? 'text-blue-300 font-bold drop-shadow-[0_0_8px_rgba(147,197,253,0.5)]' : isPast ? 'text-gray-400' : 'text-gray-700'
-                  }`}>
-                    {step.text}
-                  </span>
+                
+                <div className="flex-shrink-0 mr-4 transform scale-75 opacity-80">
+                  {getOfficialIcon(step.icon, isActive)}
+                </div>
+                
+                <div className="flex-1">
+                  <h3 className={`font-medium tracking-wide ${isActive ? 'text-white' : isPast ? 'text-gray-300' : 'text-gray-500'}`}>
+                    {isActive && (step.dynamic || currentPhase?.includes(step.match)) ? currentPhase : step.text}
+                  </h3>
                   {isActive && (
-                     <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 2.5, ease: "linear" }} className="h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-transparent mt-1"></motion.div>
+                    <div className="w-full bg-gray-800 rounded-full h-1 mt-3 overflow-hidden">
+                      <motion.div 
+                        className="bg-cyan-500 h-1 rounded-full"
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                    </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
 function Dashboard({ analysisId }) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['analysis', analysisId],
-    queryFn: () => getAnalysisStatus(analysisId),
-    refetchInterval: (data) => {
-      if (!data) return 3000;
-      return data.status === 'PENDING' ? 3000 : false;
-    },
-  });
+    const [showDashboard, setShowDashboard] = useState(false);
 
-  if (isLoading || (data && data.status === 'PENDING')) {
-    return <InteractiveLoading />;
-  }
+    // Reset showDashboard if a new analysis starts
+    useEffect(() => {
+      if (analysisId) {
+        setShowDashboard(false);
+      }
+    }, [analysisId]);
+
+    const { data, isLoading, isError } = useQuery({
+      queryKey: ['analysis', analysisId],
+      queryFn: () => getAnalysisStatus(analysisId),
+      refetchInterval: (query) => {
+        if (!query.state.data) return 800;
+        return query.state.data.status === 'PENDING' ? 800 : false;
+      },
+    });
+  
+    if (isLoading || (data && data.status === 'PENDING') || (data?.status === 'COMPLETED' && !showDashboard)) {
+      return (
+        <InteractiveLoading 
+          currentPhase={data?.current_phase} 
+          isCompleted={data?.status === 'COMPLETED'}
+          onFinish={() => setShowDashboard(true)}
+        />
+      );
+    }
 
   if (isError || data?.status === 'FAILED') {
     return (
@@ -399,116 +431,124 @@ function Dashboard({ analysisId }) {
       });
     }
 
+    const realName = metadata?.real_name_deduced;
+    const targetUsername = metadata?.target || data.target_url;
+    const displayName = (realName && realName !== "Sconosciuto") ? realName : targetUsername;
+    const hasAlias = (realName && realName !== "Sconosciuto" && targetUsername !== realName);
+
     return (
       <div className="mt-12 space-y-8 w-full max-w-7xl mx-auto text-left">
-
         {/* Top Row: Score & Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1 glassmorphism rounded-3xl p-8 flex flex-col relative overflow-hidden group">
-            <div className={`absolute -inset-2 bg-gradient-to-tr ${isCritical ? 'from-red-500/20 to-orange-500/5' : 'from-blue-500/20 to-cyan-500/5'} blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700`}></div>
-            <h3 className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-6 text-center">Indice di Rischio</h3>
-            <div className="flex justify-center mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-1 glass-card p-8 flex flex-col relative overflow-hidden group">
+            <div className={`absolute -inset-2 bg-gradient-to-tr ${isCritical ? 'from-red-500/10 to-orange-500/5' : 'from-blue-500/10 to-cyan-500/5'} blur-3xl -z-10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000`}></div>
+            <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-8 text-center">Indice di Rischio</h3>
+            <div className="flex justify-center mb-8">
               <RadialProgress score={score} isCritical={isCritical} />
             </div>
 
             {data.llm_report?.score_breakdown && (
-              <div className="w-full mt-2 mb-4 bg-black/20 rounded-xl p-4 border border-white/5 overflow-y-auto max-h-40 custom-scrollbar">
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Score Breakdown</h4>
-                <div className="space-y-2">
+              <div className="w-full mt-2 mb-6 bg-white/[0.02] rounded-2xl p-5 border border-white/[0.05] overflow-y-auto max-h-40 custom-scrollbar">
+                <h4 className="text-[9px] font-medium text-gray-500 uppercase tracking-[0.2em] mb-4">Score Breakdown</h4>
+                <div className="space-y-3">
                   {data.llm_report.score_breakdown.map((sb, idx) => (
                     <div key={idx} className="flex justify-between items-start text-xs">
-                      <span className="text-gray-300 mr-2 leading-relaxed">{sb.reason}</span>
-                      <span className="text-white font-bold whitespace-nowrap px-1.5 py-0.5 bg-white/10 rounded">+{sb.points_added}</span>
+                      <span className="text-gray-300/80 mr-3 leading-relaxed font-light">{sb.reason}</span>
+                      <span className="text-white/90 font-medium whitespace-nowrap px-2 py-1 bg-white/10 rounded-full text-[10px]">+{sb.points_added}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="w-full space-y-4 mt-2 border-t border-white/5 pt-4">
+            <div className="w-full space-y-5 mt-2 border-t border-white/5 pt-6">
               <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-300 font-medium">Identità e Contatti</span>
-                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.identity_exposure || 0}%</span>
+                <div className="flex justify-between text-xs mb-2">
+                  <span className="text-gray-400 font-light">Identità e Contatti</span>
+                  <span className="text-white/90 font-medium">{data.llm_report?.sub_scores?.identity_exposure || 0}%</span>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.identity_exposure || 0}%` }} transition={{ duration: 1, ease: "easeOut" }} className="bg-red-500 h-1.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.8)]"></motion.div>
+                <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.identity_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-red-400 h-1 rounded-full shadow-[0_0_10px_rgba(248,113,113,0.8)]"></motion.div>
                 </div>
               </div>
               <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-300 font-medium">Network e Relazioni</span>
-                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.network_exposure || 0}%</span>
+                <div className="flex justify-between text-xs mb-2">
+                  <span className="text-gray-400 font-light">Network e Relazioni</span>
+                  <span className="text-white/90 font-medium">{data.llm_report?.sub_scores?.network_exposure || 0}%</span>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.network_exposure || 0}%` }} transition={{ duration: 1, ease: "easeOut" }} className="bg-orange-500 h-1.5 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"></motion.div>
+                <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.network_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-orange-400 h-1 rounded-full shadow-[0_0_10px_rgba(251,146,60,0.8)]"></motion.div>
                 </div>
               </div>
               <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-300 font-medium">Routine e Luoghi</span>
-                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
+                <div className="flex justify-between text-xs mb-2">
+                  <span className="text-gray-400 font-light">Routine e Luoghi</span>
+                  <span className="text-white/90 font-medium">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1, ease: "easeOut" }} className="bg-amber-400 h-1.5 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.8)]"></motion.div>
+                <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-emerald-400 h-1 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.8)]"></motion.div>
                 </div>
               </div>
             </div>
 
-            <div className={`mt-6 px-6 py-2 mx-auto rounded-full text-sm font-extrabold tracking-widest shadow-lg border ${isCritical ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-red-500/10' : 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-blue-500/10'}`}>
+            <div className={`mt-8 px-8 py-2.5 mx-auto rounded-full text-[11px] font-bold tracking-[0.2em] uppercase border backdrop-blur-md ${isCritical ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.15)]' : 'bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.15)]'}`}>
               {data.risk_level}
             </div>
           </div>
 
           {/* PII Grid Widget */}
-          <div className="md:col-span-2 glassmorphism rounded-3xl p-8 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-white text-xl font-bold tracking-tight">Dati Sensibili (PII)</h3>
-              <span className="text-xs bg-white/10 text-gray-300 px-3 py-1 rounded-full font-medium">{data.pii_extracted?.length || 0} Trovati</span>
+          <div className="md:col-span-2 glass-card p-10 flex flex-col relative overflow-hidden">
+            <div className="flex justify-between items-end mb-8 border-b border-white/[0.05] pb-6">
+              <div>
+                <h3 className="text-white/90 text-2xl font-light tracking-tight mb-1">Dati Sensibili Estrapolati</h3>
+                <p className="text-gray-400 text-xs font-light">Informazioni personali (PII) individuate tramite OSINT e AI</p>
+              </div>
+              <span className="text-[11px] glass-pill px-4 py-2 font-medium tracking-widest uppercase text-white/70">{data.pii_extracted?.length || 0} Tracce</span>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[200px]">
               {(Object.keys(piiGroups).length === 0) ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-3">
-                  <svg className="w-12 h-12 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                  <p className="text-sm font-medium">Nessun dato critico esposto.</p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
+                  <svg className="w-16 h-16 opacity-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                  <p className="text-sm font-bold tracking-widest uppercase">Nessuna vulnerabilità rilevata</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {Object.entries(piiGroups).map(([label, values], idx) => (
                     <motion.div
                       key={label}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
-                      className="flex flex-col p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 transition-colors group animate-fade-in"
+                      className="flex flex-col p-6 rounded-3xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.05] transition-all duration-300 group"
                     >
-                      <div className="flex items-center space-x-3 mb-3 pb-2 border-b border-white/5">
-                        <div className="p-2 bg-white/5 rounded-xl group-hover:scale-110 transition-transform">
+                      <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-white/[0.05]">
+                        <div className="p-3 bg-white/[0.03] rounded-2xl border border-white/[0.05] shadow-[0_0_15px_rgba(255,255,255,0.02)]">
                           {getIconForPII(label)}
                         </div>
                         <div>
-                          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">{label}</p>
-                          <h4 className="text-white text-sm font-semibold tracking-tight">
+                          <p className="text-gray-500 text-[9px] font-bold uppercase tracking-[0.2em]">{label}</p>
+                          <h4 className="text-white/90 text-[15px] font-light tracking-tight mt-0.5">
                             {labelMapping[label] || label}
                           </h4>
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-1.5 mt-1">
+                      <div className="flex flex-wrap gap-2 mt-2">
                         {values.map((valObj, valIdx) => (
                           <span
                             key={valIdx}
-                            className="bg-white/5 hover:bg-white/10 text-gray-200 text-xs px-2.5 py-1.5 rounded-lg transition-all duration-200 border border-white/5 break-all font-mono inline-flex items-center gap-1.5 relative group/item"
+                            className="glass-pill text-gray-300 text-[13px] px-4 py-2 font-mono inline-flex items-center gap-2 group/item hover:text-white hover:bg-white/10 transition-all cursor-default"
                           >
                             <span>{valObj.value}</span>
-                            <span className="relative group/tooltip inline-flex items-center text-gray-500 hover:text-blue-400 transition-colors cursor-help">
+                            <span className="relative group/tooltip inline-flex items-center text-white/30 hover:text-white/80 transition-colors">
                               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
-                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-950/95 border border-white/10 text-[10px] text-gray-200 rounded-xl shadow-2xl opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-200 z-50 text-center font-sans font-normal leading-normal normal-case backdrop-blur-md">
-                                Fonte: <strong className="text-blue-400 block mt-0.5">{valObj.source || 'Scansione OSINT'}</strong>
-                                {valObj.confidence && <span className="block text-gray-500 mt-1">Confidenza: {Math.round(valObj.confidence * 100)}%</span>}
+                              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-56 p-4 glass-panel text-[11px] text-gray-300 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-all duration-300 z-50 text-center font-sans font-light leading-relaxed">
+                                <strong className="text-white block font-medium mb-1">Fonte del Dato</strong>
+                                {valObj.source || 'Scansione OSINT'}
+                                {valObj.confidence && <span className="block text-gray-400 mt-2 text-[10px] uppercase tracking-widest">Confidenza: {Math.round(valObj.confidence * 100)}%</span>}
                               </span>
                             </span>
                           </span>
@@ -524,54 +564,133 @@ function Dashboard({ analysisId }) {
 
 {/* OCR Media Gallery Widget */}
         {ocrResults && (
-          <div className="glassmorphism rounded-3xl p-8 flex flex-col mt-6 border border-white/5 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-cyan-500/5 -z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-2.5 bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 rounded-xl border border-white/10">
-                  <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <div className="glass-card p-10 flex flex-col mt-6 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-cyan-500/5 -z-10 opacity-60 group-hover:opacity-100 transition-opacity duration-1000"></div>
+            <div className="flex justify-between items-end mb-8 border-b border-white/[0.05] pb-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-white/[0.03] rounded-2xl border border-white/[0.05] shadow-[0_0_15px_rgba(255,255,255,0.02)]">
+                  <svg className="w-6 h-6 text-cyan-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 </div>
                 <div>
-                  <h3 className="text-white text-xl font-bold tracking-tight">Analisi Media & OCR</h3>
-                  <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Testo Estratto da Immagini Post</p>
+                  <h3 className="text-white/90 text-2xl font-light tracking-tight mb-1">Analisi Media & OCR</h3>
+                  <p className="text-gray-400 text-xs font-light tracking-wide">Testo ed elementi estratti da immagini e post</p>
                 </div>
               </div>
-              <span className="text-xs bg-white/10 text-cyan-400 px-3 py-1 rounded-full font-bold">{ocrResults.length} Rilevamenti</span>
+              <span className="text-[11px] glass-pill px-4 py-2 font-medium tracking-widest uppercase text-cyan-400/80">{ocrResults.length} Rilevamenti</span>
             </div>
             
             {ocrResults.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-8 border border-white/5 bg-white/[0.02] rounded-2xl">
-                <svg className="w-12 h-12 text-gray-500 opacity-30 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                <p className="text-gray-400 text-sm font-medium">Nessun media o testo estratto disponibile.</p>
+              <div className="flex flex-col items-center justify-center p-12 glass-panel rounded-3xl mt-4">
+                <svg className="w-16 h-16 text-gray-500 opacity-10 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <p className="text-gray-400 text-sm font-bold tracking-widest uppercase">Nessun media scansionato</p>
               </div>
             ) : (
-              <div className="flex overflow-x-auto gap-6 pb-6 pt-2 custom-scrollbar snap-x snap-mandatory scroll-smooth w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pt-4 w-full">
                 {ocrResults.map((ocr, idx) => (
-                  <div key={idx} className="min-w-[320px] max-w-[400px] flex-shrink-0 snap-center bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-3xl overflow-hidden flex flex-col hover:border-cyan-500/30 transition-colors shadow-xl">
-                    <div className="h-48 w-full overflow-hidden bg-black/40 relative group/img">
-                      <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover opacity-80 group-hover/img:opacity-100 group-hover/img:scale-105 transition-all duration-500" />
-                      <div className="absolute top-2 right-2 bg-blue-500/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] font-bold text-white shadow-lg border border-blue-400/50 flex items-center space-x-1">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        <span>ANALISI AI</span>
-                      </div>
+                  <div key={idx} className="relative rounded-[2rem] overflow-hidden group/card shadow-[0_15px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex flex-col h-full">
+                    <div className="w-full h-72 md:h-80 relative overflow-hidden bg-black">
+                      <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 group-hover/card:scale-105 transition-all duration-700" />
                     </div>
-                    <div className="p-5 flex-1 flex flex-col">
-                      <h4 className="text-white text-sm font-bold mb-3 leading-snug">
-                        {ocr.ai_description || "Descrizione AI non disponibile."}
-                      </h4>
-                      <div className="mt-auto pt-4 border-t border-white/5">
-                        <details className="group/details">
-                          <summary className="text-[10px] text-gray-500 hover:text-cyan-400 uppercase tracking-widest font-bold cursor-pointer flex items-center transition-colors">
-                            <svg className="w-3 h-3 mr-1 transform group-open/details:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                            Mostra Testo Grezzo Rilevato
-                          </summary>
-                          <div className="bg-black/30 rounded-xl p-3 border border-white/5 mt-2 max-h-32 overflow-y-auto custom-scrollbar">
-                            <p className="text-gray-400 font-mono text-[10px] leading-relaxed break-words whitespace-pre-wrap">
-                              {ocr.text_extracted}
+                    
+                    <div className="absolute top-4 right-4 glass-pill px-3 py-1.5 text-[9px] font-bold tracking-widest text-white/90 flex items-center space-x-1.5 bg-black/50">
+                      <svg className="w-3 h-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <span>ANALISI AI</span>
+                    </div>
+
+                    <div className="flex-1 p-6 glass-panel border-t border-white/[0.08] relative z-10 bg-[#080808]/80 backdrop-blur-3xl">
+                      <div className="mb-4">
+                        {(() => {
+                          let text = ocr.ai_description;
+                          if (!text) return <p className="text-white/95 text-sm font-medium">Descrizione AI non disponibile.</p>;
+                          
+                          // Rimuovi eventuali grassetti Markdown
+                          text = text.replace(/\*\*/g, '');
+                          
+                          // Dividi il testo usando come separatore i bullet point ("-" all'inizio di linea o preceduti da spazio)
+                          const parts = text.split(/(?:\n|^)\s*-\s+/);
+                          
+                          if (parts.length > 1 || text.includes(" - ")) {
+                            // Supporto fallback se non c'era \n ma solo " - "
+                            const splitParts = parts.length > 1 ? parts : text.split(" - ");
+                            
+                            let intro = splitParts[0];
+                            const listItems = splitParts.slice(1);
+                            
+                            // Pulizia intro text dai titoli standard
+                            intro = intro.replace(/Descrizione dell'immagine:?/i, '');
+                            intro = intro.replace(/Dati sensibili visibili:?/i, '');
+                            intro = intro.replace(/Dati visibili:?/i, '');
+                            intro = intro.trim();
+                            
+                            return (
+                              <div className="flex flex-col space-y-3">
+                                <p className="text-white/95 text-sm font-medium leading-snug drop-shadow-md whitespace-pre-wrap">
+                                  {intro}
+                                </p>
+                                {listItems.length > 0 && (
+                                  <div className="max-h-36 overflow-y-auto custom-scrollbar pr-2 mt-2">
+                                    <ul className="space-y-2">
+                                      {listItems.map((item, i) => {
+                                      let label = null;
+                                      let value = null;
+                                      
+                                      // Prova a fare match su "Label: Value"
+                                      const colonMatch = item.match(/^([^:]+):\s*(.+)$/);
+                                      // Prova a fare match su "Label (Value)"
+                                      const parenMatch = item.match(/^([^(]+)\(([^)]+)\)$/);
+                                      
+                                      if (colonMatch && colonMatch[1].length < 40) {
+                                        label = colonMatch[1];
+                                        value = colonMatch[2];
+                                      } else if (parenMatch && parenMatch[1].length < 40) {
+                                        label = parenMatch[1];
+                                        value = parenMatch[2];
+                                      }
+                                      
+                                      if (label && value) {
+                                        return (
+                                          <li key={i} className="flex flex-col text-xs">
+                                            <span className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-0.5">{label.trim()}:</span>
+                                            <span className="text-emerald-400 font-mono bg-emerald-400/[0.05] px-2 py-1 rounded-md border border-emerald-400/[0.1] break-words">{value.trim()}</span>
+                                          </li>
+                                        );
+                                      }
+                                      
+                                      // Fallback se è un bullet point semplice senza chiave/valore
+                                      return (
+                                        <li key={i} className="flex items-start text-xs text-white/80">
+                                          <span className="w-1 h-1 rounded-full bg-cyan-500 mr-2 shrink-0 mt-1.5"></span>
+                                          <span className="break-words">{item.trim()}</span>
+                                        </li>
+                                      );
+                                    })}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          
+                          // Se non ci sono list items
+                          text = text.replace(/Descrizione dell'immagine:?/i, '').trim();
+                          return (
+                            <p className="text-white/95 text-sm font-medium leading-snug drop-shadow-md whitespace-pre-wrap">
+                              {text}
                             </p>
-                          </div>
-                        </details>
+                          );
+                        })()}
                       </div>
+                      <details className="group/details">
+                        <summary className="text-[10px] text-gray-400 hover:text-white uppercase tracking-widest font-bold cursor-pointer flex items-center transition-colors">
+                          <svg className="w-3 h-3 mr-2 transform group-open/details:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                          Mostra Testo Rilevato
+                        </summary>
+                        <div className="bg-black/40 rounded-2xl p-4 border border-white/[0.05] mt-3 max-h-32 overflow-y-auto custom-scrollbar shadow-inner">
+                          <p className="text-gray-300 font-mono text-[10px] leading-relaxed break-words whitespace-pre-wrap">
+                            {ocr.text_extracted}
+                          </p>
+                        </div>
+                      </details>
                     </div>
                   </div>
                 ))}
@@ -583,29 +702,29 @@ function Dashboard({ analysisId }) {
         
 {/* AI Audit Alert Box */}
         {data.llm_report && (
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 glassmorphism p-0 flex flex-col md:flex-row">
-            <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-500 to-purple-500 hidden md:block"></div>
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500 md:hidden"></div>
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.05] glass-card p-0 flex flex-col md:flex-row shadow-[0_8px_32px_rgba(0,0,0,0.4)] mt-8">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-purple-500 hidden md:block"></div>
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 to-purple-500 md:hidden"></div>
 
             {/* Left Column: Title & Threats */}
-            <div className="p-8 md:w-1/3 bg-black/20 border-b md:border-b-0 md:border-r border-white/5">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border border-white/10">
-                  <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+            <div className="p-10 md:w-1/3 bg-white/[0.01] border-b md:border-b-0 md:border-r border-white/[0.05]">
+              <div className="flex items-center space-x-4 mb-8">
+                <div className="p-3 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl border border-white/[0.05]">
+                  <svg className="w-6 h-6 text-purple-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                 </div>
                 <div>
-                  <h3 className="text-white text-lg font-bold tracking-tight">Audit AI</h3>
-                  <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Gemini Pro</p>
+                  <h3 className="text-white/90 text-xl font-light tracking-tight">Audit AI</h3>
+                  <p className="text-gray-400 text-[10px] uppercase tracking-widest font-bold">Gemini Pro Insight</p>
                 </div>
               </div>
 
               {data.llm_report.threat_vectors && data.llm_report.threat_vectors.length > 0 && (
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-3">Vettori di Minaccia Rilevati</p>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold mb-4">Vettori di Minaccia</p>
+                  <div className="flex flex-col gap-3">
                     {data.llm_report.threat_vectors.map((threat, idx) => (
-                      <span key={idx} className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-950/60 text-red-300 border border-red-500/30 hover:border-red-500/50 hover:text-white transition-all duration-300 shadow-[0_0_10px_rgba(239,68,68,0.02)] hover:shadow-[0_0_12px_rgba(239,68,68,0.12)]">
-                        <svg className="w-3.5 h-3.5 mr-2 text-red-400 opacity-90" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                      <span key={idx} className="flex items-start text-[13px] font-light text-red-300/90 leading-relaxed bg-red-500/5 p-3 rounded-xl border border-red-500/10">
+                        <svg className="w-4 h-4 mr-3 mt-0.5 text-red-400/70 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                         {threat}
                       </span>
                     ))}
@@ -613,18 +732,18 @@ function Dashboard({ analysisId }) {
                 </div>
               )}
               {(!data.llm_report.threat_vectors || data.llm_report.threat_vectors.length === 0) && (
-                <div className="flex items-center space-x-2 text-green-400/80 bg-green-500/5 border border-green-500/10 p-3 rounded-xl">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span className="text-sm font-medium">Nessuna minaccia diretta</span>
+                <div className="flex items-center space-x-3 text-emerald-400/80 bg-emerald-500/5 border border-emerald-500/10 p-4 rounded-2xl">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <span className="text-sm font-light">Nessuna minaccia diretta</span>
                 </div>
               )}
             </div>
 
             {/* Right Column: Mitigation Advice & Sections */}
-            <div className="p-8 md:w-2/3 flex flex-col justify-start overflow-y-auto max-h-[550px] custom-scrollbar">
-              <div className="flex items-center space-x-2 mb-6 border-b border-white/5 pb-4">
-                <svg className="w-5 h-5 text-blue-400 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                <h4 className="text-blue-300 text-sm font-bold tracking-wide uppercase">Piano di Mitigazione</h4>
+            <div className="p-10 md:w-2/3 flex flex-col justify-start overflow-y-auto max-h-[550px] custom-scrollbar bg-white/[0.005]">
+              <div className="flex items-center space-x-3 mb-8 border-b border-white/[0.05] pb-5">
+                <svg className="w-5 h-5 text-blue-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                <h4 className="text-blue-300/90 text-xs font-medium tracking-[0.2em] uppercase">Piano di Mitigazione</h4>
               </div>
 
               {data.llm_report.mitigation_sections && data.llm_report.mitigation_sections.length > 0 ? (
@@ -635,10 +754,10 @@ function Dashboard({ analysisId }) {
                     const isSecMedium = crit === 'MEDIA' || crit === 'MEDIUM';
 
                     const badgeColor = isSecCritical
-                      ? 'bg-red-500/10 text-red-400 border-red-500/20 shadow-red-500/5'
+                      ? 'glass-pill bg-red-500/10 text-red-400 border-red-500/20'
                       : isSecMedium
-                        ? 'bg-orange-500/10 text-orange-400 border-orange-500/20 shadow-orange-500/5'
-                        : 'bg-green-500/10 text-green-400 border-green-500/20 shadow-green-500/5';
+                        ? 'glass-pill bg-orange-500/10 text-orange-400 border-orange-500/20'
+                        : 'glass-pill bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
 
                     return (
                       <motion.div
@@ -646,11 +765,11 @@ function Dashboard({ analysisId }) {
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4 hover:border-white/10 transition-colors"
+                        className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/[0.05] space-y-5 hover:bg-white/[0.03] transition-colors"
                       >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.05] pb-4">
                           <div>
-                            <h5 className="text-white text-base font-bold tracking-tight">{section.title}</h5>
+                            <h5 className="text-white/95 text-lg font-light tracking-tight">{section.title}</h5>
                             {section.threat_vector && (
                               <span className="text-[10px] text-red-400 font-mono tracking-wider block mt-0.5 uppercase">
                                 Vettore: {section.threat_vector}
@@ -1309,8 +1428,10 @@ function MainApp() {
         /* Intestazione Compattata quando in analisi */
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-7xl z-10 flex flex-col md:flex-row items-center justify-between mt-4 mb-8 glassmorphism p-6 rounded-3xl border-white/5">
           <div>
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Social Exposure Analyzer</h2>
-            <p className="text-sm text-gray-400 font-mono mt-1">Target: <span className="text-white">{targetUrl}</span></p>
+            <h2 className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Social Exposure Analyzer</h2>
+            <p className="text-lg text-gray-400 font-medium mt-1 flex items-center">
+              Target: <span className="text-cyan-400 ml-2 font-mono tracking-wide">@{targetUrl}</span>
+            </p>
           </div>
           <button type="button" onClick={() => { setAnalysisId(null); setTargetUrl(''); }} className="mt-4 md:mt-0 bg-white/10 hover:bg-white/20 text-white font-semibold py-2 px-6 rounded-full transition-colors backdrop-blur-md border border-white/5 flex items-center space-x-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
