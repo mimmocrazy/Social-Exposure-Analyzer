@@ -38,5 +38,3 @@ di quello che fa il backend per ottenere quei risultati
 
 capire come utilizzare la sezione testing di antigravity per fare i /test
 
-aggiustare il file architecture perche confusionario, alcune fasi sono mischiate, non fa niente se esce fittizio, l importante e che sia allineato
-all ai journal.md
