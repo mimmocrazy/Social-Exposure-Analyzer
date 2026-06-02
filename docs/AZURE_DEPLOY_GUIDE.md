@@ -64,7 +64,7 @@ Ora diciamo all'App Service di abbandonare NGINX e prepararsi a ricevere la vera
 3. Nel pannello laterale, alla voce **Origine immagine**, scegli **Registro Azure Container**.
 4. Seleziona il tuo registro (es. `socialexposureregistry`).
 5. **Autenticazione:** Scegli **Identità gestita** e seleziona **Assegnata dal sistema**.
-6. **Immagine:** Scrivi a mano `social-backend`
+6. **Immagine:** Scrivi a mano `social-exposure-backend`
 7. **Tag dell'immagine:** Scrivi a mano `latest`
 8. Clicca su **Applica**.
 
