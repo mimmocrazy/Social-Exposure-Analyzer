@@ -66,6 +66,21 @@ async def guess_real_name(username: str) -> str:
         logger.warning(f"Errore durante la deduzione del nome per {username}: {e}")
     return None
 
+def update_analysis_phase(analysis_id: uuid.UUID, phase: str):
+    """Aggiorna lo stato della fase nel database per il tracciamento in tempo reale sul Frontend."""
+    try:
+        from sqlmodel import Session
+        import backend.database
+        from backend.models import ProfileAnalysis
+        with Session(backend.database.engine) as session:
+            analysis = session.get(ProfileAnalysis, analysis_id)
+            if analysis:
+                analysis.current_phase = phase
+                session.add(analysis)
+                session.commit()
+    except Exception as e:
+        logger.error(f"Errore durante l'aggiornamento della fase {phase}: {e}")
+
 async def run_scraping_task(
     analysis_id: uuid.UUID, 
     target: str,
@@ -83,6 +98,7 @@ async def run_scraping_task(
         analysis_id = uuid.UUID(analysis_id)
         
     try:
+        update_analysis_phase(analysis_id, "Inizializzazione Sistema")
         urls_to_scrape = []
         real_name_deduced = None
         
@@ -91,10 +107,12 @@ async def run_scraping_task(
             urls_to_scrape.append(target)
             logger.info("Target identificato come URL diretto.")
         else:
-            logger.info("Target identificato come username, avvio pipeline Discovery...")
+            update_analysis_phase(analysis_id, "Discovery Sherlock")
+            logger.info(f"Avvio Discovery tramite Sherlock per username: {target}")
             discovery_adapter = SherlockAdapter()
             urls_to_scrape = discovery_adapter.discover_profiles(target)
             
+            update_analysis_phase(analysis_id, "Deduzione Identità LLM")
             logger.info(f"Avvio deduzione identità tramite LLM per l'username: {target}")
             real_name_deduced = await guess_real_name(target)
             if real_name_deduced:
@@ -111,7 +129,8 @@ async def run_scraping_task(
             enable_ddg=enable_ddg,
             ig_sessionid=ig_sessionid,
             enable_fb_scan=enable_fb_scan,
-            fb_sessionid=fb_sessionid
+            fb_sessionid=fb_sessionid,
+            update_phase_callback=lambda p: update_analysis_phase(analysis_id, p)
         )
         
         is_instagram_target = any("instagram.com" in url for url in urls_to_scrape)
@@ -131,9 +150,11 @@ async def run_scraping_task(
         from backend.services.risk_engine import summarize_media_context
         
         if images_to_ocr:
+            update_analysis_phase(analysis_id, f"Estrazione Contenuto (0/{len(images_to_ocr)})")
             logger.info(f"Avvio estrazione OCR e AI context per {len(images_to_ocr)} immagini trovate.")
             async with httpx.AsyncClient() as img_client:
                 for idx, img_obj in enumerate(images_to_ocr):
+                    update_analysis_phase(analysis_id, f"Analisi Media ({idx+1}/{len(images_to_ocr)})")
                     try:
                         # Handle both string (legacy) and dict (new) image formats
                         img_url = img_obj if isinstance(img_obj, str) else img_obj.get("url")
@@ -177,6 +198,7 @@ async def run_scraping_task(
         if ocr_texts:
             combined_text += " " + " ".join(ocr_texts)
             
+        update_analysis_phase(analysis_id, "Correlazione NLP (SpaCy)")
         logger.info("Avvio estrazione PII tramite SpaCy...")
         spacy_entities = extract_pii(combined_text)
         spacy_payload = [e.model_dump() for e in spacy_entities]
@@ -189,6 +211,8 @@ async def run_scraping_task(
             "ocr_results": ocr_results_payload,
             "spacy_entities": spacy_payload,
             "metadata": {
+                "target": target,
+                "real_name_deduced": real_name_deduced,
                 "enable_ddg": enable_ddg,
                 "enable_holehe": enable_holehe,
                 "ig_sessionid_provided": bool(ig_sessionid),
@@ -201,6 +225,7 @@ async def run_scraping_task(
 
         # HOLEHE INTEGRATION
         if enable_holehe:
+            update_analysis_phase(analysis_id, "Controllo Data Breach (Holehe)")
             # Semplice regex per trovare email in tutti i testi di bio
             combined_bio = " ".join([p.get("bio", "") for p in raw_data if p.get("bio")])
             emails_found = list(set(re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', combined_bio)))
@@ -231,17 +256,20 @@ async def run_scraping_task(
         original_length = len(payload_str)
         
         # Limite di sicurezza Anti-DoS ottimizzato per LLM ad ampio contesto
-        max_allowed_length = 60000
+        max_allowed_length = 100000
         if original_length > max_allowed_length:
             logger.warning(f"DoS Prevention: Testo troncato da {original_length} a {max_allowed_length} caratteri prima del Risk Engine.")
             payload_str = payload_str[:max_allowed_length]
         else:
             logger.info(f"Risk Engine Payload preparato con successo. Dimensione: {original_length} caratteri (limite DoS: {max_allowed_length}).")
             
+        update_analysis_phase(analysis_id, "Analisi Risk Engine AI")
+        logger.info("Avvio analisi Risk Engine tramite LLM...")
         # Risk Engine Analysis tramite payload JSON strutturato
         from backend.services.risk_engine import calculate_risk
         risk_report = await calculate_risk(payload_str, target, real_name_deduced)
         
+        update_analysis_phase(analysis_id, "Generazione Report")
         pii_dicts = [pii.model_dump() for pii in risk_report.pii_extracted]
         
         # Aggiornamento Database con i dati raw, PII e Risk Score
@@ -364,6 +392,7 @@ def get_analysis_status(
         "id": analysis.id,
         "target_url": analysis.target_url,
         "status": analysis.status,
+        "current_phase": analysis.current_phase,
         "scan_date": analysis.scan_date,
         "risk_score": analysis.risk_score,
         "risk_level": analysis.risk_level,

@@ -10,7 +10,8 @@ async def gather_profile_metadata(
     enable_ddg: bool = True,
     ig_sessionid: str = None,
     enable_fb_scan: bool = False,
-    fb_sessionid: str = None
+    fb_sessionid: str = None,
+    update_phase_callback=None
 ) -> List[Dict[str, Any]]:
     """
     Estrae metadati di base dagli URL forniti (approccio Search Dorking).
@@ -36,6 +37,7 @@ async def gather_profile_metadata(
         if (ig_sessionid or is_instagram_target) and target_to_search and target_to_search != "unknown":
             try:
                 logger.info(f"Avvio Instagram Deep Scan per {target_to_search} (sessionid fornito: {bool(ig_sessionid)})")
+                if update_phase_callback: update_phase_callback("Instagram Deep Scan")
                 ig_headers = headers.copy()
                 if ig_sessionid:
                     ig_headers["Cookie"] = f"sessionid={ig_sessionid}"
@@ -185,6 +187,7 @@ async def gather_profile_metadata(
         if enable_ddg:
             try:
                 if target_to_search and target_to_search != "unknown":
+                    if update_phase_callback: update_phase_callback("OSINT DuckDuckGo")
                     search_queries = [target_to_search]
                     if real_name and real_name.lower() != "sconosciuto":
                         # Cerca il nome esatto
@@ -193,7 +196,7 @@ async def gather_profile_metadata(
                         search_queries.append(f'"{real_name}" pastebin OR dump OR "data breach"')
                         
                     for q in search_queries:
-                        ddg_url = f"https://lite.duckduckgo.com/lite/"
+                        ddg_url = "https://lite.duckduckgo.com/lite/"
                         logger.info(f"Avvio OSINT profondo su DuckDuckGo per: {q}")
                         resp = await client.post(ddg_url, data={"q": q}, follow_redirects=True)
                         if resp.status_code == 200:
@@ -212,9 +215,11 @@ async def gather_profile_metadata(
                 logger.warning(f"OSINT DuckDuckGo fallito: {e}")
                 
         # 4. Facebook Deep Scan (mbasic)
-        if enable_fb_scan and (fb_sessionid or target_to_search != "unknown"):
+        is_facebook_target = any("facebook.com" in url for url in urls)
+        if enable_fb_scan or is_facebook_target:
             try:
                 logger.info(f"Avvio Facebook Deep Scan per {target_to_search}")
+                if update_phase_callback: update_phase_callback("Facebook Deep Scan")
                 fb_headers = headers.copy()
                 if fb_sessionid:
                     fb_headers["Cookie"] = fb_sessionid if "c_user" in fb_sessionid else f"c_user={fb_sessionid}"
