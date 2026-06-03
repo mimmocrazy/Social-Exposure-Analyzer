@@ -208,13 +208,23 @@ const TerminalLoading = ({ isCompleted, onFinish }) => {
     if (!isCompleted && currentIndex < allLogs.length) {
       // Ritardo logico simulato per sincronizzarsi meglio con il backend Azure
       const logText = allLogs[currentIndex];
-      let delay = Math.random() * 400 + 200;
-      if (logText.includes("OSINT profondo")) {
-        delay = Math.random() * 1500 + 1000;
+      // Base delay per i log normali (1-2 secondi invece di millisecondi)
+      let delay = Math.random() * 1000 + 1000; 
+      
+      if (logText.includes("SHERLOCK")) {
+        delay = Math.random() * 2000 + 1500;
+      } else if (logText.includes("LLM IDENTITY")) {
+        delay = Math.random() * 3000 + 2000;
+      } else if (logText.includes("INSTAGRAM API")) {
+        delay = Math.random() * 4000 + 3000;
+      } else if (logText.includes("DUCKDUCKGO") || logText.includes("OSINT profondo")) {
+        delay = Math.random() * 5000 + 4000;
       } else if (logText.includes("estrazione OCR")) {
-        delay = Math.random() * 4000 + 3000; // OCR richiede 1-2 minuti, rallentiamo l'animazione qui
+        delay = Math.random() * 8000 + 5000; // OCR è pesantissimo
+      } else if (logText.includes("HOLEHE")) {
+        delay = Math.random() * 6000 + 4000;
       } else if (logText.includes("generazione report") || logText.includes("Risk Engine AI")) {
-        delay = Math.random() * 3000 + 2000; // Gemini richiede tempo
+        delay = Math.random() * 6000 + 5000; // Gemini richiede molto tempo
       } else if (logText.includes("logging")) {
         delay = 50;
       }
