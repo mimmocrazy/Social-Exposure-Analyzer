@@ -21,3 +21,4 @@ pydantic[email]
 loguru
 holehe
 sherlock-project
+openai
