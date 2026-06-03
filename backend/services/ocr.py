@@ -1,6 +1,5 @@
 import os
 import warnings
-import easyocr
 from backend.core.logger import logger
 
 # Ignora i fastidiosi warning di PyTorch sull'uso della CPU al posto della GPU
@@ -9,9 +8,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module="torch.utils.data
 _reader = None
 
 def get_reader():
-    """Carica EasyOCR in modalità lazy per ridurre il memory footprint."""
+    """Carica EasyOCR in modalità lazy per ridurre il memory footprint e non bloccare l'event loop."""
     global _reader
     if _reader is None:
+        import easyocr
         _reader = easyocr.Reader(['it', 'en'], gpu=False, verbose=False)
     return _reader
 
