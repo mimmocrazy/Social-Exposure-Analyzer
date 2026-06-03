@@ -8,7 +8,7 @@ alembic
 passlib
 bcrypt
 python-jose
-httpx
+httpx[http2]
 beautifulsoup4
 requests
 spacy
@@ -19,3 +19,5 @@ groq
 python-dotenv
 pydantic[email]
 loguru
+holehe
+sherlock-project
