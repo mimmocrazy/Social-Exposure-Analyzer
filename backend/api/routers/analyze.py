@@ -64,13 +64,13 @@ async def guess_real_name(username: str) -> str:
                     break
                 except asyncio.TimeoutError:
                     logger.warning(f"[{model_name}] andato in TIMEOUT (ignoro retries). Provo il fallback...")
-                    _mark_model_failed(model_name)
+                    _mark_model_failed(model_name, asyncio.TimeoutError())
                     last_err = Exception(f"Timeout (8s) per {model_name}")
                 except Exception as e:
                     err_str = str(e)
                     short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
                     logger.warning(f"[{model_name}] fallito in guess_real_name: {short_err}. Provo il fallback...")
-                    _mark_model_failed(model_name)
+                    _mark_model_failed(model_name, e)
                     last_err = e
                     
             if response is None:

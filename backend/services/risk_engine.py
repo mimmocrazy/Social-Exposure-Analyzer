@@ -17,7 +17,7 @@ def get_client():
 
 # Dictionary to track temporary model failures: model_name -> expiration timestamp
 _disabled_models = {}
-_DISABLE_DURATION = 300  # 5 minutes
+_DISABLE_DURATION = 60  # 1 minuto (ridotto da 5min: i 503 sono transitori)
 
 def _is_model_available(model_name: str) -> bool:
     """Controlla se il modello è disponibile o se è stato disabilitato temporaneamente."""
@@ -29,10 +29,19 @@ def _is_model_available(model_name: str) -> bool:
             _disabled_models.pop(model_name, None)
     return True
 
-def _mark_model_failed(model_name: str):
-    """Disabilita temporaneamente un modello dopo un errore."""
+def _is_transient_error(error) -> bool:
+    """Rileva se l'errore è transitorio (503/UNAVAILABLE) e non merita un ban."""
+    err_str = str(error).lower()
+    return "503" in err_str or "unavailable" in err_str or "service" in err_str
+
+def _mark_model_failed(model_name: str, error=None):
+    """Disabilita temporaneamente un modello dopo un errore permanente (429/quota).
+    Gli errori transitori (503) NON causano il ban."""
+    if error and _is_transient_error(error):
+        logger.info(f"Modello {model_name}: errore transitorio (503), NON viene bannato. Si riproverà al prossimo tentativo.")
+        return
     _disabled_models[model_name] = time.time() + _DISABLE_DURATION
-    logger.warning(f"Modello {model_name} contrassegnato come temporaneamente non disponibile per {_DISABLE_DURATION} secondi.")
+    logger.warning(f"Modello {model_name} contrassegnato come non disponibile per {_DISABLE_DURATION}s.")
 
 async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: str = None) -> RiskReport:
     """
@@ -162,7 +171,7 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
                     err_str = str(e)
                     short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
                     logger.warning(f"Errore con il modello {model_name}: {short_err}. Provo il prossimo modello di fallback...")
-                    _mark_model_failed(model_name)
+                    _mark_model_failed(model_name, e)
                     last_err = e
                     
             if response is None:
@@ -224,13 +233,13 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
                     return response.text.strip()
                 except asyncio.TimeoutError:
                     logger.debug(f"Gemini {model_name} in TIMEOUT (12s) per image summary.")
-                    _mark_model_failed(model_name)
+                    _mark_model_failed(model_name, asyncio.TimeoutError())
                     continue
                 except Exception as e:
                     err_str = str(e)
                     short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
                     logger.debug(f"Gemini {model_name} fallito per image summary: {short_err}")
-                    _mark_model_failed(model_name)
+                    _mark_model_failed(model_name, e)
                     continue
             
             # Se tutti i modelli tentati in questo giro hanno fallito, controlliamo se sono tutti disabilitati ora
