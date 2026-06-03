@@ -49,7 +49,7 @@ async def guess_real_name(username: str) -> str:
             else:
                 ai_provider = "gemini"
 
-        if ai_provider == "groq":
+        elif ai_provider == "groq":
             from groq import Groq
             groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
             completion = groq_client.chat.completions.create(
@@ -60,7 +60,7 @@ async def guess_real_name(username: str) -> str:
                 temperature=0.1
             )
             name = completion.choices[0].message.content.strip()
-        else:
+        elif ai_provider == "gemini":
             from backend.services.risk_engine import get_client, _is_model_available, _mark_model_failed
             client = get_client()
             models_to_try = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest']
