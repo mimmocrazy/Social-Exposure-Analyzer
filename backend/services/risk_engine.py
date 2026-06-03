@@ -187,7 +187,7 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
                         logger.warning(f"Errore con gpt-4o su GitHub Models: {e2}. Fallback a Gemini/Groq...")
                         ai_provider = "gemini" # Trigger fallback
         
-        if ai_provider == "groq":
+        elif ai_provider == "groq":
             logger.info("Avvio analisi Risk Engine tramite Groq (Llama 3.3 70B)...")
             from groq import Groq
             groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))

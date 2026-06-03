@@ -13,7 +13,8 @@ Applicazione cloud-based strutturata in tre layer isolati, progettata per il dep
 - **Database:** SQLite (ambiente dev/demo).
 - **Estrazione PII (NLP):** Microsoft Presidio / spaCy.
 - **Estrazione Testo da Immagini (OCR):** Tesseract / EasyOCR.
-- **LLM / Generazione Report:** Google Gemini Pro.
+- **LLM / Generazione Report:** GitHub Models (Azure AI) come primario.
+- **LLM Fallback HA (High-Availability):** Google Gemini Pro / Groq (Llama 3).
 - **Scraping:** Librerie native locali (Playwright, BeautifulSoup).
 - **Testing:** Pytest, HTTPX, pytest-cov.
 - **Infrastruttura:** Microsoft Azure App Service.
@@ -64,6 +65,7 @@ Questa sezione rispecchia fedelmente l'ordine logico e cronologico delle impleme
 - [x] Inizializzazione Auth & Alembic.
 - [x] Refactoring Architetturale OSINT & PII Extraction (Approccio LLM-Native).
 - [x] Switch Architetturale AI Provider (Groq Integration).
+- [x] Integrazione GitHub Models (Azure AI) e Sistema di High-Availability LLM.
 - [x] Risoluzione Broken Images CORS e Ottimizzazione Rate Limits LLM.
 - [x] UX Premium & Deep Scan Controls.
 
