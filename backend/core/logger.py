@@ -19,9 +19,15 @@ class InterceptHandler(logging.Handler):
 
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
-def mask_pii(record):
-    """Filtro di sicurezza per offuscare PII elementari dai log (Email/Telefoni)."""
+def filter_logs(record):
+    """Filtro di sicurezza per offuscare PII e rimuovere log di polling rumorosi."""
     msg = str(record["message"])
+    
+    # Rimuovi lo spam del polling di FastAPI dal terminale
+    if record["name"] == "uvicorn.access":
+        if "GET /api/v1/analyze/" in msg or "GET /api/v1/history" in msg:
+            return False
+
     msg = re.sub(r'[\w\.-]+@[\w\.-]+', '[EMAIL-MASKED]', msg)
     msg = re.sub(r'\+?\d{2,3}[\s-]?\d{3}[\s-]?\d{4,5}', '[PHONE-MASKED]', msg)
     record["message"] = msg
@@ -69,7 +75,7 @@ def setup_logging():
     # Aggiungi stdout per Azure App Service con PII Masking e formattatore personalizzato
     logger.add(
         sys.stdout, 
-        filter=mask_pii,
+        filter=filter_logs,
         format=custom_format
     )
 
