@@ -153,10 +153,6 @@ async def run_scraping_task(
         from backend.services.risk_engine import summarize_media_context
         
         if images_to_ocr:
-            # OPTIMIZATION: Limit to max 3 images to prevent Azure B1 from taking 5 minutes
-            if len(images_to_ocr) > 3:
-                images_to_ocr = images_to_ocr[:3]
-                
             update_analysis_phase(analysis_id, f"Estrazione Contenuto (0/{len(images_to_ocr)})")
             logger.info(f"Avvio estrazione OCR e AI context per {len(images_to_ocr)} immagini trovate.")
             async with httpx.AsyncClient() as img_client:
