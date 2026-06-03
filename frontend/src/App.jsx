@@ -37,7 +37,7 @@ class ErrorBoundary extends React.Component {
 
 // Custom Radial Progress Component (Apple Glass Style)
 const RadialProgress = ({ score, isCritical }) => {
-  const radius = 64;
+  const radius = 76;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score / 100) * circumference;
   
@@ -46,13 +46,13 @@ const RadialProgress = ({ score, isCritical }) => {
 
   return (
     <div className="relative flex items-center justify-center">
-      <svg className="transform -rotate-90 w-40 h-40">
+      <svg className="transform -rotate-90 w-48 h-48">
         <circle
-          cx="80"
-          cy="80"
+          cx="96"
+          cy="96"
           r={radius}
           stroke="currentColor"
-          strokeWidth="10"
+          strokeWidth="14"
           fill="transparent"
           className="text-white/5"
         />
@@ -60,11 +60,11 @@ const RadialProgress = ({ score, isCritical }) => {
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset }}
           transition={{ duration: 2, ease: "easeOut" }}
-          cx="80"
-          cy="80"
+          cx="96"
+          cy="96"
           r={radius}
           stroke="currentColor"
-          strokeWidth="10"
+          strokeWidth="14"
           fill="transparent"
           strokeDasharray={circumference}
           strokeLinecap="round"
@@ -72,8 +72,8 @@ const RadialProgress = ({ score, isCritical }) => {
         />
       </svg>
       <div className="absolute flex flex-col items-center justify-center text-white">
-        <span className="text-5xl font-bold tracking-tighter" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{score}</span>
-        <span className="text-[10px] text-gray-300 uppercase tracking-[0.2em] mt-1 font-semibold">Score</span>
+        <span className="text-6xl font-extrabold tracking-tighter" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{score}</span>
+        <span className="text-xs text-gray-300 uppercase tracking-[0.2em] mt-2 font-bold">Score</span>
       </div>
     </div>
   );
@@ -202,7 +202,7 @@ const TerminalLoading = ({ isCompleted, onFinish }) => {
 
   const [visibleLogs, setVisibleLogs] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollRef = useRef(null);
+  const scrollRef = React.useRef(null);
 
   useEffect(() => {
     if (!isCompleted && currentIndex < allLogs.length) {
@@ -437,9 +437,6 @@ function Dashboard({ analysisId }) {
       'PERSON': 'Persone Coinvolte',
       'EMAIL': 'Indirizzi Email',
       'PHONE': 'Numeri di Telefono',
-      'TELEFONO': 'Numeri di Telefono',
-      'TELEFONO_AZIENDALE': 'Telefono Aziendale',
-      'TELEFONO AZIENDALE': 'Telefono Aziendale',
       'LOCATION': 'Luoghi e Indirizzi',
       'ORGANIZATION': 'Organizzazioni / Aziende',
       'DATE_OF_BIRTH': 'Data di Nascita',
@@ -467,16 +464,10 @@ function Dashboard({ analysisId }) {
       'RUOLO': 'Ruoli e Occupazioni',
       'LAVORO': 'Ruoli e Occupazioni',
       'COMPANY': 'Organizzazioni / Aziende',
-      'NOME_COGNOME': 'Nome e Cognome Target',
-      'NOME_COGNOME_PADRE': 'Nome e Cognome Padre',
-      'NOME_COGNOME_MADRE': 'Nome e Cognome Madre',
-      'NOME_COGNOME_SORELLA_PARTNER': 'Nome e Cognome Sorella/Partner',
-      'NOME_COGNOME_FRATELLO': 'Nome e Cognome Fratello',
-      'URL_PERSONALE': 'Link / Siti Personali',
-      'URL PERSONALE': 'Link / Siti Personali'
+      'NOME_COGNOME': 'Nome e Cognome'
     };
 
-    const coreLabels = ['PERSON', 'EMAIL', 'PHONE', 'TELEFONO', 'TELEFONO_AZIENDALE', 'TELEFONO AZIENDALE', 'NOME', 'COGNOME', 'NOME_COGNOME', 'DATE_OF_BIRTH', 'PLACE_OF_BIRTH', 'AGE', 'IP', 'SOCIAL_MEDIA_HANDLE', 'USERNAME', 'HANDLE', 'URL_PERSONALE', 'URL PERSONALE'];
+    const coreLabels = ['PERSON', 'EMAIL', 'PHONE', 'TELEFONO', 'NOME', 'COGNOME', 'NOME_COGNOME', 'DATE_OF_BIRTH', 'PLACE_OF_BIRTH', 'AGE', 'IP', 'SOCIAL_MEDIA_HANDLE', 'USERNAME', 'HANDLE'];
 
     const corePiiGroups = {};
     const contextualPiiGroups = {};
@@ -485,23 +476,11 @@ function Dashboard({ analysisId }) {
       data.pii_extracted.forEach((pii) => {
         if (!pii || !pii.label) return;
         let labelKey = pii.label.toUpperCase();
-        
-        // Raggruppamento dinamico delle relazioni Nome/Cognome
-        if (labelKey.includes('NOME') || labelKey.includes('COGNOME')) {
-          if (labelKey.includes('PADRE')) {
-            labelKey = 'NOME_COGNOME_PADRE';
-          } else if (labelKey.includes('MADRE')) {
-            labelKey = 'NOME_COGNOME_MADRE';
-          } else if (labelKey.includes('SORELLA') || labelKey.includes('PARTNER')) {
-            labelKey = 'NOME_COGNOME_SORELLA_PARTNER';
-          } else if (labelKey.includes('FRATELLO')) {
-            labelKey = 'NOME_COGNOME_FRATELLO';
-          } else if (labelKey === 'NOME' || labelKey === 'COGNOME' || labelKey === 'FIRST_NAME' || labelKey === 'LAST_NAME') {
-            labelKey = 'NOME_COGNOME';
-          }
+        if (labelKey === 'NOME' || labelKey === 'COGNOME' || labelKey === 'FIRST_NAME' || labelKey === 'LAST_NAME') {
+          labelKey = 'NOME_COGNOME';
         }
         
-        const isCore = coreLabels.some(c => labelKey.includes(c)) || labelKey.startsWith('NOME_COGNOME_');
+        const isCore = coreLabels.some(c => labelKey.includes(c));
         const targetGroup = isCore ? corePiiGroups : contextualPiiGroups;
 
         if (!targetGroup[labelKey]) {
@@ -531,7 +510,7 @@ function Dashboard({ analysisId }) {
     const hasAlias = (realName && realName !== "Sconosciuto" && targetUsername !== realName);
 
     return (
-      <div className="mt-2 space-y-6 w-full max-w-7xl mx-auto text-left">
+      <div className="mt-12 md:mt-16 space-y-12 w-full max-w-7xl mx-auto text-left">
         {/* Top Row: Risk Index (Full Width Horizontal) */}
         <div className="glass-card p-8 relative overflow-hidden group">
           <div className={`absolute -inset-2 bg-gradient-to-tr ${isCritical ? 'from-red-500/10 to-orange-500/5' : 'from-blue-500/10 to-cyan-500/5'} blur-3xl -z-10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000`}></div>
@@ -547,32 +526,32 @@ function Dashboard({ analysisId }) {
             </div>
 
             {/* Sub Scores */}
-            <div className="w-full space-y-5">
+            <div className="w-full space-y-6">
               <div>
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="text-gray-300 font-semibold">Identità e Contatti</span>
-                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.identity_exposure || 0}%</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-gray-300 font-bold tracking-wide">Identità e Contatti</span>
+                  <span className="text-white font-extrabold text-base">{data.llm_report?.sub_scores?.identity_exposure || 0}%</span>
                 </div>
-                <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.identity_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-red-400 h-3 rounded-full shadow-[0_0_12px_rgba(248,113,113,0.9)]"></motion.div>
+                <div className="w-full bg-white/5 rounded-full h-5 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.identity_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-red-400 h-5 rounded-full shadow-[0_0_12px_rgba(248,113,113,0.9)]"></motion.div>
                 </div>
               </div>
               <div>
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="text-gray-300 font-semibold">Network e Relazioni</span>
-                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.network_exposure || 0}%</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-gray-300 font-bold tracking-wide">Network e Relazioni</span>
+                  <span className="text-white font-extrabold text-base">{data.llm_report?.sub_scores?.network_exposure || 0}%</span>
                 </div>
-                <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.network_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-orange-400 h-3 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.9)]"></motion.div>
+                <div className="w-full bg-white/5 rounded-full h-5 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.network_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-orange-400 h-5 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.9)]"></motion.div>
                 </div>
               </div>
               <div>
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="text-gray-300 font-semibold">Routine e Luoghi</span>
-                  <span className="text-white font-bold">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-gray-300 font-bold tracking-wide">Routine e Luoghi</span>
+                  <span className="text-white font-extrabold text-base">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
                 </div>
-                <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-emerald-400 h-3 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.9)]"></motion.div>
+                <div className="w-full bg-white/5 rounded-full h-5 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-emerald-400 h-5 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.9)]"></motion.div>
                 </div>
               </div>
             </div>
@@ -614,42 +593,42 @@ function Dashboard({ analysisId }) {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {Object.entries(visiblePiiGroups).map(([label, values], idx) => (
                       <motion.div
                         key={label}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.03 }}
-                        className="flex flex-col p-5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] hover:border-white/[0.12] transition-all duration-300 group shadow-md"
+                        className="flex flex-col p-6 rounded-3xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] hover:border-white/[0.12] transition-all duration-300 group shadow-lg"
                       >
-                        <div className="flex items-center space-x-3 mb-3 pb-3 border-b border-white/[0.05]">
-                          <div className="p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.08] shadow-[0_0_12px_rgba(255,255,255,0.02)]">
+                        <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-white/[0.05]">
+                          <div className="p-3 bg-white/[0.04] rounded-2xl border border-white/[0.08] shadow-[0_0_12px_rgba(255,255,255,0.02)] scale-110">
                             {getIconForPII(label)}
                           </div>
                           <div>
-                            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-[0.2em]">{label}</p>
-                            <h4 className="text-white text-[14px] font-semibold tracking-tight mt-0.5">
+                            <p className="text-gray-400 text-[10px] font-extrabold uppercase tracking-[0.2em]">{label}</p>
+                            <h4 className="text-white text-lg font-bold tracking-tight mt-1">
                               {labelMapping[label] || label}
                             </h4>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        <div className="flex flex-wrap gap-2 mt-2">
                           {values.map((valObj, valIdx) => (
                             <span
                               key={valIdx}
-                              className="glass-pill text-gray-200 text-[12px] px-3 py-1.5 font-mono inline-flex items-center gap-1.5 group/item hover:text-white hover:bg-white/10 transition-all cursor-default"
+                              className="glass-pill text-gray-100 text-sm px-4 py-2 font-mono font-semibold inline-flex items-center gap-2 group/item hover:text-white hover:bg-white/10 transition-all cursor-default"
                             >
                               <span className="break-all">{valObj.value}</span>
                               <span className="relative group/tooltip inline-flex items-center text-white/30 hover:text-white/80 transition-colors">
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-56 p-4 glass-panel text-[11px] text-gray-300 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-all duration-300 z-50 text-center font-sans font-normal leading-relaxed">
-                                  <strong className="text-white block font-semibold mb-1">Fonte del Dato</strong>
+                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-56 p-4 glass-panel text-xs text-gray-300 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-all duration-300 z-50 text-center font-sans font-normal leading-relaxed shadow-2xl">
+                                  <strong className="text-white block font-semibold mb-1 text-sm">Fonte del Dato</strong>
                                   {valObj.source || 'Scansione OSINT'}
-                                  {valObj.confidence && <span className="block text-gray-400 mt-2 text-[10px] uppercase tracking-widest font-semibold">Confidenza: {Math.round(valObj.confidence * 100)}%</span>}
+                                  {valObj.confidence && <span className="block text-gray-400 mt-2 text-[10px] uppercase tracking-widest font-bold">Confidenza: {Math.round(valObj.confidence * 100)}%</span>}
                                 </span>
                               </span>
                             </span>
