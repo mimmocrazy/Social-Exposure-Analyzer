@@ -38,13 +38,18 @@ async def guess_real_name(username: str) -> str:
             )
             name = completion.choices[0].message.content.strip()
         else:
-            from backend.services.risk_engine import get_client
+            from backend.services.risk_engine import get_client, _is_model_available, _mark_model_failed
             client = get_client()
-            models_to_try = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest']
+            models_to_try = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest']
+            
+            active_models = [m for m in models_to_try if _is_model_available(m)]
+            if not active_models:
+                active_models = models_to_try
+
             response = None
             last_err = None
             
-            for model_name in models_to_try:
+            for model_name in active_models:
                 try:
                     def _call_gemini(mod):
                         return client.models.generate_content(
@@ -59,11 +64,13 @@ async def guess_real_name(username: str) -> str:
                     break
                 except asyncio.TimeoutError:
                     logger.warning(f"[{model_name}] andato in TIMEOUT (ignoro retries). Provo il fallback...")
+                    _mark_model_failed(model_name)
                     last_err = Exception(f"Timeout (8s) per {model_name}")
                 except Exception as e:
                     err_str = str(e)
                     short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
                     logger.warning(f"[{model_name}] fallito in guess_real_name: {short_err}. Provo il fallback...")
+                    _mark_model_failed(model_name)
                     last_err = e
                     
             if response is None:
