@@ -160,6 +160,7 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
             logger.info("Successo con Groq!")
             return report
             
+        gemini_available = any(_is_model_available(m) for m in ['gemini-pro-latest', 'gemini-1.5-pro', 'gemini-2.5-pro', 'gemini-2.0-flash'])
         if ai_provider == "gemini" and gemini_available and not _gemini_is_down:
             logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback e Rotazione Chiavi)...")
             models_to_try = ['gemini-pro-latest', 'gemini-1.5-pro', 'gemini-2.5-pro', 'gemini-2.0-flash']
