@@ -613,7 +613,7 @@ function Dashboard({ analysisId }) {
                           <div>
                             <p className="text-gray-400 text-[10px] font-extrabold uppercase tracking-[0.2em]">{label}</p>
                             <h4 className="text-white text-lg font-bold tracking-tight mt-1">
-                              {labelMapping[label] || label}
+                              {labelMapping[label] || label.charAt(0).toUpperCase() + label.slice(1).toLowerCase().replace(/_/g, ' ')}
                             </h4>
                           </div>
                         </div>
@@ -625,15 +625,13 @@ function Dashboard({ analysisId }) {
                               className="glass-pill text-gray-100 text-sm px-4 py-2 font-mono font-semibold inline-flex items-center gap-2 group/item hover:text-white hover:bg-white/10 transition-all cursor-default"
                             >
                               <span className="break-all">{valObj.value}</span>
-                              <span className="relative group/tooltip inline-flex items-center text-white/30 hover:text-white/80 transition-colors">
+                              <span
+                                className="relative inline-flex items-center text-white/30 hover:text-white/80 transition-colors cursor-help"
+                                title={`Fonte: ${valObj.source || 'Scansione OSINT'}${valObj.confidence ? `\nConfidenza: ${Math.round(valObj.confidence * 100)}%` : ''}`}
+                              >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 w-56 p-4 glass-panel text-xs text-gray-300 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-all duration-300 z-50 text-center font-sans font-normal leading-relaxed shadow-2xl">
-                                  <strong className="text-white block font-semibold mb-1 text-sm">Fonte del Dato</strong>
-                                  {valObj.source || 'Scansione OSINT'}
-                                  {valObj.confidence && <span className="block text-gray-400 mt-2 text-[10px] uppercase tracking-widest font-bold">Confidenza: {Math.round(valObj.confidence * 100)}%</span>}
-                                </span>
                               </span>
                             </span>
                           ))}
@@ -1475,8 +1473,10 @@ function MainApp() {
             </motion.div>
 
             {/* Instagram Sensor */}
-            <motion.div className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 backdrop-blur-md flex flex-col h-full justify-start ${enableIgScan ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
-              {enableIgScan && <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl"></div>}
+            <motion.div className={`relative rounded-2xl border transition-all duration-300 p-5 backdrop-blur-md flex flex-col h-full justify-start ${enableIgScan ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
+              <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none -z-10">
+                {enableIgScan && <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl"></div>}
+              </div>
               <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableIgScan(!enableIgScan)}>
                 <div className="flex items-center space-x-4">
                   <div className={`p-3.5 rounded-xl transition-colors ${enableIgScan ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
@@ -1532,8 +1532,10 @@ function MainApp() {
             </motion.div>
 
             {/* Configurazione Avanzata FB */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="p-5 glassmorphism rounded-2xl border border-white/5 relative overflow-hidden group flex flex-col h-full justify-start">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -z-10 group-hover:bg-blue-500/20 transition-colors"></div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="p-5 glassmorphism rounded-2xl border border-white/5 relative group flex flex-col h-full justify-start">
+              <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none -z-10">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-colors"></div>
+              </div>
               
               <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableFbScan(!enableFbScan)}>
                 <div className="flex items-center space-x-4">
