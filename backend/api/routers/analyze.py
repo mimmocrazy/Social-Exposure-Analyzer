@@ -52,8 +52,14 @@ async def guess_real_name(username: str) -> str:
                             contents=prompt
                         )
                     import asyncio
-                    response = await asyncio.to_thread(_call_gemini, model_name)
+                    response = await asyncio.wait_for(
+                        asyncio.to_thread(_call_gemini, model_name),
+                        timeout=5.0
+                    )
                     break
+                except asyncio.TimeoutError:
+                    logger.warning(f"[{model_name}] andato in TIMEOUT (ignoro retries). Provo il fallback...")
+                    last_err = Exception(f"Timeout (5s) per {model_name}")
                 except Exception as e:
                     err_str = str(e)
                     short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
