@@ -171,38 +171,35 @@ async def run_scraping_task(
         if images_to_ocr:
             update_analysis_phase(analysis_id, f"Estrazione Contenuto (0/{len(images_to_ocr)})")
             logger.info(f"Avvio estrazione OCR e AI context per {len(images_to_ocr)} immagini trovate.")
-            # Usa un semaforo per limitare la concorrenza e non causare 429 sul tier gratuito
-            sem = asyncio.Semaphore(2)
-            
-            async def process_single_image(img_client, idx, img_obj):
-                """Processa una singola immagine: download, OCR, AI summary."""
-                async with sem:
+            async with httpx.AsyncClient() as img_client:
+                for idx, img_obj in enumerate(images_to_ocr):
+                    update_analysis_phase(analysis_id, f"Analisi Media ({idx+1}/{len(images_to_ocr)})")
                     try:
                         img_url = img_obj if isinstance(img_obj, str) else img_obj.get("url")
                         caption = None if isinstance(img_obj, str) else img_obj.get("caption")
                         
                         if not img_url:
-                            return None
+                            continue
                             
                         img_headers = {
                             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                             "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
                         }
                         img_resp = await img_client.get(img_url, headers=img_headers, follow_redirects=True, timeout=15.0)
-                        if img_resp.status_code != 200:
+                        if img_resp.status_code == 200:
+                            content = img_resp.content
+                            tmp_path = os.path.join(tempfile.gettempdir(), f"ocr_img_{analysis_id}_{idx}.jpg")
+                            text = None
+                            try:
+                                with open(tmp_path, "wb") as f:
+                                    f.write(content)
+                                text = await asyncio.to_thread(extract_text_from_image, tmp_path)
+                            finally:
+                                if os.path.exists(tmp_path):
+                                    os.remove(tmp_path)
+                        else:
                             logger.warning(f"Impossibile scaricare l'immagine OCR {idx}, status: {img_resp.status_code}")
-                            return None
-                        
-                        content = img_resp.content
-                        tmp_path = os.path.join(tempfile.gettempdir(), f"ocr_img_{analysis_id}_{idx}.jpg")
-                        text = None
-                        try:
-                            with open(tmp_path, "wb") as f:
-                                f.write(content)
-                            text = await asyncio.to_thread(extract_text_from_image, tmp_path)
-                        finally:
-                            if os.path.exists(tmp_path):
-                                os.remove(tmp_path)
+                            continue
                         
                         has_text = text and len(text.strip()) > 2
                         has_caption = caption and len(caption.strip()) > 2
@@ -212,33 +209,20 @@ async def run_scraping_task(
                                 ocr_texts.append(text)
                             
                             safe_text = text if has_text else "Nessun testo rilevato all'interno dell'immagine."
-                            await asyncio.sleep(1.0)  # Evita burst rate limit su Gemini
                             ai_description = await summarize_media_context(safe_text, caption)
                             
                             import base64
                             b64_img = base64.b64encode(content).decode('utf-8')
                             frontend_url = f"data:image/jpeg;base64,{b64_img}"
 
-                            return {
+                            ocr_results_payload.append({
                                 "url": frontend_url,
                                 "original_url": img_url,
                                 "text_extracted": safe_text,
                                 "ai_description": ai_description
-                            }
-                        return None
+                            })
                     except Exception as e:
                         logger.warning(f"Errore download ocr o riassunto immagine {idx}: {e}")
-                        return None
-            
-            # Processa TUTTE le immagini in parallelo per evitare attese sequenziali
-            update_analysis_phase(analysis_id, f"Analisi Media (1/{len(images_to_ocr)})")
-            async with httpx.AsyncClient() as img_client:
-                tasks = [process_single_image(img_client, idx, img_obj) for idx, img_obj in enumerate(images_to_ocr)]
-                results_imgs = await asyncio.gather(*tasks, return_exceptions=True)
-                
-            for r in results_imgs:
-                if isinstance(r, dict):
-                    ocr_results_payload.append(r)
 
         # NLP Pipeline classica (SpaCy) come da requisiti universitari
         from backend.services.nlp import extract_pii
