@@ -168,7 +168,7 @@ const getOfficialIcon = (iconName, isActive) => {
   }
 };
 
-const TerminalLoading = ({ isCompleted, onFinish }) => {
+const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
   const allLogs = [
     "[SYSTEM] Booting OSINT kernel v3.2.1...",
     "[SHERLOCK OSINT] Avvio Discovery tramite Sherlock per username: target_user",
@@ -203,6 +203,14 @@ const TerminalLoading = ({ isCompleted, onFinish }) => {
   const [visibleLogs, setVisibleLogs] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollRef = React.useRef(null);
+  const [lastPhase, setLastPhase] = useState(null);
+
+  useEffect(() => {
+    if (currentPhase && currentPhase !== lastPhase) {
+      setLastPhase(currentPhase);
+      setVisibleLogs(prev => [...prev, `[BACKEND ORCHESTRATOR] Fase attiva: ${currentPhase}...`]);
+    }
+  }, [currentPhase, lastPhase]);
 
   useEffect(() => {
     if (!isCompleted && currentIndex < allLogs.length) {
@@ -291,7 +299,8 @@ const TerminalLoading = ({ isCompleted, onFinish }) => {
             }
             
             let tagColor = "text-emerald-400";
-            if (tag.includes("SHERLOCK")) tagColor = "text-cyan-400";
+            if (tag.includes("BACKEND ORCHESTRATOR")) tagColor = "text-white font-bold bg-blue-900/30 px-1 border-l-2 border-blue-500";
+            else if (tag.includes("SHERLOCK")) tagColor = "text-cyan-400";
             else if (tag.includes("LLM IDENTITY")) tagColor = "text-emerald-400";
             else if (tag.includes("ORCHESTRATOR")) tagColor = "text-blue-400";
             else if (tag.includes("INSTAGRAM")) tagColor = "text-fuchsia-400";
@@ -360,6 +369,7 @@ function Dashboard({ analysisId }) {
       return (
         <TerminalLoading 
           isCompleted={data?.status === 'COMPLETED'}
+          currentPhase={data?.current_phase}
           onFinish={() => setShowDashboard(true)}
         />
       );
