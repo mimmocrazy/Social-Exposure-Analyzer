@@ -139,6 +139,54 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
     ai_provider = env_config.get("AI_PROVIDER", "gemini").lower()
     
     try:
+        if ai_provider == "github":
+            logger.info("Avvio analisi Risk Engine tramite GitHub Models (Azure AI)...")
+            import openai
+            github_token = os.getenv("GITHUB_TOKEN")
+            
+            if not github_token or github_token == "INSERISCI_QUI_IL_TUO_GITHUB_PAT":
+                logger.warning("GITHUB_TOKEN non configurato nel .env. Fallback a provider alternativo...")
+                ai_provider = "gemini" # Fallback a Gemini
+            else:
+                client = openai.OpenAI(
+                    base_url="https://models.inference.ai.azure.com",
+                    api_key=github_token,
+                )
+                
+                schema_instructions = f"\n\nRispondi RIGOROSAMENTE con un oggetto JSON che rispetti questo schema:\n{RiskReport.model_json_schema()}"
+                
+                try:
+                    completion = client.chat.completions.create(
+                        messages=[
+                            {"role": "system", "content": system_prompt + schema_instructions},
+                            {"role": "user", "content": payload_str}
+                        ],
+                        model="gpt-4o-mini",
+                        temperature=0.2,
+                        response_format={"type": "json_object"}
+                    )
+                    report = RiskReport.model_validate_json(completion.choices[0].message.content)
+                    logger.info("Successo con GitHub Models (gpt-4o-mini)!")
+                    return report
+                except Exception as e:
+                    logger.warning(f"Errore con gpt-4o-mini su GitHub Models: {e}. Fallback a gpt-4o...")
+                    try:
+                        completion = client.chat.completions.create(
+                            messages=[
+                                {"role": "system", "content": system_prompt + schema_instructions},
+                                {"role": "user", "content": payload_str}
+                            ],
+                            model="gpt-4o",
+                            temperature=0.2,
+                            response_format={"type": "json_object"}
+                        )
+                        report = RiskReport.model_validate_json(completion.choices[0].message.content)
+                        logger.info("Successo con GitHub Models (gpt-4o)!")
+                        return report
+                    except Exception as e2:
+                        logger.warning(f"Errore con gpt-4o su GitHub Models: {e2}. Fallback a Gemini/Groq...")
+                        ai_provider = "gemini" # Trigger fallback
+        
         if ai_provider == "groq":
             logger.info("Avvio analisi Risk Engine tramite Groq (Llama 3.3 70B)...")
             from groq import Groq
@@ -284,6 +332,29 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
         prompt += "ATTENZIONE CRITICA: Se la didascalia o il testo indicano relazioni (es. 'mamma', 'papà', 'fratello', 'collega'), DEVI dedurle ed esplicitarle come chiave-valore (es. '- Madre: Luisa', '- Padre: Mario'). "
         prompt += "SE NON CI SONO RELAZIONI NEL TESTO, NON SCRIVERLE. È SEVERAMENTE VIETATO scrivere 'Relazioni: non specificate', 'Madre: non specificata' ecc. Ometti il campo se non esiste. "
         prompt += "NON dare consigli, limitati a descrivere i dati."
+
+        if ai_provider == "github":
+            import openai
+            github_token = os.getenv("GITHUB_TOKEN")
+            if github_token and github_token != "INSERISCI_QUI_IL_TUO_GITHUB_PAT":
+                client = openai.OpenAI(
+                    base_url="https://models.inference.ai.azure.com",
+                    api_key=github_token,
+                )
+                try:
+                    completion = client.chat.completions.create(
+                        messages=[
+                            {"role": "user", "content": prompt}
+                        ],
+                        model="gpt-4o-mini",
+                        temperature=0.2,
+                    )
+                    return completion.choices[0].message.content.strip()
+                except Exception as e:
+                    logger.warning(f"Errore gpt-4o-mini image context: {e}. Fallback a Gemini...")
+                    ai_provider = "gemini"
+            else:
+                ai_provider = "gemini"
 
         # Controlla dinamicamente se abbiamo modelli Gemini disponibili
         gemini_available = any(_is_model_available(m) for m in ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'])

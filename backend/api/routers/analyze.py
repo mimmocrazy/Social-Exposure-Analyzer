@@ -26,6 +26,29 @@ async def guess_real_name(username: str) -> str:
         
         name = ""
         
+        if ai_provider == "github":
+            import openai
+            github_token = os.getenv("GITHUB_TOKEN")
+            if github_token and github_token != "INSERISCI_QUI_IL_TUO_GITHUB_PAT":
+                client = openai.OpenAI(
+                    base_url="https://models.inference.ai.azure.com",
+                    api_key=github_token,
+                )
+                try:
+                    completion = client.chat.completions.create(
+                        messages=[
+                            {"role": "user", "content": prompt}
+                        ],
+                        model="gpt-4o-mini",
+                        temperature=0.1,
+                    )
+                    name = completion.choices[0].message.content.strip()
+                except Exception as e:
+                    logger.warning(f"Errore gpt-4o-mini in guess_real_name: {e}. Fallback a Gemini...")
+                    ai_provider = "gemini"
+            else:
+                ai_provider = "gemini"
+
         if ai_provider == "groq":
             from groq import Groq
             groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
