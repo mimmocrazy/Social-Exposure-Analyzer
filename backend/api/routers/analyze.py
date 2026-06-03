@@ -171,10 +171,13 @@ async def run_scraping_task(
         if images_to_ocr:
             update_analysis_phase(analysis_id, f"Estrazione Contenuto (0/{len(images_to_ocr)})")
             logger.info(f"Avvio estrazione OCR e AI context per {len(images_to_ocr)} immagini trovate.")
+            # Usa un semaforo per limitare la concorrenza e non causare 429 sul tier gratuito
+            sem = asyncio.Semaphore(2)
             
             async def process_single_image(img_client, idx, img_obj):
                 """Processa una singola immagine: download, OCR, AI summary."""
-                try:
+                async with sem:
+                    try:
                     img_url = img_obj if isinstance(img_obj, str) else img_obj.get("url")
                     caption = None if isinstance(img_obj, str) else img_obj.get("caption")
                     
@@ -209,6 +212,7 @@ async def run_scraping_task(
                             ocr_texts.append(text)
                         
                         safe_text = text if has_text else "Nessun testo rilevato all'interno dell'immagine."
+                        await asyncio.sleep(1.0)  # Evita burst rate limit su Gemini
                         ai_description = await summarize_media_context(safe_text, caption)
                         
                         import base64

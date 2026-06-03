@@ -232,14 +232,12 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
                     )
                     return response.text.strip()
                 except asyncio.TimeoutError:
-                    logger.debug(f"Gemini {model_name} in TIMEOUT (12s) per image summary.")
-                    _mark_model_failed(model_name, asyncio.TimeoutError())
+                    logger.debug(f"Gemini {model_name} in TIMEOUT (12s) per image summary. Non lo banno per preservarlo per il Risk Engine.")
                     continue
                 except Exception as e:
                     err_str = str(e)
                     short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
-                    logger.debug(f"Gemini {model_name} fallito per image summary: {short_err}")
-                    _mark_model_failed(model_name, e)
+                    logger.debug(f"Gemini {model_name} fallito per image summary: {short_err}. Non lo banno.")
                     continue
             
             # Se tutti i modelli tentati in questo giro hanno fallito, controlliamo se sono tutti disabilitati ora
