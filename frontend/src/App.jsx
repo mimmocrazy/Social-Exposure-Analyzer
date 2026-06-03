@@ -169,105 +169,86 @@ const getOfficialIcon = (iconName, isActive) => {
 };
 
 const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
-  const allLogs = [
-    "[SYSTEM] Booting OSINT kernel v3.2.1...",
-    "[SHERLOCK OSINT] Avvio Discovery tramite Sherlock per username: target_user",
-    "[SHERLOCK OSINT] Nessun URL trovato tramite Sherlock. Applica fallback a Instagram.",
-    "[LLM IDENTITY] Avvio deduzione identità tramite LLM per target_user",
-    "[NETWORK] Handshake SSL completato. Connessione cifrata 256-bit stabilita.",
-    "[ORCHESTRATOR] Nome reale dedotto con successo.",
-    "[INSTAGRAM API] Avvio Instagram Deep Scan (sessionid fornito: True)",
-    "[OSINT SCRAPER] Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...",
-    "[INSTAGRAM API] Instagram Deep Scan riuscito con successo.",
-    "[OSINT SCRAPER] Skipping standard scraping in quanto il Deep Scan è andato a buon fine.",
-    "[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo...",
-    "[DUCKDUCKGO OSINT] Avvio OSINT profondo per alias pastebin OR dump OR data breach",
-    "[ORCHESTRATOR] Avvio estrazione OCR e AI context per le immagini trovate.",
-    "[COMPUTE] Allocazione Tensor stream su CPU. Note: This module is much faster con GPU.",
-    "[RISK ENGINE AI] Gemini gemini-flash-latest fallito per image summary: 503 UNAVAILABLE",
-    "[RISK ENGINE AI] WARNING: Modello gemini-flash-latest contrassegnato come temporaneamente non disponibile per 300 secondi.",
-    "[RISK ENGINE AI] Fallback trasparente avviato su instanza di backup...",
-    "[ORCHESTRATOR] Avvio estrazione PII tramite SpaCy...",
-    "[NLP] Modello it_core_news_sm caricato in RAM. Esecuzione pipeline NER avanzata.",
-    "[ORCHESTRATOR] Trovate 1 email per Holehe OSINT: ['[EMAIL-MASKED]']",
-    "[HOLEHE OSINT] Avvio ricerca OSINT Holehe per leak check...",
-    "[HOLEHE OSINT] Holehe completato per [EMAIL-MASKED] Siti trovati: 0",
-    "[ORCHESTRATOR] Risk Engine Payload preparato con successo. Dimensione: 13426 caratteri (limite DoS: 100000).",
-    "[ORCHESTRATOR] Avvio analisi Risk Engine tramite LLM...",
-    "[RISK ENGINE AI] Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...",
-    "[RISK ENGINE AI] Tentativo di generazione report con modello gemini-2.5-flash...",
-    "[RISK ENGINE AI] Successo con il modello gemini-2.5-flash!",
-    "[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso."
-  ];
-
   const [visibleLogs, setVisibleLogs] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollRef = React.useRef(null);
+  const [logQueue, setLogQueue] = useState(["[SYSTEM] Booting OSINT kernel v3.2.1...", "[NETWORK] Handshake SSL completato. Connessione cifrata 256-bit stabilita."]);
   const [lastPhase, setLastPhase] = useState(null);
+  const scrollRef = React.useRef(null);
 
+  // 1. Ascolta il vero backend e accoda i log finti corrispondenti
   useEffect(() => {
     if (currentPhase && currentPhase !== lastPhase) {
       setLastPhase(currentPhase);
-      setVisibleLogs(prev => [...prev, `[BACKEND ORCHESTRATOR] Fase attiva: ${currentPhase}...`]);
+      const newLogs = [`[BACKEND ORCHESTRATOR] Fase attiva: ${currentPhase}...`];
+      
+      const p = currentPhase.toLowerCase();
+      if (p.includes("discovery")) {
+        newLogs.push("[SHERLOCK OSINT] Avvio Discovery tramite Sherlock per target_user");
+        newLogs.push("[SHERLOCK OSINT] Nessun URL trovato tramite Sherlock. Applica fallback.");
+      } else if (p.includes("identità")) {
+        newLogs.push("[LLM IDENTITY] Avvio deduzione identità tramite LLM per target_user");
+        newLogs.push("[ORCHESTRATOR] Nome reale dedotto con successo.");
+      } else if (p.includes("scraping instagram") || p.includes("scraping")) {
+        newLogs.push("[INSTAGRAM API] Avvio Instagram Deep Scan (sessionid fornito: True)");
+        newLogs.push("[OSINT SCRAPER] Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...");
+      } else if (p.includes("scraping ddg") || p.includes("duckduckgo")) {
+        newLogs.push("[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo...");
+        newLogs.push("[DUCKDUCKGO OSINT] Avvio OSINT profondo per alias pastebin OR dump OR data breach");
+      } else if (p.includes("estrazione contenuto") || p.includes("ocr")) {
+        newLogs.push("[COMPUTE] Allocazione Tensor stream su CPU. Note: This module is much faster con GPU.");
+        newLogs.push("[ORCHESTRATOR] Avvio estrazione OCR e AI context per le immagini trovate.");
+      } else if (p.includes("analisi media")) {
+        newLogs.push("[RISK ENGINE AI] Analisi semantica in corso sull'immagine...");
+      } else if (p.includes("correlazione nlp") || p.includes("spacy")) {
+        newLogs.push("[NLP] Modello it_core_news_sm caricato in RAM. Esecuzione pipeline NER avanzata.");
+      } else if (p.includes("analisi databreach") || p.includes("holehe")) {
+        newLogs.push("[HOLEHE OSINT] Avvio ricerca OSINT Holehe per leak check...");
+        newLogs.push("[HOLEHE OSINT] Holehe completato. Verifica databreach in corso...");
+      } else if (p.includes("risk engine") || p.includes("generazione report")) {
+        newLogs.push("[ORCHESTRATOR] Risk Engine Payload preparato con successo. Dimensione: 13426 caratteri.");
+        newLogs.push("[RISK ENGINE AI] Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...");
+        newLogs.push("[RISK ENGINE AI] Tentativo di generazione report con modello gemini-2.5-flash...");
+      }
+      
+      setLogQueue(prev => [...prev, ...newLogs]);
     }
   }, [currentPhase, lastPhase]);
 
+  // 2. Consuma la coda un log alla volta per creare l'animazione fluida
   useEffect(() => {
-    if (!isCompleted && currentIndex < allLogs.length) {
-      // Ritardo logico simulato per sincronizzarsi meglio con il backend Azure
-      const logText = allLogs[currentIndex];
-      // Base delay per i log normali (1-2 secondi invece di millisecondi)
-      let delay = Math.random() * 1000 + 1000; 
+    if (logQueue.length > 0 && !isCompleted) {
+      const nextLog = logQueue[0];
       
-      if (logText.includes("SHERLOCK")) {
-        delay = Math.random() * 2000 + 1500;
-      } else if (logText.includes("LLM IDENTITY")) {
-        delay = Math.random() * 3000 + 2000;
-      } else if (logText.includes("INSTAGRAM API")) {
-        delay = Math.random() * 4000 + 3000;
-      } else if (logText.includes("DUCKDUCKGO") || logText.includes("OSINT profondo")) {
-        delay = Math.random() * 5000 + 4000;
-      } else if (logText.includes("estrazione OCR")) {
-        delay = Math.random() * 8000 + 5000; // OCR è pesantissimo
-      } else if (logText.includes("HOLEHE")) {
-        delay = Math.random() * 6000 + 4000;
-      } else if (logText.includes("generazione report") || logText.includes("Risk Engine AI")) {
-        delay = Math.random() * 6000 + 5000; // Gemini richiede molto tempo
-      } else if (logText.includes("logging")) {
-        delay = 50;
-      }
+      let delay = Math.random() * 400 + 400; // Ritardo dinamico ma veloce
+      if (nextLog.includes("BACKEND ORCHESTRATOR")) delay = 200; // Il log reale appare subito
+      else if (nextLog.includes("COMPUTE") || nextLog.includes("NLP")) delay = 1500;
+      else if (nextLog.includes("RISK ENGINE AI") && !nextLog.includes("Successo")) delay = 2000;
       
       const timer = setTimeout(() => {
-        setVisibleLogs(prev => [...prev, logText]);
-        setCurrentIndex(prev => prev + 1);
+        setVisibleLogs(prev => [...prev, nextLog]);
+        setLogQueue(prev => prev.slice(1)); // Rimuovi il log processato
       }, delay);
+      
       return () => clearTimeout(timer);
-    } else if (isCompleted) {
-      // Se completato dal server, velocizza la stampa dei restanti
-      if (currentIndex < allLogs.length) {
-         setVisibleLogs(prev => [...prev, allLogs[currentIndex]]);
-         setCurrentIndex(prev => prev + 1);
-      }
     }
-  }, [currentIndex, allLogs.length, isCompleted, allLogs]);
+  }, [logQueue, isCompleted]);
 
+  // 3. Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [visibleLogs]);
 
+  // 4. Gestione completamento forzato dal server
   useEffect(() => {
-    if (isCompleted && currentIndex >= allLogs.length) {
+    if (isCompleted) {
+      setVisibleLogs(prev => [...prev, "[RISK ENGINE AI] Successo con il modello gemini-2.5-flash!", "[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso.", "[SYSTEM] Elaborazione completata. Generazione UI in corso..."]);
       const timer = setTimeout(() => {
-        setVisibleLogs(prev => [...prev, "[SYSTEM] Elaborazione completata. Generazione UI in corso..."]);
-        setTimeout(() => {
-          if (onFinish) onFinish();
-        }, 800);
-      }, 300);
+        if (onFinish) onFinish();
+      }, 800);
       return () => clearTimeout(timer);
     }
-  }, [isCompleted, currentIndex, allLogs.length, onFinish]);
+  }, [isCompleted, onFinish]);
 
   return (
     <div className="flex flex-col items-center justify-center py-10 w-full px-4 relative">
