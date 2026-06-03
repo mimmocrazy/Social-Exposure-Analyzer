@@ -1210,13 +1210,13 @@ function MainApp() {
   const [targetUrl, setTargetUrl] = useState('');
   const [analysisId, setAnalysisId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [inputType, setInputType] = useState('generic'); // 'generic', 'instagram', 'facebook'
+  const [inputType, setInputType] = useState('instagram'); // 'generic', 'instagram', 'facebook'
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // OSINT Settings State
   const [enableDdg, setEnableDdg] = useState(true);
   const [enableHolehe, setEnableHolehe] = useState(true);
-  const [enableIgScan, setEnableIgScan] = useState(false);
+  const [enableIgScan, setEnableIgScan] = useState(true);
   const [igSessionId, setIgSessionId] = useState('');
   const [enableFbScan, setEnableFbScan] = useState(false);
   const [fbCUser, setFbCUser] = useState('');
