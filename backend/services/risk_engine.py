@@ -6,14 +6,49 @@ from google.genai import types
 from backend.models.risk import RiskReport
 from backend.core.logger import logger
 
-# Inizializza il client usando google-genai in modo lazy (evita crash su pytest se manca la chiave API locale)
+import re
+
+def _get_all_gemini_keys():
+    keys = []
+    env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if "GEMINI_API_KEY" in line:
+                    match = re.search(r'GEMINI_API_KEY\s*=\s*["\']?(AQ\.[\w-]+)["\']?', line)
+                    if match:
+                        keys.append(match.group(1))
+    
+    current_env_key = os.getenv("GEMINI_API_KEY")
+    if current_env_key and current_env_key not in keys:
+        keys.append(current_env_key)
+        
+    seen = set()
+    return [k for k in keys if not (k in seen or seen.add(k))]
+
+_gemini_keys_pool = _get_all_gemini_keys()
+_current_key_idx = 0
 _client = None
 
 def get_client():
-    global _client
+    global _client, _current_key_idx, _gemini_keys_pool
     if _client is None:
-        _client = genai.Client()
+        if _gemini_keys_pool:
+            _client = genai.Client(api_key=_gemini_keys_pool[_current_key_idx])
+            logger.info(f"Inizializzato Gemini con chiave {_current_key_idx+1}/{len(_gemini_keys_pool)}")
+        else:
+            _client = genai.Client()
     return _client
+
+def rotate_gemini_key() -> bool:
+    global _client, _current_key_idx, _gemini_keys_pool, _disabled_models
+    if not _gemini_keys_pool or len(_gemini_keys_pool) <= 1:
+        return False
+    _current_key_idx = (_current_key_idx + 1) % len(_gemini_keys_pool)
+    logger.warning(f"🔄 ROTAZIONE CHIAVE GEMINI: Passo alla chiave {_current_key_idx + 1}/{len(_gemini_keys_pool)}")
+    _client = genai.Client(api_key=_gemini_keys_pool[_current_key_idx])
+    _disabled_models.clear()
+    return True
 
 # Dictionary to track temporary model failures: model_name -> expiration timestamp
 _disabled_models = {}
@@ -125,59 +160,95 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
             logger.info("Successo con Groq!")
             return report
             
-        else:
-            logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...")
-            client = get_client()
+        if ai_provider == "gemini" and gemini_available and not _gemini_is_down:
+            logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback e Rotazione Chiavi)...")
+            models_to_try = ['gemini-pro-latest', 'gemini-1.5-pro', 'gemini-2.5-pro', 'gemini-2.0-flash']
             
-            models_to_try = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest']
-            
-            # Filtra i modelli disabilitati temporaneamente
-            active_models = [m for m in models_to_try if _is_model_available(m)]
-            
-            # Se tutti i modelli sono temporaneamente disabilitati, tenta comunque la lista intera come ultima spiaggia
-            if not active_models:
-                logger.warning("Tutti i modelli Gemini sono temporaneamente disabilitati. Tento comunque con tutti i modelli come fallback estremo.")
-                active_models = models_to_try
+            while True:
+                client = get_client()
                 
-            response = None
-            last_err = None
-            
-            for model_name in active_models:
-                try:
-                    logger.info(f"Tentativo di generazione report con modello {model_name}...")
-                    def _call_gemini_risk(mod):
-                        return client.models.generate_content(
-                            model=mod,
-                            contents=payload_str,
-                            config=types.GenerateContentConfig(
-                                system_instruction=system_prompt,
-                                response_mime_type="application/json",
-                                response_schema=RiskReport,
-                                temperature=0.2, 
-                            ),
-                        )
-                    import asyncio
-                    response = await asyncio.wait_for(
-                        asyncio.to_thread(_call_gemini_risk, model_name),
-                        timeout=25.0
-                    )
-                    logger.info(f"Successo con il modello {model_name}!")
-                    break
-                except asyncio.TimeoutError:
-                    logger.warning(f"Timeout (25s) raggiunto per {model_name}. Passo al prossimo...")
-                    _mark_model_failed(model_name)
-                    last_err = Exception(f"Timeout (25s) su {model_name}")
-                except Exception as e:
-                    err_str = str(e)
-                    short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
-                    logger.warning(f"Errore con il modello {model_name}: {short_err}. Provo il prossimo modello di fallback...")
-                    _mark_model_failed(model_name, e)
-                    last_err = e
+                # Filtra i modelli disabilitati temporaneamente
+                active_models = [m for m in models_to_try if _is_model_available(m)]
+                
+                # Se tutti sono stati disabilitati, forziamo il riprovare tutti (magari è passato il timeout o siamo disperati)
+                if not active_models:
+                    active_models = models_to_try
                     
-            if response is None:
-                raise last_err
+                response = None
+                last_err = None
+                
+                for model_name in active_models:
+                    try:
+                        logger.info(f"Tentativo di generazione report con modello {model_name}...")
+                        def _call_gemini_risk(mod):
+                            return client.models.generate_content(
+                                model=mod,
+                                contents=payload_str,
+                                config=types.GenerateContentConfig(
+                                    system_instruction=system_prompt,
+                                    response_mime_type="application/json",
+                                    response_schema=RiskReport,
+                                    temperature=0.2, 
+                                ),
+                            )
+                        import asyncio
+                        response = await asyncio.wait_for(
+                            asyncio.to_thread(_call_gemini_risk, model_name),
+                            timeout=25.0
+                        )
+                        logger.info(f"Successo con il modello {model_name}!")
+                        break
+                    except asyncio.TimeoutError:
+                        logger.warning(f"Timeout (25s) raggiunto per {model_name}. Passo al prossimo...")
+                        _mark_model_failed(model_name, asyncio.TimeoutError())
+                        last_err = Exception(f"Timeout (25s) su {model_name}")
+                    except Exception as e:
+                        err_str = str(e)
+                        short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
+                        logger.warning(f"Errore con il modello {model_name}: {short_err}. Provo il prossimo modello di fallback...")
+                        _mark_model_failed(model_name, e)
+                        last_err = e
+                        
+                if response is not None:
+                    report = RiskReport.model_validate_json(response.text)
+                    return report
+                
+                # Se siamo qui, tutti i modelli hanno fallito con la chiave attuale.
+                if rotate_gemini_key():
+                    continue # Riprova il giro con la nuova chiave!
+                else:
+                    logger.warning("Tutte le chiavi Gemini e i modelli hanno fallito. Fallback a Groq...")
+                    _gemini_is_down = True
+                    break # Esce dal while e va al fallback Groq
+
+        # Fallback a Groq Llama3 per il Risk Engine
+        if _gemini_is_down or ai_provider == "groq":
+            logger.info("Avvio analisi Risk Engine tramite Groq Llama3...")
+            from groq import Groq
+            groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
             
-            report = RiskReport.model_validate_json(response.text)
+            schema_json = json.dumps(RiskReport.model_json_schema())
+            groq_sys_prompt = system_prompt + f"\nRESTITUISCI ESATTAMENTE UN OGGETTO JSON CON LA SEGUENTE STRUTTURA: {schema_json}\nNon aggiungere NESSUN ALTRO TESTO."
+            
+            def _call_groq_risk():
+                return groq_client.chat.completions.create(
+                    model="llama3-70b-8192",
+                    messages=[
+                        {"role": "system", "content": groq_sys_prompt},
+                        {"role": "user", "content": payload_str}
+                    ],
+                    temperature=0.2,
+                    response_format={"type": "json_object"}
+                )
+                
+            import asyncio
+            completion = await asyncio.wait_for(
+                asyncio.to_thread(_call_groq_risk),
+                timeout=30.0
+            )
+            
+            content = completion.choices[0].message.content
+            report = RiskReport.model_validate_json(content)
             return report
             
     except Exception as e:
