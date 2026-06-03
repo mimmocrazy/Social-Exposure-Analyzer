@@ -239,7 +239,7 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
             
             def _call_groq_risk():
                 return groq_client.chat.completions.create(
-                    model="llama3-70b-8192",
+                    model="llama-3.3-70b-versatile",
                     messages=[
                         {"role": "system", "content": groq_sys_prompt},
                         {"role": "user", "content": payload_str}
