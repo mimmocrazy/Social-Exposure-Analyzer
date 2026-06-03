@@ -1,21 +1,21 @@
 import pytest
 import logging
-from backend.core.logger import mask_pii, custom_format, InterceptHandler
+from backend.core.logger import filter_logs, custom_format, InterceptHandler
 
 def test_mask_pii():
     # Test email masking
     record = {"message": "Found email: user@example.com in the leak"}
-    mask_pii(record)
+    filter_logs(record)
     assert record["message"] == "Found email: [EMAIL-MASKED] in the leak"
     
     # Test phone masking
     record = {"message": "Found phone: +39 333 123 4567 in the leak"}
-    mask_pii(record)
+    filter_logs(record)
     assert "[PHONE-MASKED]" in record["message"]
     
     # Test safe message
     record = {"message": "Found username testuser"}
-    mask_pii(record)
+    filter_logs(record)
     assert record["message"] == "Found username testuser"
 
 def test_custom_format():

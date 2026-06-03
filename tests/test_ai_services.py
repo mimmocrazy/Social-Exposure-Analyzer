@@ -42,6 +42,7 @@ async def test_calculate_risk_success(mocker):
     mock_client_instance.models.generate_content.return_value = mock_generate
     
     mocker.patch('backend.services.risk_engine.get_client', return_value=mock_client_instance)
+    mocker.patch('dotenv.dotenv_values', return_value={"AI_PROVIDER": "gemini"})
     
     pii_data = [{"label": "EMAIL", "value": "test@test.com"}]
     report = await calculate_risk(pii_data)
@@ -56,6 +57,7 @@ async def test_calculate_risk_fallback(mocker):
     mock_client_instance.models.generate_content.side_effect = Exception("API Quota Exceeded")
     
     mocker.patch('backend.services.risk_engine.get_client', return_value=mock_client_instance)
+    mocker.patch('dotenv.dotenv_values', return_value={"AI_PROVIDER": "gemini"})
     
     with pytest.raises(RuntimeError) as exc_info:
         await calculate_risk([])
@@ -65,8 +67,10 @@ async def test_calculate_risk_fallback(mocker):
 @pytest.mark.asyncio
 async def test_model_temporary_disabling(mocker):
     from backend.services.risk_engine import _disabled_models, _is_model_available
+    import backend.services.risk_engine as risk_engine
     # Svuota i modelli disabilitati prima del test
     _disabled_models.clear()
+    risk_engine._gemini_is_down = False
     
     mock_client_instance = mocker.MagicMock()
     # Primo modello fallisce con eccezione, secondo modello ha successo
@@ -74,11 +78,12 @@ async def test_model_temporary_disabling(mocker):
     mock_generate.text = '{"score": 10, "score_breakdown": [], "sub_scores": {"identity_exposure": 10, "network_exposure": 0, "routine_exposure": 0}, "level": "LOW", "threat_vectors": [], "mitigation_advice": "Advice", "mitigation_sections": [], "insufficient_data": false, "pii_extracted": []}'
     
     mock_client_instance.models.generate_content.side_effect = [
-        Exception("503 Service Unavailable"),
+        Exception("429 Resource Exhausted"),
         mock_generate
     ]
     
     mocker.patch('backend.services.risk_engine.get_client', return_value=mock_client_instance)
+    mocker.patch('dotenv.dotenv_values', return_value={"AI_PROVIDER": "gemini"})
     
     # Esegue la chiamata: il primo modello ('gemini-flash-latest') dovrebbe fallire ed essere disabilitato,
     # poi il secondo ('gemini-2.5-flash') dovrebbe avere successo.
