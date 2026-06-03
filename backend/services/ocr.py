@@ -12,7 +12,7 @@ def get_reader():
     """Carica EasyOCR in modalità lazy per ridurre il memory footprint."""
     global _reader
     if _reader is None:
-        _reader = easyocr.Reader(['it', 'en'], gpu=False)
+        _reader = easyocr.Reader(['it', 'en'], gpu=False, verbose=False)
     return _reader
 
 def extract_text_from_image(image_path: str) -> str:

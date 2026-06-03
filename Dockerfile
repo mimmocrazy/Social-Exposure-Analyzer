@@ -24,6 +24,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Scarica il modello linguistico di SpaCy in italiano in anticipo per non rallentare l'avvio
 RUN python -m spacy download it_core_news_sm
 
+# Scarica i modelli OCR in anticipo per evitare latenza e log superflui
+RUN python -c "import easyocr; easyocr.Reader(['it', 'en'], gpu=False, verbose=False)"
+
 # Copia il codice del backend
 COPY backend/ ./backend/
 
