@@ -150,14 +150,14 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
                     import asyncio
                     response = await asyncio.wait_for(
                         asyncio.to_thread(_call_gemini_risk, model_name),
-                        timeout=15.0
+                        timeout=25.0
                     )
                     logger.info(f"Successo con il modello {model_name}!")
                     break
                 except asyncio.TimeoutError:
-                    logger.warning(f"Timeout (15s) raggiunto per {model_name}. Passo al prossimo...")
+                    logger.warning(f"Timeout (25s) raggiunto per {model_name}. Passo al prossimo...")
                     _mark_model_failed(model_name)
-                    last_err = Exception(f"Timeout (15s) su {model_name}")
+                    last_err = Exception(f"Timeout (25s) su {model_name}")
                 except Exception as e:
                     err_str = str(e)
                     short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
@@ -219,11 +219,11 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
                     import asyncio
                     response = await asyncio.wait_for(
                         asyncio.to_thread(_call_gemini_summary, model_name),
-                        timeout=8.0
+                        timeout=12.0
                     )
                     return response.text.strip()
                 except asyncio.TimeoutError:
-                    logger.debug(f"Gemini {model_name} in TIMEOUT (8s) per image summary.")
+                    logger.debug(f"Gemini {model_name} in TIMEOUT (12s) per image summary.")
                     _mark_model_failed(model_name)
                     continue
                 except Exception as e:
