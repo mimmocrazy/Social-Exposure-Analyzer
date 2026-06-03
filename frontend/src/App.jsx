@@ -178,6 +178,15 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
   useEffect(() => {
     if (currentPhase && currentPhase !== lastPhase) {
       setLastPhase(currentPhase);
+      
+      // Se cambia fase, flusha tutto ciò che era in coda per non rimanere MAI indietro
+      setVisibleLogs(prev => {
+        if (logQueue.length > 0) {
+           return [...prev, ...logQueue];
+        }
+        return prev;
+      });
+      
       const newLogs = [`[BACKEND ORCHESTRATOR] Fase attiva: ${currentPhase}...`];
       
       const p = currentPhase.toLowerCase();
@@ -209,19 +218,20 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
         newLogs.push("[RISK ENGINE AI] Tentativo di generazione report con modello gemini-2.5-flash...");
       }
       
-      setLogQueue(prev => [...prev, ...newLogs]);
+      setLogQueue(newLogs); // Rimpiazza la coda con i nuovi, così i vecchi non rallentano
     }
-  }, [currentPhase, lastPhase]);
+  }, [currentPhase, lastPhase, logQueue]);
 
   // 2. Consuma la coda un log alla volta per creare l'animazione fluida
   useEffect(() => {
     if (logQueue.length > 0 && !isCompleted) {
       const nextLog = logQueue[0];
       
-      let delay = Math.random() * 400 + 400; // Ritardo dinamico ma veloce
-      if (nextLog.includes("BACKEND ORCHESTRATOR")) delay = 200; // Il log reale appare subito
-      else if (nextLog.includes("COMPUTE") || nextLog.includes("NLP")) delay = 1500;
-      else if (nextLog.includes("RISK ENGINE AI") && !nextLog.includes("Successo")) delay = 2000;
+      // Ritardi MOLTO brevi per impedire al terminale di rimanere indietro
+      let delay = Math.random() * 100 + 50; 
+      if (nextLog.includes("BACKEND ORCHESTRATOR")) delay = 50; 
+      else if (nextLog.includes("COMPUTE") || nextLog.includes("NLP")) delay = 200;
+      else if (nextLog.includes("RISK ENGINE AI") && !nextLog.includes("Successo")) delay = 300;
       
       const timer = setTimeout(() => {
         setVisibleLogs(prev => [...prev, nextLog]);
