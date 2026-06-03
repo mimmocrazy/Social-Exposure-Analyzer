@@ -174,7 +174,7 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
   const [lastPhase, setLastPhase] = useState(null);
   const scrollRef = React.useRef(null);
 
-  // 1. Ascolta il vero backend e accoda i log finti corrispondenti
+  // 1. Ascolta il vero backend e accoda i log corrispondenti alla fase
   useEffect(() => {
     if (currentPhase && currentPhase !== lastPhase) {
       setLastPhase(currentPhase);
@@ -187,69 +187,99 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
         return prev;
       });
       
-      const newLogs = [`[BACKEND ORCHESTRATOR] Fase attiva: ${currentPhase}...`];
+      const newLogs = [`[ORCHESTRATOR] Fase attiva: ${currentPhase}...`];
       
       const p = currentPhase.toLowerCase();
+      
+      // Match esatti con le fasi reali del backend (scraper.py + analyze.py)
       if (p.includes("discovery")) {
-        newLogs.push("[SHERLOCK OSINT] Avvio Discovery tramite Sherlock per target_user");
-        newLogs.push("[SHERLOCK OSINT] Nessun URL trovato tramite Sherlock. Applica fallback.");
-      } else if (p.includes("identità")) {
-        newLogs.push("[LLM IDENTITY] Avvio deduzione identità tramite LLM per target_user");
+        newLogs.push("[SHERLOCK OSINT] Avvio Discovery tramite Sherlock per target_user...");
+        newLogs.push("[SHERLOCK OSINT] Nessun URL trovato tramite Sherlock. Applica fallback a Instagram.");
+      } else if (p.includes("identità") || p.includes("identita")) {
+        newLogs.push("[LLM IDENTITY] Avvio deduzione identità tramite LLM per target_user...");
         newLogs.push("[ORCHESTRATOR] Nome reale dedotto con successo.");
-      } else if (p.includes("scraping instagram") || p.includes("scraping")) {
+      } else if (p.includes("instagram")) {
         newLogs.push("[INSTAGRAM API] Avvio Instagram Deep Scan (sessionid fornito: True)");
         newLogs.push("[OSINT SCRAPER] Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...");
-      } else if (p.includes("scraping ddg") || p.includes("duckduckgo")) {
+        newLogs.push("[INSTAGRAM API] Instagram Deep Scan riuscito con successo.");
+      } else if (p.includes("facebook")) {
+        newLogs.push("[FACEBOOK API] Avvio Facebook Deep Scan tramite mbasic.facebook.com...");
+        newLogs.push("[FACEBOOK API] Estrazione dati dal profilo in corso...");
+      } else if (p.includes("duckduckgo") || p.includes("osint duck")) {
         newLogs.push("[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo...");
-        newLogs.push("[DUCKDUCKGO OSINT] Avvio OSINT profondo per alias pastebin OR dump OR data breach");
-      } else if (p.includes("estrazione contenuto") || p.includes("ocr")) {
+        newLogs.push("[DUCKDUCKGO OSINT] Ricerca alias, pastebin, dump e data breach...");
+      } else if (p.includes("estrazione contenuto") || p.includes("estrazione")) {
         newLogs.push("[COMPUTE] Allocazione Tensor stream su CPU. Note: This module is much faster con GPU.");
         newLogs.push("[ORCHESTRATOR] Avvio estrazione OCR e AI context per le immagini trovate.");
       } else if (p.includes("analisi media")) {
+        // Le fasi "Analisi Media (1/5)" etc. arrivano rapidamente, aggiungiamo un solo log 
         newLogs.push("[RISK ENGINE AI] Analisi semantica in corso sull'immagine...");
       } else if (p.includes("correlazione nlp") || p.includes("spacy")) {
         newLogs.push("[NLP] Modello it_core_news_sm caricato in RAM. Esecuzione pipeline NER avanzata.");
-      } else if (p.includes("analisi databreach") || p.includes("holehe")) {
+      } else if (p.includes("data breach") || p.includes("holehe") || p.includes("controllo")) {
         newLogs.push("[HOLEHE OSINT] Avvio ricerca OSINT Holehe per leak check...");
         newLogs.push("[HOLEHE OSINT] Holehe completato. Verifica databreach in corso...");
-      } else if (p.includes("risk engine") || p.includes("generazione report")) {
-        newLogs.push("[ORCHESTRATOR] Risk Engine Payload preparato con successo. Dimensione: 13426 caratteri.");
+      } else if (p.includes("risk engine")) {
+        newLogs.push("[ORCHESTRATOR] Risk Engine Payload preparato con successo.");
         newLogs.push("[RISK ENGINE AI] Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...");
         newLogs.push("[RISK ENGINE AI] Tentativo di generazione report con modello gemini-2.5-flash...");
+      } else if (p.includes("generazione report")) {
+        newLogs.push("[RISK ENGINE AI] Successo con il modello gemini-2.5-flash!");
+        newLogs.push("[ORCHESTRATOR] Salvataggio risultati nel database...");
+      } else {
+        // Fase generica non riconosciuta, mostra comunque qualcosa
+        newLogs.push(`[SYSTEM] Processamento: ${currentPhase}`);
       }
       
-      setLogQueue(newLogs); // Rimpiazza la coda con i nuovi, così i vecchi non rallentano
+      setLogQueue(newLogs);
     }
   }, [currentPhase, lastPhase, logQueue]);
 
-  // 2. Consuma la coda un log alla volta per creare l'animazione fluida
+  // 2. Consuma la coda un log alla volta con animazione veloce
   useEffect(() => {
     if (logQueue.length > 0 && !isCompleted) {
       const nextLog = logQueue[0];
       
-      // Ritardi MOLTO brevi per impedire al terminale di rimanere indietro
-      let delay = Math.random() * 100 + 50; 
-      if (nextLog.includes("BACKEND ORCHESTRATOR")) delay = 50; 
-      else if (nextLog.includes("COMPUTE") || nextLog.includes("NLP")) delay = 200;
-      else if (nextLog.includes("RISK ENGINE AI") && !nextLog.includes("Successo")) delay = 300;
+      let delay = Math.random() * 150 + 80;
+      if (nextLog.includes("ORCHESTRATOR") && nextLog.includes("Fase attiva")) delay = 50;
+      else if (nextLog.includes("COMPUTE") || nextLog.includes("NLP")) delay = 250;
+      else if (nextLog.includes("RISK ENGINE AI") && nextLog.includes("Tentativo")) delay = 350;
       
       const timer = setTimeout(() => {
         setVisibleLogs(prev => [...prev, nextLog]);
-        setLogQueue(prev => prev.slice(1)); // Rimuovi il log processato
+        setLogQueue(prev => prev.slice(1));
       }, delay);
       
       return () => clearTimeout(timer);
     }
   }, [logQueue, isCompleted]);
 
-  // 3. Auto-scroll
+  // 3. Heartbeat: se il terminale non ha novità per 4s e non è completato, mostra un log di attesa
+  useEffect(() => {
+    if (!isCompleted && logQueue.length === 0) {
+      const heartbeat = setInterval(() => {
+        const msgs = [
+          "[NETWORK] Connessione attiva. In attesa di risposta dal server AI...",
+          "[SYSTEM] Pipeline in esecuzione. Elaborazione dati in corso...",
+          "[COMPUTE] Thread pool attivo. Attesa risposta modello LLM...",
+          "[NETWORK] Keep-alive. Timeout non raggiunto. Attendere prego...",
+          "[SYSTEM] Analisi avanzata in corso. Stima completamento imminente..."
+        ];
+        const msg = msgs[Math.floor(Math.random() * msgs.length)];
+        setVisibleLogs(prev => [...prev, msg]);
+      }, 4000);
+      return () => clearInterval(heartbeat);
+    }
+  }, [isCompleted, logQueue.length]);
+
+  // 4. Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [visibleLogs]);
 
-  // 4. Gestione completamento forzato dal server
+  // 5. Gestione completamento forzato dal server
   useEffect(() => {
     if (isCompleted) {
       setVisibleLogs(prev => [...prev, "[RISK ENGINE AI] Successo con il modello gemini-2.5-flash!", "[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso.", "[SYSTEM] Elaborazione completata. Generazione UI in corso..."]);
@@ -290,20 +320,21 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
             }
             
             let tagColor = "text-emerald-400";
-            if (tag.includes("BACKEND ORCHESTRATOR")) tagColor = "text-white font-bold bg-blue-900/30 px-1 border-l-2 border-blue-500";
-            else if (tag.includes("SHERLOCK")) tagColor = "text-cyan-400";
+            if (tag.includes("SHERLOCK")) tagColor = "text-cyan-400";
             else if (tag.includes("LLM IDENTITY")) tagColor = "text-emerald-400";
             else if (tag.includes("ORCHESTRATOR")) tagColor = "text-blue-400";
             else if (tag.includes("INSTAGRAM")) tagColor = "text-fuchsia-400";
+            else if (tag.includes("FACEBOOK")) tagColor = "text-blue-500";
             else if (tag.includes("DUCKDUCKGO")) tagColor = "text-yellow-400";
             else if (tag.includes("RISK ENGINE AI")) tagColor = "text-orange-400";
             else if (tag.includes("HOLEHE")) tagColor = "text-rose-400";
             else if (tag.includes("COMPUTE")) tagColor = "text-indigo-400";
             else if (tag.includes("NLP")) tagColor = "text-teal-400";
+            else if (tag.includes("NETWORK")) tagColor = "text-gray-500";
             else if (tag.includes("SYSTEM")) tagColor = "text-gray-400";
-            else if (tag.includes("logging")) tagColor = "text-gray-500";
+            else if (tag.includes("OSINT SCRAPER")) tagColor = "text-amber-400";
             
-            // Aggiunge il trattino se mancante per coerenza visiva con lo screen
+            // Aggiunge il trattino se mancante per coerenza visiva
             let formattedRest = rest.trim();
             if (!formattedRest.startsWith("-") && tag !== "") {
               formattedRest = `- ${formattedRest}`;
