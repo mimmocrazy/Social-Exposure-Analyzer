@@ -127,6 +127,7 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
         - `criticality`: CRITICA | ALTA | MEDIA | BASSA.
         - `mitigation`: Minimo 3-4 azioni correttive CONCRETE e specifiche per QUELLA vulnerabilità, descritte estesamente.
     """
+    global _gemini_is_down
     
     max_payload = 100000
     if len(raw_text) > max_payload:
