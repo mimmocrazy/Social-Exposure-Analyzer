@@ -161,12 +161,15 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
             logger.info("Successo con Groq!")
             return report
             
-        gemini_available = any(_is_model_available(m) for m in ['gemini-pro-latest', 'gemini-1.5-pro', 'gemini-2.5-pro', 'gemini-2.0-flash'])
+        gemini_available = any(_is_model_available(m) for m in ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest'])
         if ai_provider == "gemini" and gemini_available and not _gemini_is_down:
             logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback e Rotazione Chiavi)...")
-            models_to_try = ['gemini-pro-latest', 'gemini-1.5-pro', 'gemini-2.5-pro', 'gemini-2.0-flash']
+            models_to_try = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest']
             
-            while True:
+            keys_tried = 0
+            max_keys = max(1, len(_gemini_keys_pool))
+            
+            while keys_tried < max_keys:
                 client = get_client()
                 
                 # Filtra i modelli disabilitati temporaneamente
@@ -215,9 +218,11 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
                     report = RiskReport.model_validate_json(response.text)
                     return report
                 
-                # Se siamo qui, tutti i modelli hanno fallito con la chiave attuale.
-                if rotate_gemini_key():
-                    continue # Riprova il giro con la nuova chiave!
+                keys_tried += 1
+                # Se non abbiamo ancora provato tutte le chiavi, ruotiamo.
+                if keys_tried < max_keys:
+                    rotate_gemini_key()
+                    continue 
                 else:
                     logger.warning("Tutte le chiavi Gemini e i modelli hanno fallito. Fallback a Groq...")
                     _gemini_is_down = True
