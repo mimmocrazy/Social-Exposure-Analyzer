@@ -24,8 +24,8 @@ def filter_logs(record):
     msg = str(record["message"])
     
     # Rimuovi lo spam del polling di FastAPI dal terminale
-    if record["name"] == "uvicorn.access":
-        if "GET /api/v1/analyze/" in msg or "GET /api/v1/history" in msg:
+    if "GET /api/v1/analyze/" in msg or "GET /api/v1/history" in msg:
+        if "HTTP/" in msg and "200" in msg:
             return False
 
     msg = re.sub(r'[\w\.-]+@[\w\.-]+', '[EMAIL-MASKED]', msg)
