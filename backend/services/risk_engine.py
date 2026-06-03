@@ -136,16 +136,19 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
             for model_name in active_models:
                 try:
                     logger.info(f"Tentativo di generazione report con modello {model_name}...")
-                    response = client.models.generate_content(
-                        model=model_name,
-                        contents=payload_str,
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_prompt,
-                            response_mime_type="application/json",
-                            response_schema=RiskReport,
-                            temperature=0.2, 
-                        ),
-                    )
+                    def _call_gemini_risk(mod):
+                        return client.models.generate_content(
+                            model=mod,
+                            contents=payload_str,
+                            config=types.GenerateContentConfig(
+                                system_instruction=system_prompt,
+                                response_mime_type="application/json",
+                                response_schema=RiskReport,
+                                temperature=0.2, 
+                            ),
+                        )
+                    import asyncio
+                    response = await asyncio.to_thread(_call_gemini_risk, model_name)
                     logger.info(f"Successo con il modello {model_name}!")
                     break
                 except Exception as e:
@@ -201,10 +204,13 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
             response = None
             for model_name in active_models:
                 try:
-                    response = client.models.generate_content(
-                        model=model_name,
-                        contents=prompt,
-                    )
+                    def _call_gemini_summary(mod):
+                        return client.models.generate_content(
+                            model=mod,
+                            contents=prompt,
+                        )
+                    import asyncio
+                    response = await asyncio.to_thread(_call_gemini_summary, model_name)
                     return response.text.strip()
                 except Exception as e:
                     err_str = str(e)

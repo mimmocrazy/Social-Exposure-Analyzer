@@ -46,10 +46,13 @@ async def guess_real_name(username: str) -> str:
             
             for model_name in models_to_try:
                 try:
-                    response = client.models.generate_content(
-                        model=model_name,
-                        contents=prompt
-                    )
+                    def _call_gemini(mod):
+                        return client.models.generate_content(
+                            model=mod,
+                            contents=prompt
+                        )
+                    import asyncio
+                    response = await asyncio.to_thread(_call_gemini, model_name)
                     break
                 except Exception as e:
                     err_str = str(e)
