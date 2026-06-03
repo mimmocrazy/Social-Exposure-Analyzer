@@ -206,11 +206,15 @@ const TerminalLoading = ({ isCompleted, onFinish }) => {
 
   useEffect(() => {
     if (!isCompleted && currentIndex < allLogs.length) {
-      // Ritardo logico simulato
-      let delay = Math.random() * 400 + 100;
+      // Ritardo logico simulato per sincronizzarsi meglio con il backend Azure
       const logText = allLogs[currentIndex];
-      if (logText.includes("OSINT profondo") || logText.includes("estrazione OCR") || logText.includes("generazione report")) {
-        delay = Math.random() * 800 + 600;
+      let delay = Math.random() * 400 + 200;
+      if (logText.includes("OSINT profondo")) {
+        delay = Math.random() * 1500 + 1000;
+      } else if (logText.includes("estrazione OCR")) {
+        delay = Math.random() * 4000 + 3000; // OCR richiede 1-2 minuti, rallentiamo l'animazione qui
+      } else if (logText.includes("generazione report") || logText.includes("Risk Engine AI")) {
+        delay = Math.random() * 3000 + 2000; // Gemini richiede tempo
       } else if (logText.includes("logging")) {
         delay = 50;
       }

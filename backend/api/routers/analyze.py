@@ -153,6 +153,10 @@ async def run_scraping_task(
         from backend.services.risk_engine import summarize_media_context
         
         if images_to_ocr:
+            # OPTIMIZATION: Limit to max 3 images to prevent Azure B1 from taking 5 minutes
+            if len(images_to_ocr) > 3:
+                images_to_ocr = images_to_ocr[:3]
+                
             update_analysis_phase(analysis_id, f"Estrazione Contenuto (0/{len(images_to_ocr)})")
             logger.info(f"Avvio estrazione OCR e AI context per {len(images_to_ocr)} immagini trovate.")
             async with httpx.AsyncClient() as img_client:
@@ -179,7 +183,8 @@ async def run_scraping_task(
                             try:
                                 with open(tmp_path, "wb") as f:
                                     f.write(content)
-                                text = extract_text_from_image(tmp_path)
+                                # OPTIMIZATION: Run CPU-bound OCR in a thread to not block FastAPI event loop
+                                text = await asyncio.to_thread(extract_text_from_image, tmp_path)
                             finally:
                                 if os.path.exists(tmp_path):
                                     os.remove(tmp_path)
@@ -253,7 +258,9 @@ async def run_scraping_task(
                 logger.info(f"Trovate {len(emails_found)} email per Holehe OSINT: {emails_found}")
                 from backend.services.holehe_adapter import run_holehe
                 from backend.services.databreach_service import check_data_breaches
-                for em in emails_found:
+                
+                # OPTIMIZATION: Process all emails concurrently
+                async def process_email(em):
                     sites = await run_holehe(em)
                     if sites:
                         osint_payload["holehe_results"].append({
@@ -262,7 +269,6 @@ async def run_scraping_task(
                         })
                         logger.info(f"[OSINT HOLEHE] {em} -> {sites}")
                     
-                    # Data breach check
                     breaches = await check_data_breaches(em)
                     if breaches:
                         osint_payload["databreach_results"].append({
@@ -270,6 +276,8 @@ async def run_scraping_task(
                             "breaches": breaches
                         })
                         logger.warning(f"[OSINT BREACH] {em} è esposta in {len(breaches)} databreaches!")
+
+                await asyncio.gather(*[process_email(em) for em in emails_found])
             
         import copy
         llm_payload = copy.deepcopy(osint_payload)
