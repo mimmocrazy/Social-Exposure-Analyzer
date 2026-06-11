@@ -72,16 +72,22 @@
         color: inherit !important;
         padding: 0;
     }
-    /* Syntax Highlighting Overrides for Dark Theme (One Dark Pro) */
-    .hljs-keyword, .keyword { color: #c678dd !important; }
-    .hljs-string, .string { color: #98c379 !important; }
-    .hljs-title, .title, .hljs-title.function_ { color: #61afef !important; }
-    .hljs-comment, .comment { color: #5c6370 !important; font-style: italic; }
-    .hljs-built_in, .built_in { color: #e5c07b !important; }
-    .hljs-type, .type { color: #e5c07b !important; }
-    .hljs-literal, .literal { color: #d19a66 !important; }
-    .hljs-number, .number { color: #d19a66 !important; }
-    .hljs-params, .params { color: #abb2bf !important; }
+    /* Syntax Highlighting Overrides for Dark Theme (Super Vibrant) */
+    .hljs-keyword, .keyword { color: #ff7edb !important; font-weight: bold; }
+    .hljs-string, .string { color: #a8ff60 !important; }
+    .hljs-title, .title, .hljs-title.function_ { color: #54c8ff !important; font-weight: bold; }
+    .hljs-comment, .comment { color: #8a99a8 !important; font-style: italic; }
+    .hljs-built_in, .built_in { color: #ffd659 !important; font-style: italic; }
+    .hljs-type, .type { color: #ffd659 !important; }
+    .hljs-literal, .literal { color: #ff9d00 !important; }
+    .hljs-number, .number { color: #ff9d00 !important; }
+    .hljs-params, .params { color: #f8f8f2 !important; }
+    .hljs-variable, .variable { color: #f8f8f2 !important; }
+    .hljs-attr, .attr { color: #54c8ff !important; }
+    .hljs-meta, .meta { color: #ff9d00 !important; font-weight: bold; }
+    .hljs-operator, .operator { color: #ff7edb !important; }
+    .hljs-property, .property { color: #54c8ff !important; }
+    .hljs-punctuation, .punctuation { color: #abb2bf !important; }
 </style>
 
 <div style="text-align: center; margin-top: 15px;">
