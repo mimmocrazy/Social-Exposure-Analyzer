@@ -35,7 +35,17 @@
         font-style: italic;
         color: #555;
         margin-top: 10px;
+        margin-bottom: 15px;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    .figure-container {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
         margin-bottom: 40px;
+        display: inline-block !important;
+        width: 100%;
+        text-align: center;
     }
     pre {
         background-color: #282c34 !important;
@@ -136,19 +146,18 @@ Tutte le risorse afferenti al progetto sono isolate logicamente all'interno di u
 
 **Schema Architetturale dell'Infrastruttura Cloud:**
 <br>
-<div align="center">
-    <img src="images/mermaid1.png" alt="Azure Infrastructure Diagram" width="800" />
-</div>
-<div class="caption">
-    <strong>Figura 1: Topologia di rete dell'infrastruttura Cloud Azure.</strong> Il diagramma illustra il flusso del dato (1): l'utente interroga la CDN fornita nativamente dallo Storage Account che ospita la Single Page Application React. Il layer di presentazione contatta (2) tramite chiamate asincrone il container Linux dell'App Service. Il ciclo di integrazione continua (3) è garantito dall'Azure Container Registry che inietta le immagini Docker tramite Webhook, mentre la persistenza (4) sfrutta la VNet Integration per interloquire a bassa latenza con il nodo PostgreSQL mascherando i flussi alla rete pubblica Internet.
+<div class="figure-container">
+    <img src="images/mermaid1.png" alt="Azure Infrastructure Diagram" width="800" style="margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Figura 1: Topologia di rete dell'infrastruttura Cloud Azure.</strong> Il diagramma illustra il flusso del dato (1): l'utente interroga la CDN fornita nativamente dallo Storage Account che ospita la Single Page Application React. Il layer di presentazione contatta (2) tramite chiamate asincrone il container Linux dell'App Service. Il ciclo di integrazione continua (3) è garantito dall'Azure Container Registry che inietta le immagini Docker tramite Webhook, mentre la persistenza (4) sfrutta la VNet Integration per interloquire a bassa latenza con il nodo PostgreSQL mascherando i flussi alla rete pubblica Internet.
+    </div>
 </div>
 
-<br>
-<div align="center">
-    <img src="images/azure.png" alt="Azure Resource Group" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);" />
-</div>
-<div class="caption">
-    <strong>Figura 2: Portale Microsoft Azure - Resource Group del Progetto.</strong> La schermata mostra la raccolta logica delle risorse allocate nel cloud Azure per l'applicativo, inclusi l'App Service, l'App Service Plan, lo Storage Account e il Flexible PostgreSQL Server.
+<div class="figure-container">
+    <img src="images/azure.png" alt="Azure Resource Group" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Figura 2: Portale Microsoft Azure - Resource Group del Progetto.</strong> La schermata mostra la raccolta logica delle risorse allocate nel cloud Azure per l'applicativo, inclusi l'App Service, l'App Service Plan, lo Storage Account e il Flexible PostgreSQL Server.
+    </div>
 </div>
 
 ### 2.1 Erogazione del Frontend (Azure Storage Account - Static Web App)
@@ -216,11 +225,11 @@ Se il backend avesse adottato un approccio sincrono tradizionale, l'esecuzione d
 
 **Sequence Diagram dell'Orchestrazione Asincrona:**
 <br>
-<div align="center">
-    <img src="images/mermaid2.png" alt="Asynchronous Sequence Diagram" width="800" />
-</div>
-<div class="caption">
-    <strong>Figura 2: Diagramma di sequenza del pattern Produttore-Consumatore.</strong> Lo schema modella la risoluzione del collo di bottiglia tipico dei task bloccanti. Il router FastAPI delega l'onere elaborativo a un Worker interno svincolando il client con un <code>HTTP 202 Accepted</code> (step 1-3). Il client esegue un loop non invasivo (<code>Short Polling</code>) per monitorare l'avanzamento (step 4-5). Nel frattempo, il Worker esegue i rami OSINT in parallelo all'interno di coroutine concorrenti, finalizzando l'estrazione PII prima di notificare al client la conclusione del ciclo vitale e rilasciare i dati generati (<code>COMPLETED</code>, step 12-13).
+<div class="figure-container">
+    <img src="images/mermaid2.png" alt="Asynchronous Sequence Diagram" width="800" style="margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Figura 3: Diagramma di sequenza del pattern Produttore-Consumatore.</strong> Lo schema modella la risoluzione del collo di bottiglia tipico dei task bloccanti. Il router FastAPI delega l'onere elaborativo a un Worker interno svincolando il client con un <code>HTTP 202 Accepted</code> (step 1-3). Il client esegue un loop non invasivo (<code>Short Polling</code>) per monitorare l'avanzamento (step 4-5). Nel frattempo, il Worker esegue i rami OSINT in parallelo all'interno di coroutine concorrenti, finalizzando l'estrazione PII prima di notificare al client la conclusione del ciclo vitale e rilasciare i dati generati (<code>COMPLETED</code>, step 12-13).
+    </div>
 </div>
 
 ### 3.1 Esecuzione Disaccoppiata (Pattern Produttore-Consumatore)
@@ -339,40 +348,39 @@ Tramite questa istruzione, il frontend bersaglia la via di fuga API `GET /api/v1
 
 Nel frattempo, un costrutto nativo React (l'hook `useEffect`) monitora ossessivamente i cambiamenti della proprietà `data.current_phase` esposta dal worker cloud. Al suo mutare, innesca stringhe e log testuali animati ("*OSINT Scraping in corso su IG...*"), inserendoli nella coda della UI, regalando l'illusione di una connessione zero-latency persistente.
 
-<br>
-<div align="center">
-    <img src="images/home.png" alt="Homepage e Input Target" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin-bottom: 20px;" />
-</div>
-<div class="caption">
-    <strong>Figura 3: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi.
-</div>
-
-<div align="center">
-    <img src="images/post_analysis.png" alt="Dashboard Principale post analisi" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin-bottom: 20px;" />
-</div>
-<div class="caption">
-    <strong>Figura 4: Dashboard Globale dell'Audit OSINT completato.</strong> La vista d'insieme raccoglie gli indici aggregati di esposizione, la telemetria di esecuzione dei singoli moduli OSINT (Sherlock, Holehe, Dork Engine) e il feed dell'OCR con carosello interattivo.
+<div class="figure-container">
+    <img src="images/home.png" alt="Homepage e Input Target" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Figura 4: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi.
+    </div>
 </div>
 
-<div align="center">
-    <img src="images/score.png" alt="Indice di Rischio e Punteggi" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin-bottom: 20px;" />
-</div>
-<div class="caption">
-    <strong>Figura 5: Sezione Indice di Rischio e Breakdown Matematico.</strong> Il widget illustra lo Score di Rischio complessivo, le barre di esposizione per aree tematiche (Identità, Network, Routine) e il breakdown analitico dei punti assegnati deterministicamente in base alle vulnerabilità riscontrate.
-</div>
-
-<div align="center">
-    <img src="images/dati_sensibili.png" alt="Dati Sensibili Estrapolati" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin-bottom: 20px;" />
-</div>
-<div class="caption">
-    <strong>Figura 6: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP e OCR, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.
+<div class="figure-container">
+    <img src="images/score.png" alt="Indice di Rischio e Punteggi" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Figura 5: Sezione Indice di Rischio e Breakdown Matematico.</strong> Il widget illustra lo Score di Rischio complessivo, le barre di esposizione per aree tematiche (Identità, Network, Routine) e il breakdown analitico dei punti assegnati deterministicamente in base alle vulnerabilità riscontrate.
+    </div>
 </div>
 
-<div align="center">
-    <img src="images/audit_ai.png" alt="Rapporto AI e Piani di Mitigazione" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);" />
+<div class="figure-container">
+    <img src="images/dati_sensibili.png" alt="Dati Sensibili Estrapolati" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Figura 6: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP e OCR, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.
+    </div>
 </div>
-<div class="caption">
-    <strong>Figura 7: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco.
+
+<div class="figure-container">
+    <img src="images/post_analysis.png" alt="Dashboard Principale post analisi" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Figura 7: Dashboard Globale dell'Audit OSINT completato.</strong> La vista d'insieme raccoglie gli indici aggregati di esposizione, la telemetria di esecuzione dei singoli moduli OSINT (Sherlock, Holehe, Dork Engine) e il feed dell'OCR con carosello interattivo.
+    </div>
+</div>
+
+<div class="figure-container">
+    <img src="images/audit_ai.png" alt="Rapporto AI e Piani di Mitigazione" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Figura 8: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco.
+    </div>
 </div>
 
 ## 6. Sicurezza, Privacy e Conformità
