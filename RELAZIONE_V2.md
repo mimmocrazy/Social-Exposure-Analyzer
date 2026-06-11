@@ -129,7 +129,8 @@
   - [6.2 Transitorietà e Rispetto Legale del GDPR](#62-transitorietà-e-rispetto-legale-del-gdpr)
   - [6.3 Verifica e Testing Automatico](#63-verifica-e-testing-automatico)
   - [6.4 Utilizzo di Identità Sintetiche (Testing Etico)](#64-utilizzo-di-identita-sintetiche-testing-etico)
-- [7. Appendice: Utilizzo di AI Generativa nello Sviluppo](#7-appendice-utilizzo-di-ai-generativa-nello-sviluppo)
+- [7. Conclusioni e Sviluppi Futuri](#7-conclusioni-e-sviluppi-futuri)
+- [8. Appendice: Utilizzo di AI Generativa nello Sviluppo](#8-appendice-utilizzo-di-ai-generativa-nello-sviluppo)
 
 ## 1. Intento e Analisi dei Requisiti
 La presente relazione tecnica descrive le specifiche funzionali e le scelte ingegneristiche alla base dell'applicativo "Social Exposure Analyzer". 
@@ -475,7 +476,20 @@ Al fine di condurre test funzionali ed end-to-end sul corretto comportamento del
 
 Questo profilo artificiale è stato appositamente configurato con dati ed immagini contenenti vulnerabilità simulabili (es. post geolocalizzati fittizi, immagini contenenti dettagli PII fittizi), consentendo di validare le capacità di recupero dell'OCR, l'accuratezza del Risk Engine e la reattività della dashboard in totale sicurezza, senza raccogliere né manipolare informazioni reali riferibili a soggetti fisici esistenti.
 
-## 7. Appendice: Utilizzo di AI Generativa nello Sviluppo
+## 7. Conclusioni e Sviluppi Futuri
+Il lavoro svolto ha permesso di progettare e implementare con successo una piattaforma completa e resiliente per la valutazione quantitativa dell'esposizione al rischio di ingegneria sociale. L'adozione del framework FastAPI per il backend, unita a un pattern produttore-consumatore basato su task asincroni in background, ha dimostrato come sia possibile orchestrare pipeline OSINT complesse ed esecuzioni computazionalmente onerose (come OCR ed NLP) senza compromettere la reattività e la stabilità delle interfacce utente.
+
+La migrazione architetturale verso un ecosistema cloud interamente PaaS su Microsoft Azure (App Service, Storage Account per static web hosting e Flexible Server PostgreSQL) ha concretizzato i benefici fondamentali del cloud-native computing: scalabilità verticale e orizzontale semplificata, continuità operativa grazie ai webhook CI/CD con Azure Container Registry, e prossimità di rete tramite integrazione in VNet privata per la sicurezza dei canali di persistenza. Inoltre, l'implementazione del Circuit Breaker multilivello per i servizi AI garantisce un'elevata affidabilità applicativa, svincolando il sistema da blackout improvvisi dei singoli provider AI.
+
+Come sviluppi futuri, l'infrastruttura si presta a diverse ottimizzazioni incrementali:
+1. **Canale Bidirezionale WebSocket:** Sostituire lo Short Polling lato client con una comunicazione persistente full-duplex basata su WebSockets, riducendo ulteriormente il volume delle richieste HTTP verso il backend e migliorando l'immediatezza della telemetria dei task in esecuzione.
+2. **Caching Distribuito (Azure Cache for Redis):** Integrare un layer di memorizzazione temporanea in-memory per registrare gli esiti degli scanning ricorrenti di Sherlock e Holehe, ottimizzando i tempi di risposta e aggirando preventivamente i limiti di rate-limiting imposti dai domini interrogati.
+3. **Task Queue Distribuita (Celery / Azure Queue Storage):** Estrarre l'esecuzione delle pipeline OSINT dal ThreadPool del container di backend per demandarla a nodi worker dedicati e scalabili autonomamente (serverless worker o Azure Functions), consentendo la gestione parallela di centinaia di scansioni simultanee senza impattare le risorse della macchina principale.
+4. **Espansione del Raggio OSINT:** Integrare pipeline specifiche per il controllo di data-leak storici tramite API dedicate (es. *Have I Been Pwned* o similari) per fornire un quadro di vulnerabilità ancora più approfondito e granulare.
+
+<div style="page-break-before: always;"></div>
+
+## 8. Appendice: Utilizzo di AI Generativa nello Sviluppo
 Come previsto esplicitamente dalla traccia valutativa di progetto, la natura del codice sorgente è stata il prodotto di una stretta collaborazione ingegneristica con interfacce LLM adottando l'ormai radicato paradigma di sviluppo moderno noto come *Pair-Programming e Agentic Coding*.
 
 A garanzia di totale trasparenza e riproducibilità del processo decisionale, l'intera genesi del progetto è stata minuziosamente documentata all'interno del file **`docs/archive/AI_JOURNAL.md`**. Questo registro adotta un pattern di formattazione rigoroso e standardizzato per ogni singola interazione architetturale, strutturato secondo i seguenti campi:
@@ -487,7 +501,7 @@ A garanzia di totale trasparenza e riproducibilità del processo decisionale, l'
 
 **Strumenti Software Adottati:**
 - **Antigravity IDE (Gemini / Google DeepMind):** È stato l'epicentro operativo adoperato integralmente nello sviluppo di micro-servizi asincroni tramite framework FastAPI, impiegato altresì a livello analitico e procedurale per identificare le corrette logiche comportamentali nel gestire le collisioni delle dipendenze di pacchetto.
-- **ChatGPT (OpenAI GPT-4o):** Supporto esterno accademico utilizzato nello studio isolato delle documentazioni obsolete o criptiche sulle interfacce strutturali e gli schemi ad albero del file system utilizzato per orchestrare React SPA in ambiente di compilazione Vite e Docker.
+- **Google Gemini (Gemini 1.5 Pro / Flash):** Supporto esterno accademico utilizzato nello studio isolato delle documentazioni obsolete o criptiche sulle interfacce strutturali e gli schemi ad albero del file system utilizzato per orchestrare React SPA in ambiente di compilazione Vite e Docker.
 
 **Evidenze Pratiche e Prompt Analitici Impiegati:**
 1. *Deployment e DevOps Cloud:* "Redigi un `Dockerfile` strutturato nativamente sulla base minima Linux di Python (`python:3.12-slim`). Implementa un design multistage effettuando inizialmente la copia puramente selettiva di `requirements.txt` isolata dal codice sorgente, al mero scopo di forzare la conservazione delle librerie in cache e non installarle a ogni rigenerazione. Poi redigi un semplice script PowerShell per inviare e avviare la medesima immagine sull'Azure App Service sottoscritto."
