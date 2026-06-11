@@ -147,9 +147,8 @@ Tutte le risorse afferenti al progetto sono isolate logicamente all'interno di u
 
 <div style="page-break-inside: avoid;">
 
-<div class="figure-container" markdown="1">
-
-**Schema Architetturale dell'Infrastruttura Cloud:**
+<div class="figure-container">
+    <div style="font-weight: bold; text-align: left; margin-bottom: 10px; font-size: 1.1em;">Schema Architetturale dell'Infrastruttura Cloud:</div>
     <img src="images/mermaid1.png" alt="Azure Infrastructure Diagram" width="800" style="margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 1: Topologia di rete dell'infrastruttura Cloud Azure.</strong> Il diagramma illustra il flusso del dato (1): l'utente interroga la CDN fornita nativamente dallo Storage Account che ospita la Single Page Application React. Il layer di presentazione contatta (2) tramite chiamate asincrone il container Linux dell'App Service. Il ciclo di integrazione continua (3) è garantito dall'Azure Container Registry che inietta le immagini Docker tramite Webhook, mentre la persistenza (4) sfrutta la VNet Integration per interloquire a bassa latenza con il nodo PostgreSQL mascherando i flussi alla rete pubblica Internet.
@@ -202,6 +201,7 @@ A questo punto, l'App Service, che è nativamente agganciato all'ACR tramite **W
         <strong>Automazione GitHub Actions:</strong> La schermata certifica l'avvenuta esecuzione automatica e parallela dei workflow di "Build and Deploy" sia per il frontend che per il backend sul cloud Azure, attivati istantaneamente e in modo trasparente dal comando di push.
     </div>
 </div>
+
 ### 2.4 Persistenza Relazionale (Azure Database for PostgreSQL Flexible Server)
 
 La conservazione a lungo termine degli audit generati e delle configurazioni utente è demandata ad **Azure Database for PostgreSQL Flexible Server** (`social-exposure-db`).
@@ -314,10 +314,7 @@ Affinché il risultato del ragionamento dell'AI sia interfacciabile in un ambien
 I fornitori mondiali di modelli linguistici (API Provider come OpenAI o Google) possono presentare blackout temporanei imprevisti o respingere le chiamate del nostro applicativo per esaurimento del budget orario di rete (il noto Errore `HTTP 429 Resource Exhausted / Too Many Requests`).
 Un'architettura di grado enterprise non può dipendere deterministicamente da un singolo fornitore di terze parti. È stato quindi implementato un pattern architetturale tipico dei sistemi distribuiti noto come **Circuit Breaker** (Interruttore Automatico).
 
-<div class="figure-container" style="text-align: left;" markdown="1">
-
 *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover*
-
 ```python
 async def risk_engine_analysis(payload: str) -> dict:
     import os
@@ -345,8 +342,6 @@ async def risk_engine_analysis(payload: str) -> dict:
     # Se la matrice di High Availability è interamente collassata
     raise BackendExhaustionError("Alta disponibilità esaurita: tutti i nodi AI mondiali in down.")
 ```
-
-</div>
 Questo meccanismo di failover sequenziale rende l'infrastruttura estremamente resiliente: il traffico interroga il nodo prioritario Azure; se questo fallisce, l'eccezione viene soppressa e il carico viene deviato istantaneamente su Google Gemini, per poi passare a Groq. Si assicura in tal modo la generazione ininterrotta del report verso il frontend.
 
 ## 5. Frontend e Layer di Presentazione (React)
