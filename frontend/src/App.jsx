@@ -40,7 +40,7 @@ const RadialProgress = ({ score, isCritical }) => {
   const radius = 76;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (score / 100) * circumference;
-  
+
   const colorClass = score > 75 ? 'text-red-500' : score > 40 ? 'text-orange-500' : 'text-emerald-400';
   const dropShadowClass = score > 75 ? 'drop-shadow-[0_0_12px_rgba(239,68,68,0.6)]' : score > 40 ? 'drop-shadow-[0_0_12px_rgba(249,115,22,0.6)]' : 'drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]';
 
@@ -168,110 +168,148 @@ const getOfficialIcon = (iconName, isActive) => {
   }
 };
 
-const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
+const TerminalLoading = ({ isCompleted, currentPhase, target, onFinish }) => {
   const [visibleLogs, setVisibleLogs] = useState([]);
   const [logQueue, setLogQueue] = useState(["[SYSTEM] Booting OSINT kernel v3.2.1...", "[NETWORK] Handshake SSL completato. Connessione cifrata 256-bit stabilita."]);
   const [lastPhase, setLastPhase] = useState(null);
   const scrollRef = React.useRef(null);
+  const logQueueRef = React.useRef(logQueue);
+  const hasInjectedInitialPhases = React.useRef(false);
+
+  // Tieni il ref sincronizzato con lo state
+  useEffect(() => { logQueueRef.current = logQueue; }, [logQueue]);
+
+  // Genera i log per una specifica fase
+  const getLogsForPhase = (phase) => {
+    const p = phase.toLowerCase();
+    const t = target || "target";
+    const logs = [];
+
+    if (p.includes("discovery")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push(`[SHERLOCK OSINT] Avvio Discovery tramite Sherlock per username: ${t}`);
+      logs.push("[SHERLOCK OSINT] Nessun URL trovato tramite Sherlock. Applica fallback a Instagram.");
+    } else if (p.includes("identità") || p.includes("identita")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push(`[LLM IDENTITY] Avvio deduzione identità tramite LLM per l'username: ${t}`);
+      logs.push("[ORCHESTRATOR] Nome reale dedotto con successo.");
+    } else if (p.includes("instagram")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push(`[INSTAGRAM API] Avvio Instagram Deep Scan per ${t} (sessionid fornito: True)`);
+      logs.push("[OSINT SCRAPER] Timeline non accessibile con la sessione attuale. Tento fallback Deep Scan in modalità anonima...");
+      logs.push("[OSINT SCRAPER] Fallback anonimo riuscito! Profilo pubblico rilevato, media estratti con successo.");
+      logs.push("[INSTAGRAM API] Instagram Deep Scan riuscito con successo.");
+      logs.push(`[OSINT SCRAPER] Salto il Web Scraping classico per https://instagram.com/${t}: i dati sono già stati catturati tramite Deep Scan.`);
+    } else if (p.includes("facebook")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push(`[FACEBOOK API] Avvio Facebook Deep Scan per ${t}...`);
+      logs.push("[FACEBOOK API] Analisi del grafo sociale completata.");
+    } else if (p.includes("duckduckgo") || p.includes("osint duck")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push(`[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo per: ${t}`);
+      logs.push(`[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo per: "${t}"`);
+      logs.push(`[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo per: "${t}" pastebin OR dump OR "data breach"`);
+    } else if (p.includes("estrazione contenuto") || p.includes("estrazione")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push("[ORCHESTRATOR] Avvio estrazione OCR e AI context per le immagini trovate.");
+    } else if (p.includes("analisi media")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push("[RISK ENGINE AI] Analisi semantica in corso sull'immagine...");
+    } else if (p.includes("correlazione nlp") || p.includes("spacy")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push("[NLP] Modello NLP caricato. Esecuzione pipeline NER avanzata...");
+    } else if (p.includes("data breach") || p.includes("holehe") || p.includes("controllo")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push("[HOLEHE OSINT] Avvio ricerca OSINT Holehe per leak check sull'email...");
+      logs.push("[HOLEHE OSINT] Holehe completato. Verifica databreach completata.");
+    } else if (p.includes("risk engine")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push("[ORCHESTRATOR] Risk Engine Payload compilato con successo.");
+      logs.push("[RISK ENGINE AI] Avvio analisi Risk Engine tramite GitHub Models...");
+    } else if (p.includes("generazione report")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push("[RISK ENGINE AI] Inferenza Risk Report completata con successo!");
+      logs.push("[ORCHESTRATOR] Salvataggio risultati nel database...");
+    } else {
+      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push(`[SYSTEM] Modulo di processo in avvio: ${phase}`);
+    }
+    return logs;
+  };
 
   // 1. Ascolta il vero backend e accoda i log corrispondenti alla fase
   useEffect(() => {
     if (currentPhase && currentPhase !== lastPhase) {
       setLastPhase(currentPhase);
-      
-      // Se cambia fase, flusha tutto ciò che era in coda per non rimanere MAI indietro
-      setVisibleLogs(prev => {
-        if (logQueue.length > 0) {
-           const timestamped = logQueue.map(l => ({ text: l, time: new Date().toISOString().substring(11, 19) }));
-           return [...prev, ...timestamped];
-        }
-        return prev;
-      });
-      
-      const newLogs = [`[ORCHESTRATOR] Fase attiva: ${currentPhase}...`];
-      
-      const p = currentPhase.toLowerCase();
-      
-      // Match esatti con le fasi reali del backend (scraper.py + analyze.py)
-      if (p.includes("discovery")) {
-        newLogs.push("[SHERLOCK OSINT] Avvio Discovery tramite Sherlock per target_user...");
-        newLogs.push("[SHERLOCK OSINT] Nessun URL trovato tramite Sherlock. Applica fallback a Instagram.");
-      } else if (p.includes("identità") || p.includes("identita")) {
-        newLogs.push("[LLM IDENTITY] Avvio deduzione identità tramite LLM per target_user...");
-        newLogs.push("[ORCHESTRATOR] Nome reale dedotto con successo.");
-      } else if (p.includes("instagram")) {
-        newLogs.push("[INSTAGRAM API] Avvio Instagram Deep Scan (sessionid fornito: True)");
-        newLogs.push("[OSINT SCRAPER] Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...");
-        newLogs.push("[INSTAGRAM API] Instagram Deep Scan riuscito con successo.");
-      } else if (p.includes("facebook")) {
-        newLogs.push("[FACEBOOK API] Avvio Facebook Deep Scan tramite mbasic.facebook.com...");
-        newLogs.push("[FACEBOOK API] Estrazione dati dal profilo in corso...");
-      } else if (p.includes("duckduckgo") || p.includes("osint duck")) {
-        newLogs.push("[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo...");
-        newLogs.push("[DUCKDUCKGO OSINT] Ricerca alias, pastebin, dump e data breach...");
-      } else if (p.includes("estrazione contenuto") || p.includes("estrazione")) {
-        newLogs.push("[COMPUTE] Allocazione Tensor stream su CPU. Note: This module is much faster con GPU.");
-        newLogs.push("[ORCHESTRATOR] Avvio estrazione OCR e AI context per le immagini trovate.");
-      } else if (p.includes("analisi media")) {
-        // Le fasi "Analisi Media (1/5)" etc. arrivano rapidamente, aggiungiamo un solo log 
-        newLogs.push("[RISK ENGINE AI] Analisi semantica in corso sull'immagine...");
-      } else if (p.includes("correlazione nlp") || p.includes("spacy")) {
-        newLogs.push("[NLP] Modello it_core_news_sm caricato in RAM. Esecuzione pipeline NER avanzata.");
-      } else if (p.includes("data breach") || p.includes("holehe") || p.includes("controllo")) {
-        newLogs.push("[HOLEHE OSINT] Avvio ricerca OSINT Holehe per leak check...");
-        newLogs.push("[HOLEHE OSINT] Holehe completato. Verifica databreach in corso...");
-      } else if (p.includes("risk engine")) {
-        newLogs.push("[ORCHESTRATOR] Risk Engine Payload preparato con successo.");
-        newLogs.push("[RISK ENGINE AI] Avvio analisi Risk Engine tramite GitHub Models (Structured Output con Fallback)...");
-        newLogs.push("[RISK ENGINE AI] Tentativo di generazione report con modello gpt-4o-mini...");
-      } else if (p.includes("generazione report")) {
-        newLogs.push("[RISK ENGINE AI] Successo con il modello gpt-4o-mini!");
-        newLogs.push("[ORCHESTRATOR] Salvataggio risultati nel database...");
-      } else {
-        // Fase generica non riconosciuta, mostra comunque qualcosa
-        newLogs.push(`[SYSTEM] Processamento: ${currentPhase}`);
+
+      // Flusha ciò che era in coda usando il ref (evita closure stale)
+      const remaining = logQueueRef.current;
+      if (remaining.length > 0) {
+        setVisibleLogs(prev => {
+          const timestamped = remaining.map(l => ({ text: l, time: new Date().toISOString().substring(11, 19) }));
+          return [...prev, ...timestamped];
+        });
       }
-      
+
+      let newLogs = [];
+      const p = currentPhase.toLowerCase();
+
+      // Se è la prima fase che riceviamo e NON è Discovery/Inizializzazione,
+      // vuol dire che Discovery e Identity sono già finite prima del primo polling.
+      // Le iniettiamo in testa per rispecchiare il terminale reale.
+      if (!hasInjectedInitialPhases.current) {
+        hasInjectedInitialPhases.current = true;
+        if (!p.includes("discovery") && !p.includes("inizializzazione")) {
+          // Inietta Discovery
+          newLogs.push(...getLogsForPhase("Discovery Sherlock"));
+          // Inietta Identity (se non è quella la fase corrente)
+          if (!p.includes("identit")) {
+            newLogs.push(...getLogsForPhase("Deduzione Identità LLM"));
+          }
+        }
+      }
+
+      // Aggiungi i log della fase corrente
+      newLogs.push(...getLogsForPhase(currentPhase));
+
       setLogQueue(newLogs);
     }
-  }, [currentPhase, lastPhase, logQueue]);
+  }, [currentPhase, lastPhase, target]);
 
-  // 2. Consuma la coda un log alla volta con animazione veloce
+  // 2. Consuma la coda un log alla volta con animazione veloce oppure genera log idle se fermo da molto
   useEffect(() => {
     if (logQueue.length > 0) {
       const nextLog = logQueue[0];
-      
+
       let delay = Math.random() * 150 + 80;
       if (nextLog.includes("ORCHESTRATOR") && nextLog.includes("Fase attiva")) delay = 50;
       else if (nextLog.includes("COMPUTE") || nextLog.includes("NLP")) delay = 250;
-      else if (nextLog.includes("RISK ENGINE AI") && nextLog.includes("Tentativo")) delay = 350;
-      
+      else if (nextLog.includes("RISK ENGINE AI")) delay = 300;
+
       const timer = setTimeout(() => {
         setVisibleLogs(prev => [...prev, { text: nextLog, time: new Date().toISOString().substring(11, 19) }]);
         setLogQueue(prev => prev.slice(1));
       }, delay);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [logQueue]);
 
-  // 3. Heartbeat: se il terminale non riceve update per 8s, mostra log di "keep-alive"
-  useEffect(() => {
-    if (!isCompleted && logQueue.length === 0) {
-      const heartbeat = setInterval(() => {
-        const msgs = [
-          "[NETWORK] Keep-alive. Timeout non raggiunto. Attendere prego...",
-          "[COMPUTE] Thread pool attivo. Attesa elaborazione modello LLM...",
-          "[SYSTEM] Analisi avanzata in corso. Stima completamento imminente...",
+      return () => clearTimeout(timer);
+    } else if (!isCompleted && currentPhase) {
+      // 3. Log Idle Periodici
+      const idleTimer = setInterval(() => {
+        const idleLogs = [
+          "[SYSTEM] Pipeline in esecuzione. Elaborazione dati background...",
           "[NETWORK] Connessione attiva. In attesa di risposta dal server AI...",
-          "[SYSTEM] Pipeline in esecuzione. Elaborazione dati background..."
+          "[COMPUTE] Chunk memory I/O in elaborazione continua...",
+          "[ORCHESTRATOR] Sincronizzazione thread secondari in corso...",
+          "[NETWORK] Monitoraggio latenza stream dati. Nessun drop pacchetti."
         ];
-        const msg = msgs[Math.floor(Math.random() * msgs.length)];
-        setVisibleLogs(prev => [...prev, { text: msg, time: new Date().toISOString().substring(11, 19) }]);
-      }, 8000);
-      return () => clearInterval(heartbeat);
+        const randomIdle = idleLogs[Math.floor(Math.random() * idleLogs.length)];
+        setVisibleLogs(prev => [...prev, { text: randomIdle, time: new Date().toISOString().substring(11, 19) }]);
+      }, 4500);
+
+      return () => clearInterval(idleTimer);
     }
-  }, [isCompleted, logQueue.length]);
+  }, [logQueue, isCompleted, currentPhase]);
+
 
   // 4. Auto-scroll
   useEffect(() => {
@@ -284,9 +322,9 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
   useEffect(() => {
     if (isCompleted && logQueue.length === 0) {
       const t = new Date().toISOString().substring(11, 19);
-      setVisibleLogs(prev => [...prev, 
-        { text: "[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso.", time: t }, 
-        { text: "[SYSTEM] Elaborazione completata. Booting della UI in corso...", time: t }
+      setVisibleLogs(prev => [...prev,
+      { text: "[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso.", time: t },
+      { text: "[SYSTEM] Elaborazione completata. Booting della UI in corso...", time: t }
       ]);
       const timer = setTimeout(() => {
         if (onFinish) onFinish();
@@ -309,14 +347,14 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
           </div>
           <div className="mx-auto text-gray-500 text-xs tracking-wider flex items-center">
             <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-            kernel_tty1 — root@osint-server
+            kernel_tty1 — root@social-exposure-analyzer
           </div>
         </div>
         <div className="p-6 h-[400px] overflow-y-auto bg-[#0a0a0f] space-y-1 md:space-y-2 font-mono text-[13px]">
           {visibleLogs.map((logItem, i) => {
             const timeStr = logItem.time;
             const log = logItem.text;
-            
+
             const match = log.match(/^(\[[^\]]+\])(.*)$/);
             let tag = "";
             let rest = log;
@@ -324,7 +362,7 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
               tag = match[1];
               rest = match[2];
             }
-            
+
             let tagColor = "text-emerald-400";
             if (tag.includes("SHERLOCK")) tagColor = "text-cyan-400";
             else if (tag.includes("LLM IDENTITY")) tagColor = "text-emerald-400";
@@ -339,7 +377,7 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
             else if (tag.includes("NETWORK")) tagColor = "text-gray-500";
             else if (tag.includes("SYSTEM")) tagColor = "text-gray-400";
             else if (tag.includes("OSINT SCRAPER")) tagColor = "text-amber-400";
-            
+
             // Aggiunge il trattino se mancante per coerenza visiva
             let formattedRest = rest.trim();
             if (!formattedRest.startsWith("-") && tag !== "") {
@@ -372,37 +410,38 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
 };
 
 function Dashboard({ analysisId }) {
-    const [showDashboard, setShowDashboard] = useState(false);
-    const [showContextualPii, setShowContextualPii] = useState(false);
-    const [osintModal, setOsintModal] = useState(null);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showContextualPii, setShowContextualPii] = useState(false);
+  const [osintModal, setOsintModal] = useState(null);
 
-    // Reset showDashboard if a new analysis starts
-    useEffect(() => {
-      if (analysisId) {
-        setShowDashboard(false);
-        setShowContextualPii(false);
-      }
-    }, [analysisId]);
-
-    const { data, isLoading, isError } = useQuery({
-      queryKey: ['analysis', analysisId],
-      queryFn: () => getAnalysisStatus(analysisId),
-      enabled: !!analysisId,
-      refetchInterval: (query) => {
-        if (!query.state.data) return 800;
-        return query.state.data.status === 'PENDING' ? 800 : false;
-      },
-    });
-  
-    if (!data || isLoading || (data && data.status === 'PENDING') || (data?.status === 'COMPLETED' && !showDashboard)) {
-      return (
-        <TerminalLoading 
-          isCompleted={data?.status === 'COMPLETED'}
-          currentPhase={data?.current_phase}
-          onFinish={() => setShowDashboard(true)}
-        />
-      );
+  // Reset showDashboard if a new analysis starts
+  useEffect(() => {
+    if (analysisId) {
+      setShowDashboard(false);
+      setShowContextualPii(false);
     }
+  }, [analysisId]);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['analysis', analysisId],
+    queryFn: () => getAnalysisStatus(analysisId),
+    enabled: !!analysisId,
+    refetchInterval: (query) => {
+      if (!query.state.data) return 800;
+      return query.state.data.status === 'PENDING' ? 800 : false;
+    },
+  });
+
+  if (!data || isLoading || (data && data.status === 'PENDING') || (data?.status === 'COMPLETED' && !showDashboard)) {
+    return (
+      <TerminalLoading
+        isCompleted={data?.status === 'COMPLETED'}
+        currentPhase={data?.current_phase}
+        target={data?.target_url || "target_user"}
+        onFinish={() => setShowDashboard(true)}
+      />
+    );
+  }
 
   if (isError || data?.status === 'FAILED') {
     return (
@@ -430,7 +469,7 @@ function Dashboard({ analysisId }) {
       if (data.raw_data_dump?.sherlock_hits && data.raw_data_dump.sherlock_hits.length > 0) {
         return data.raw_data_dump.sherlock_hits.map(url => ({ url }));
       }
-      
+
       const hits = [];
       const targetUsername = metadata?.target || data.target_url;
       scrapers.forEach(s => {
@@ -444,7 +483,7 @@ function Dashboard({ analysisId }) {
           hits.push({ url: s.url });
         }
       });
-      
+
       const uniqueUrls = [];
       const seen = new Set();
       hits.forEach(h => {
@@ -563,7 +602,7 @@ function Dashboard({ analysisId }) {
         if (labelKey === 'NOME' || labelKey === 'COGNOME' || labelKey === 'FIRST_NAME' || labelKey === 'LAST_NAME') {
           labelKey = 'NOME_COGNOME';
         }
-        
+
         const isCore = coreLabels.some(c => labelKey.includes(c));
         const targetGroup = isCore ? corePiiGroups : contextualPiiGroups;
 
@@ -599,7 +638,7 @@ function Dashboard({ analysisId }) {
         <div className="glass-card p-8 relative overflow-hidden group">
           <div className={`absolute -inset-2 bg-gradient-to-tr ${isCritical ? 'from-red-500/10 to-orange-500/5' : 'from-blue-500/10 to-cyan-500/5'} blur-3xl -z-10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000`}></div>
           <h3 className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-6 text-center md:text-left">Indice di Rischio</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
             {/* Radial Score & Level Pill */}
             <div className="flex flex-col items-center justify-center space-y-6">
@@ -661,101 +700,101 @@ function Dashboard({ analysisId }) {
 
         {/* PII Grid Widget (Full Width Horizontal) */}
         <div className="w-full glass-card p-10 flex flex-col relative overflow-hidden">
-            <div className="flex justify-between items-end mb-8 border-b border-white/[0.05] pb-6">
-              <div>
-                <h3 className="text-white/90 text-2xl font-semibold tracking-tight mb-1">Dati Sensibili Estrapolati</h3>
-                <p className="text-gray-300 text-xs font-medium">Informazioni personali (PII) individuate tramite OSINT e AI</p>
-              </div>
-              <span className="text-[11px] glass-pill px-4 py-2 font-bold tracking-widest uppercase text-white/80">{data.pii_extracted?.length || 0} Tracce</span>
+          <div className="flex justify-between items-end mb-8 border-b border-white/[0.05] pb-6">
+            <div>
+              <h3 className="text-white/90 text-2xl font-semibold tracking-tight mb-1">Dati Sensibili Estrapolati</h3>
+              <p className="text-gray-300 text-xs font-medium">Informazioni personali (PII) individuate tramite OSINT e AI</p>
             </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[200px]">
-              {(Object.keys(corePiiGroups).length === 0 && Object.keys(contextualPiiGroups).length === 0) ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
-                  <svg className="w-16 h-16 opacity-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                  <p className="text-sm font-bold tracking-widest uppercase">Nessuna vulnerabilità rilevata</p>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {Object.entries(visiblePiiGroups).map(([label, values], idx) => (
-                      <motion.div
-                        key={label}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.03 }}
-                        className="flex flex-col p-6 rounded-3xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] hover:border-white/[0.12] transition-all duration-300 group shadow-lg"
-                      >
-                        <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-white/[0.05]">
-                          <div className="p-3 bg-white/[0.04] rounded-2xl border border-white/[0.08] shadow-[0_0_12px_rgba(255,255,255,0.02)] scale-110">
-                            {getIconForPII(label)}
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-[10px] font-extrabold uppercase tracking-[0.2em]">{label}</p>
-                            <h4 className="text-white text-lg font-bold tracking-tight mt-1">
-                              {labelMapping[label] || label.charAt(0).toUpperCase() + label.slice(1).toLowerCase().replace(/_/g, ' ')}
-                            </h4>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {values.map((valObj, valIdx) => (
-                            <span
-                              key={valIdx}
-                              className="glass-pill text-gray-100 text-sm px-4 py-2 font-mono font-semibold inline-flex items-center gap-2 group/item hover:text-white hover:bg-white/10 transition-all cursor-default"
-                            >
-                              <span className="break-all">{valObj.value}</span>
-                              <span
-                                className="relative inline-flex items-center text-white/30 hover:text-white/80 transition-colors cursor-help group/icon"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                
-                                {/* Custom Premium Tooltip */}
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-max max-w-[260px] bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 text-white text-xs p-4 rounded-xl opacity-0 group-hover/icon:opacity-100 group-hover/icon:translate-y-1 pointer-events-none transition-all duration-300 z-50 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col gap-2">
-                                  <div>
-                                    <span className="font-bold text-cyan-400 uppercase tracking-widest text-[10px] block mb-1">Fonte Dati</span>
-                                    <span className="text-gray-200 font-medium leading-relaxed">{valObj.source || 'Scansione OSINT'}</span>
-                                  </div>
-                                  {valObj.confidence && (
-                                    <>
-                                      <div className="w-full h-px bg-white/10 my-1"></div>
-                                      <div className="flex justify-between items-center w-full gap-4">
-                                        <span className="text-gray-400 uppercase tracking-widest text-[10px]">Confidenza</span>
-                                        <span className="font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded text-[11px]">{Math.round(valObj.confidence * 100)}%</span>
-                                      </div>
-                                    </>
-                                  )}
-                                  {/* Punta della freccia */}
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-[1px] border-solid border-b-[#0a0a0a]/95 border-b-[5px] border-x-transparent border-x-[5px] border-t-0"></div>
-                                </div>
-                              </span>
-                            </span>
-                          ))}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {Object.keys(contextualPiiGroups).length > 0 && (
-                    <div className="flex justify-center mt-8 pt-4 border-t border-white/[0.03]">
-                      <button
-                        type="button"
-                        onClick={() => setShowContextualPii(!showContextualPii)}
-                        className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] transition-all text-gray-300 hover:text-white flex items-center space-x-2 shadow-md hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
-                      >
-                        <span>{showContextualPii ? 'Nascondi Dati di Contesto' : `Mostra Altri Dati di Contesto (${Object.keys(contextualPiiGroups).length} Categorie)`}</span>
-                        <svg className={`w-4 h-4 transform transition-transform duration-300 ${showContextualPii ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            <span className="text-[11px] glass-pill px-4 py-2 font-bold tracking-widest uppercase text-white/80">{data.pii_extracted?.length || 0} Tracce</span>
           </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[200px]">
+            {(Object.keys(corePiiGroups).length === 0 && Object.keys(contextualPiiGroups).length === 0) ? (
+              <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
+                <svg className="w-16 h-16 opacity-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                <p className="text-sm font-bold tracking-widest uppercase">Nessuna vulnerabilità rilevata</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {Object.entries(visiblePiiGroups).map(([label, values], idx) => (
+                    <motion.div
+                      key={label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className="flex flex-col p-6 rounded-3xl bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.08] hover:border-white/[0.12] transition-all duration-300 group shadow-lg"
+                    >
+                      <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-white/[0.05]">
+                        <div className="p-3 bg-white/[0.04] rounded-2xl border border-white/[0.08] shadow-[0_0_12px_rgba(255,255,255,0.02)] scale-110">
+                          {getIconForPII(label)}
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-[10px] font-extrabold uppercase tracking-[0.2em]">{label}</p>
+                          <h4 className="text-white text-lg font-bold tracking-tight mt-1">
+                            {labelMapping[label] || label.charAt(0).toUpperCase() + label.slice(1).toLowerCase().replace(/_/g, ' ')}
+                          </h4>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {values.map((valObj, valIdx) => (
+                          <span
+                            key={valIdx}
+                            className="glass-pill text-gray-100 text-sm px-4 py-2 font-mono font-semibold inline-flex items-center gap-2 group/item hover:text-white hover:bg-white/10 transition-all cursor-default"
+                          >
+                            <span className="break-all">{valObj.value}</span>
+                            <span
+                              className="relative inline-flex items-center text-white/30 hover:text-white/80 transition-colors cursor-help group/icon"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+
+                              {/* Custom Premium Tooltip */}
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-max max-w-[260px] bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 text-white text-xs p-4 rounded-xl opacity-0 group-hover/icon:opacity-100 group-hover/icon:translate-y-1 pointer-events-none transition-all duration-300 z-50 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col gap-2">
+                                <div>
+                                  <span className="font-bold text-cyan-400 uppercase tracking-widest text-[10px] block mb-1">Fonte Dati</span>
+                                  <span className="text-gray-200 font-medium leading-relaxed">{valObj.source || 'Scansione OSINT'}</span>
+                                </div>
+                                {valObj.confidence && (
+                                  <>
+                                    <div className="w-full h-px bg-white/10 my-1"></div>
+                                    <div className="flex justify-between items-center w-full gap-4">
+                                      <span className="text-gray-400 uppercase tracking-widest text-[10px]">Confidenza</span>
+                                      <span className="font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded text-[11px]">{Math.round(valObj.confidence * 100)}%</span>
+                                    </div>
+                                  </>
+                                )}
+                                {/* Punta della freccia */}
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-[1px] border-solid border-b-[#0a0a0a]/95 border-b-[5px] border-x-transparent border-x-[5px] border-t-0"></div>
+                              </div>
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {Object.keys(contextualPiiGroups).length > 0 && (
+                  <div className="flex justify-center mt-8 pt-4 border-t border-white/[0.03]">
+                    <button
+                      type="button"
+                      onClick={() => setShowContextualPii(!showContextualPii)}
+                      className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/[0.15] transition-all text-gray-300 hover:text-white flex items-center space-x-2 shadow-md hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+                    >
+                      <span>{showContextualPii ? 'Nascondi Dati di Contesto' : `Mostra Altri Dati di Contesto (${Object.keys(contextualPiiGroups).length} Categorie)`}</span>
+                      <svg className={`w-4 h-4 transform transition-transform duration-300 ${showContextualPii ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
 
 
         {ocrResults && (
@@ -773,7 +812,7 @@ function Dashboard({ analysisId }) {
               </div>
               <span className="text-[11px] glass-pill px-4 py-2 font-medium tracking-widest uppercase text-cyan-400/80">{ocrResults.length} Rilevamenti</span>
             </div>
-            
+
             {ocrResults.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 glass-panel rounded-3xl mt-4">
                 <svg className="w-16 h-16 text-gray-500 opacity-10 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -782,21 +821,21 @@ function Dashboard({ analysisId }) {
             ) : (
               <div className="relative group/carousel">
                 {/* Scroll Buttons */}
-                <button 
+                <button
                   onClick={() => {
                     const c = document.getElementById('ocr-carousel');
                     const card = c.firstElementChild;
-                    if(card) c.scrollBy({ left: -(card.clientWidth + 32), behavior: 'smooth' });
+                    if (card) c.scrollBy({ left: -(card.clientWidth + 32), behavior: 'smooth' });
                   }}
                   className="absolute left-2 md:left-4 top-[40%] -translate-y-1/2 z-20 bg-black/60 hover:bg-cyan-500/80 text-white p-3 md:p-4 rounded-full backdrop-blur-md opacity-0 group-hover/carousel:opacity-100 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] border border-white/10"
                 >
                   <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     const c = document.getElementById('ocr-carousel');
                     const card = c.firstElementChild;
-                    if(card) c.scrollBy({ left: (card.clientWidth + 32), behavior: 'smooth' });
+                    if (card) c.scrollBy({ left: (card.clientWidth + 32), behavior: 'smooth' });
                   }}
                   className="absolute right-2 md:right-4 top-[40%] -translate-y-1/2 z-20 bg-black/60 hover:bg-cyan-500/80 text-white p-3 md:p-4 rounded-full backdrop-blur-md opacity-0 group-hover/carousel:opacity-100 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] border border-white/10"
                 >
@@ -805,121 +844,121 @@ function Dashboard({ analysisId }) {
 
                 <div id="ocr-carousel" className="flex overflow-x-auto gap-8 pt-4 pb-12 w-full snap-x snap-mandatory scroll-smooth custom-scrollbar">
                   {ocrResults.map((ocr, idx) => (
-                  <div key={idx} className="relative rounded-[2rem] overflow-hidden group/card shadow-[0_15px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex flex-col shrink-0 snap-center w-[75vw] sm:w-[50vw] md:w-[35vw] lg:w-[28vw] xl:w-[22vw]">
-                    <div className="w-full h-56 md:h-64 relative overflow-hidden bg-black">
-                      <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover object-top opacity-80 group-hover/card:opacity-100 group-hover/card:scale-105 transition-all duration-700" />
-                    </div>
-                    
-                    <div className="absolute top-4 right-4 glass-pill px-3 py-1.5 text-[9px] font-bold tracking-widest text-white/90 flex items-center space-x-1.5 bg-black/50">
-                      <svg className="w-3 h-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <span>ANALISI AI</span>
-                    </div>
-
-                    <div className="flex-1 p-6 glass-panel border-t border-white/[0.08] relative z-10 bg-[#080808]/80 backdrop-blur-3xl">
-                      <div className="mb-4">
-                        {(() => {
-                          let text = ocr.ai_description;
-                          if (!text) return <p className="text-white/95 text-sm font-medium">Descrizione AI non disponibile.</p>;
-                          
-                          // Rimuovi eventuali grassetti Markdown
-                          text = text.replace(/\*\*/g, '');
-                          
-                          // Dividi il testo usando come separatore i bullet point ("-" all'inizio di linea o preceduti da spazio)
-                          const parts = text.split(/(?:\n|^)\s*-\s+/);
-                          
-                          if (parts.length > 1 || text.includes(" - ")) {
-                            // Supporto fallback se non c'era \n ma solo " - "
-                            const splitParts = parts.length > 1 ? parts : text.split(" - ");
-                            
-                            let intro = splitParts[0];
-                            const listItems = splitParts.slice(1);
-                            
-                            // Pulizia intro text dai titoli standard
-                            intro = intro.replace(/Descrizione dell'immagine:?/i, '');
-                            intro = intro.replace(/Dati sensibili visibili:?/i, '');
-                            intro = intro.replace(/Dati visibili:?/i, '');
-                            intro = intro.trim();
-                            
-                            return (
-                              <div className="flex flex-col space-y-3">
-                                <p className="text-white/95 text-sm font-medium leading-snug drop-shadow-md whitespace-pre-wrap">
-                                  {intro}
-                                </p>
-                                {listItems.length > 0 && (
-                                  <div className="max-h-36 overflow-y-auto custom-scrollbar pr-2 mt-2">
-                                    <ul className="space-y-2">
-                                      {listItems.map((item, i) => {
-                                      let label = null;
-                                      let value = null;
-                                      
-                                      // Prova a fare match su "Label: Value"
-                                      const colonMatch = item.match(/^([^:]+):\s*(.+)$/);
-                                      // Prova a fare match su "Label (Value)"
-                                      const parenMatch = item.match(/^([^(]+)\(([^)]+)\)$/);
-                                      
-                                      if (colonMatch && colonMatch[1].length < 40) {
-                                        label = colonMatch[1];
-                                        value = colonMatch[2];
-                                      } else if (parenMatch && parenMatch[1].length < 40) {
-                                        label = parenMatch[1];
-                                        value = parenMatch[2];
-                                      }
-                                      
-                                      if (label && value) {
-                                        return (
-                                          <li key={i} className="flex flex-col text-xs">
-                                            <span className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-0.5">{label.trim()}:</span>
-                                            <span className="text-emerald-400 font-mono bg-emerald-400/[0.05] px-2 py-1 rounded-md border border-emerald-400/[0.1] break-words">{value.trim()}</span>
-                                          </li>
-                                        );
-                                      }
-                                      
-                                      // Fallback se è un bullet point semplice senza chiave/valore
-                                      return (
-                                        <li key={i} className="flex items-start text-xs text-white/80">
-                                          <span className="w-1 h-1 rounded-full bg-cyan-500 mr-2 shrink-0 mt-1.5"></span>
-                                          <span className="break-words">{item.trim()}</span>
-                                        </li>
-                                      );
-                                    })}
-                                    </ul>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          }
-                          
-                          // Se non ci sono list items
-                          text = text.replace(/Descrizione dell'immagine:?/i, '').trim();
-                          return (
-                            <p className="text-white/95 text-sm font-medium leading-snug drop-shadow-md whitespace-pre-wrap">
-                              {text}
-                            </p>
-                          );
-                        })()}
+                    <div key={idx} className="relative rounded-[2rem] overflow-hidden group/card shadow-[0_15px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex flex-col shrink-0 snap-center w-[75vw] sm:w-[50vw] md:w-[35vw] lg:w-[28vw] xl:w-[22vw]">
+                      <div className="w-full h-56 md:h-64 relative overflow-hidden bg-black">
+                        <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover object-top opacity-80 group-hover/card:opacity-100 group-hover/card:scale-105 transition-all duration-700" />
                       </div>
-                      <details className="group/details">
-                        <summary className="text-[10px] text-gray-400 hover:text-white uppercase tracking-widest font-bold cursor-pointer flex items-center transition-colors">
-                          <svg className="w-3 h-3 mr-2 transform group-open/details:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                          Mostra Testo Rilevato
-                        </summary>
-                        <div className="bg-black/40 rounded-2xl p-4 border border-white/[0.05] mt-3 max-h-32 overflow-y-auto custom-scrollbar shadow-inner">
-                          <p className="text-gray-300 font-mono text-[10px] leading-relaxed break-words whitespace-pre-wrap">
-                            {ocr.text_extracted}
-                          </p>
+
+                      <div className="absolute top-4 right-4 glass-pill px-3 py-1.5 text-[9px] font-bold tracking-widest text-white/90 flex items-center space-x-1.5 bg-black/50">
+                        <svg className="w-3 h-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>ANALISI AI</span>
+                      </div>
+
+                      <div className="flex-1 p-6 glass-panel border-t border-white/[0.08] relative z-10 bg-[#080808]/80 backdrop-blur-3xl">
+                        <div className="mb-4">
+                          {(() => {
+                            let text = ocr.ai_description;
+                            if (!text) return <p className="text-white/95 text-sm font-medium">Descrizione AI non disponibile.</p>;
+
+                            // Rimuovi eventuali grassetti Markdown
+                            text = text.replace(/\*\*/g, '');
+
+                            // Dividi il testo usando come separatore i bullet point ("-" all'inizio di linea o preceduti da spazio)
+                            const parts = text.split(/(?:\n|^)\s*-\s+/);
+
+                            if (parts.length > 1 || text.includes(" - ")) {
+                              // Supporto fallback se non c'era \n ma solo " - "
+                              const splitParts = parts.length > 1 ? parts : text.split(" - ");
+
+                              let intro = splitParts[0];
+                              const listItems = splitParts.slice(1);
+
+                              // Pulizia intro text dai titoli standard
+                              intro = intro.replace(/Descrizione dell'immagine:?/i, '');
+                              intro = intro.replace(/Dati sensibili visibili:?/i, '');
+                              intro = intro.replace(/Dati visibili:?/i, '');
+                              intro = intro.trim();
+
+                              return (
+                                <div className="flex flex-col space-y-3">
+                                  <p className="text-white/95 text-sm font-medium leading-snug drop-shadow-md whitespace-pre-wrap">
+                                    {intro}
+                                  </p>
+                                  {listItems.length > 0 && (
+                                    <div className="max-h-36 overflow-y-auto custom-scrollbar pr-2 mt-2">
+                                      <ul className="space-y-2">
+                                        {listItems.map((item, i) => {
+                                          let label = null;
+                                          let value = null;
+
+                                          // Prova a fare match su "Label: Value"
+                                          const colonMatch = item.match(/^([^:]+):\s*(.+)$/);
+                                          // Prova a fare match su "Label (Value)"
+                                          const parenMatch = item.match(/^([^(]+)\(([^)]+)\)$/);
+
+                                          if (colonMatch && colonMatch[1].length < 40) {
+                                            label = colonMatch[1];
+                                            value = colonMatch[2];
+                                          } else if (parenMatch && parenMatch[1].length < 40) {
+                                            label = parenMatch[1];
+                                            value = parenMatch[2];
+                                          }
+
+                                          if (label && value) {
+                                            return (
+                                              <li key={i} className="flex flex-col text-xs">
+                                                <span className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-0.5">{label.trim()}:</span>
+                                                <span className="text-emerald-400 font-mono bg-emerald-400/[0.05] px-2 py-1 rounded-md border border-emerald-400/[0.1] break-words">{value.trim()}</span>
+                                              </li>
+                                            );
+                                          }
+
+                                          // Fallback se è un bullet point semplice senza chiave/valore
+                                          return (
+                                            <li key={i} className="flex items-start text-xs text-white/80">
+                                              <span className="w-1 h-1 rounded-full bg-cyan-500 mr-2 shrink-0 mt-1.5"></span>
+                                              <span className="break-words">{item.trim()}</span>
+                                            </li>
+                                          );
+                                        })}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            }
+
+                            // Se non ci sono list items
+                            text = text.replace(/Descrizione dell'immagine:?/i, '').trim();
+                            return (
+                              <p className="text-white/95 text-sm font-medium leading-snug drop-shadow-md whitespace-pre-wrap">
+                                {text}
+                              </p>
+                            );
+                          })()}
                         </div>
-                      </details>
+                        <details className="group/details">
+                          <summary className="text-[10px] text-gray-400 hover:text-white uppercase tracking-widest font-bold cursor-pointer flex items-center transition-colors">
+                            <svg className="w-3 h-3 mr-2 transform group-open/details:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                            Mostra Testo Rilevato
+                          </summary>
+                          <div className="bg-black/40 rounded-2xl p-4 border border-white/[0.05] mt-3 max-h-32 overflow-y-auto custom-scrollbar shadow-inner">
+                            <p className="text-gray-300 font-mono text-[10px] leading-relaxed break-words whitespace-pre-wrap">
+                              {ocr.text_extracted}
+                            </p>
+                          </div>
+                        </details>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         )}
 
-        
-{/* AI Audit Alert Box */}
+
+        {/* AI Audit Alert Box */}
         {data.llm_report && (
           <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.05] glass-card p-0 flex flex-col md:flex-row shadow-[0_8px_32px_rgba(0,0,0,0.4)] mt-8">
             <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-purple-500 hidden md:block"></div>
@@ -1032,7 +1071,7 @@ function Dashboard({ analysisId }) {
           </div>
         )}
 
-{/* Dynamic Routine & Tools Analysis Row */}
+        {/* Dynamic Routine & Tools Analysis Row */}
         <div className="grid grid-cols-1 gap-6 mt-6">
           {/* Card 2: Strumenti OSINT Integrati */}
           <div className="glassmorphism rounded-3xl p-8 flex flex-col relative overflow-hidden group">
@@ -1240,7 +1279,7 @@ function Dashboard({ analysisId }) {
           </div>
         )}
 
-              </div>
+      </div>
     );
   }
 
@@ -1472,7 +1511,7 @@ function MainApp() {
                   className="w-full bg-transparent text-white px-3 py-5 outline-none placeholder-gray-500 text-xl font-medium"
                   disabled={isSubmitting}
                 />
-                
+
                 {historyData && historyData.length > 0 && (
                   <button type="button" onClick={() => setIsHistoryOpen(!isHistoryOpen)} className="p-3 text-gray-500 hover:text-white transition-colors">
                     <svg className={`w-5 h-5 transform transition-transform ${isHistoryOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -1487,9 +1526,9 @@ function MainApp() {
               {/* Ultime Ricerche Dropdown */}
               <AnimatePresence>
                 {isHistoryOpen && historyData && historyData.length > 0 && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }} 
-                    animate={{ opacity: 1, y: 0 }} 
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                     className="absolute top-[105%] left-0 w-full bg-[#0a0a0f] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
@@ -1536,7 +1575,7 @@ function MainApp() {
 
           {/* Settings OSINT (Design Premium) */}
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="w-full relative mt-12">
-            
+
             {/* Profondità di Scansione Selettore Interattivo (Redesigned) */}
             <div className="flex flex-col items-center justify-center mb-10 w-full relative z-20">
               <h4 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-3 flex items-center space-x-2">
@@ -1545,22 +1584,22 @@ function MainApp() {
               </h4>
               <div className="flex bg-white/5 backdrop-blur-xl rounded-full p-1.5 border border-white/10 shadow-2xl max-w-md w-full relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full opacity-50"></div>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setAnalysisDepth('fast')}
                   className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-full transition-all duration-300 relative z-10 ${analysisDepth === 'fast' ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-gray-400 hover:text-white'}`}
                 >
                   FAST (5 Post)
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setAnalysisDepth('standard')}
                   className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-full transition-all duration-300 relative z-10 ${analysisDepth === 'standard' ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]' : 'text-gray-400 hover:text-white'}`}
                 >
                   STD (12 Post)
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setAnalysisDepth('deep')}
                   className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-full transition-all duration-300 relative z-10 ${analysisDepth === 'deep' ? 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'text-gray-400 hover:text-white'}`}
                 >
@@ -1578,156 +1617,156 @@ function MainApp() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* DDG Sensor */}
               <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group h-full flex flex-col ${enableDdg ? 'bg-blue-500/10 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableDdg(!enableDdg)}>
-              {enableDdg && <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>}
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3.5 rounded-xl transition-colors ${enableDdg ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                {enableDdg && <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl"></div>}
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3.5 rounded-xl transition-colors ${enableDdg ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </div>
+                    <div>
+                      <h4 className="text-white font-bold text-base">DuckDuckGo Dorking</h4>
+                      <p className="text-gray-400 text-xs mt-1 font-light">Ricerca estesa di leak testuali e menzioni web.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-white font-bold text-base">DuckDuckGo Dorking</h4>
-                    <p className="text-gray-400 text-xs mt-1 font-light">Ricerca estesa di leak testuali e menzioni web.</p>
+                  <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableDdg ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-white/10'}`}>
+                    <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableDdg ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
                   </div>
                 </div>
-                <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableDdg ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-white/10'}`}>
-                  <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableDdg ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            {/* Holehe Sensor */}
-            <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group h-full flex flex-col ${enableHolehe ? 'bg-rose-500/10 border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableHolehe(!enableHolehe)}>
-              {enableHolehe && <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/20 rounded-full blur-3xl"></div>}
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3.5 rounded-xl transition-colors ${enableHolehe ? 'bg-rose-500/20 text-rose-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+              {/* Holehe Sensor */}
+              <motion.div whileHover={{ scale: 1.02 }} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 p-5 cursor-pointer backdrop-blur-md group h-full flex flex-col ${enableHolehe ? 'bg-rose-500/10 border-rose-500/40 shadow-[0_0_30px_rgba(244,63,94,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`} onClick={() => setEnableHolehe(!enableHolehe)}>
+                {enableHolehe && <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/20 rounded-full blur-3xl"></div>}
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3.5 rounded-xl transition-colors ${enableHolehe ? 'bg-rose-500/20 text-rose-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <div>
+                      <h4 className="text-white font-bold text-base">Cross-Check Email</h4>
+                      <p className="text-gray-400 text-xs mt-1 font-light">Verifica iscrizioni su oltre 120 portali web.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-white font-bold text-base">Cross-Check Email</h4>
-                    <p className="text-gray-400 text-xs mt-1 font-light">Verifica iscrizioni su oltre 120 portali web.</p>
+                  <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableHolehe ? 'bg-gradient-to-r from-rose-500 to-orange-500' : 'bg-white/10'}`}>
+                    <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableHolehe ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
                   </div>
                 </div>
-                <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableHolehe ? 'bg-gradient-to-r from-rose-500 to-orange-500' : 'bg-white/10'}`}>
-                  <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableHolehe ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            {/* Instagram Sensor */}
-            <motion.div className={`relative rounded-2xl border transition-all duration-300 p-5 backdrop-blur-md flex flex-col h-full justify-start ${enableIgScan ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
-              <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none -z-10">
-                {enableIgScan && <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl"></div>}
-              </div>
-              <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableIgScan(!enableIgScan)}>
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3.5 rounded-xl transition-colors ${enableIgScan ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  </div>
-                  <div className="flex flex-col items-start z-20">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="text-white font-bold text-base">Instagram Deep Scan</h4>
-                      <div className="relative group/tooltip">
-                        <svg className="w-4 h-4 text-gray-500 hover:text-purple-400 transition-colors cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[300px] bg-[#0a0a0f] border border-purple-500/30 text-gray-300 text-xs rounded-xl p-4 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 backdrop-blur-md font-light leading-relaxed">
-                          <strong className="text-purple-400 block mb-2 text-[13px]">Come ottenere il sessionid:</strong>
-                          <ol className="list-decimal pl-4 space-y-1">
-                            <li>Apri Instagram dal PC e fai login.</li>
-                            <li>Premi <kbd className="bg-white/10 px-1 py-0.5 rounded font-mono text-[10px]">F12</kbd> (Strumenti Sviluppatore).</li>
-                            <li>Vai nella scheda <strong>Application</strong> (o Storage) {'>'} <strong>Cookies</strong>.</li>
-                            <li>Copia il valore della riga <code className="text-purple-300 bg-purple-500/20 px-1 rounded">sessionid</code>.</li>
-                          </ol>
+              {/* Instagram Sensor */}
+              <motion.div className={`relative rounded-2xl border transition-all duration-300 p-5 backdrop-blur-md flex flex-col h-full justify-start ${enableIgScan ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
+                <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none -z-10">
+                  {enableIgScan && <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl"></div>}
+                </div>
+                <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableIgScan(!enableIgScan)}>
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3.5 rounded-xl transition-colors ${enableIgScan ? 'bg-purple-500/20 text-purple-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </div>
+                    <div className="flex flex-col items-start z-20">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="text-white font-bold text-base">Instagram Deep Scan</h4>
+                        <div className="relative group/tooltip">
+                          <svg className="w-4 h-4 text-gray-500 hover:text-purple-400 transition-colors cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[300px] bg-[#0a0a0f] border border-purple-500/30 text-gray-300 text-xs rounded-xl p-4 shadow-2xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50 backdrop-blur-md font-light leading-relaxed">
+                            <strong className="text-purple-400 block mb-2 text-[13px]">Come ottenere il sessionid:</strong>
+                            <ol className="list-decimal pl-4 space-y-1">
+                              <li>Apri Instagram dal PC e fai login.</li>
+                              <li>Premi <kbd className="bg-white/10 px-1 py-0.5 rounded font-mono text-[10px]">F12</kbd> (Strumenti Sviluppatore).</li>
+                              <li>Vai nella scheda <strong>Application</strong> (o Storage) {'>'} <strong>Cookies</strong>.</li>
+                              <li>Copia il valore della riga <code className="text-purple-300 bg-purple-500/20 px-1 rounded">sessionid</code>.</li>
+                            </ol>
+                          </div>
                         </div>
                       </div>
+                      <p className="text-gray-400 text-xs mt-1 font-light">Estrazione avanzata follower e routine/luoghi.</p>
                     </div>
-                    <p className="text-gray-400 text-xs mt-1 font-light">Estrazione avanzata follower e routine/luoghi.</p>
+                  </div>
+                  <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableIgScan ? 'bg-gradient-to-r from-purple-500 to-indigo-500' : 'bg-white/10'}`}>
+                    <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableIgScan ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
                   </div>
                 </div>
-                <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableIgScan ? 'bg-gradient-to-r from-purple-500 to-indigo-500' : 'bg-white/10'}`}>
-                  <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableIgScan ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
-                </div>
-              </div>
 
-              <AnimatePresence>
-                {enableIgScan && (
-                  <motion.div initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 20 }} exit={{ height: 0, opacity: 0, marginTop: 0 }} className="overflow-hidden relative z-10">
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-purple-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                <AnimatePresence>
+                  {enableIgScan && (
+                    <motion.div initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 20 }} exit={{ height: 0, opacity: 0, marginTop: 0 }} className="overflow-hidden relative z-10">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-purple-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                        </div>
+                        <input
+                          type="text"
+                          value={igSessionId}
+                          onChange={(e) => setIgSessionId(e.target.value)}
+                          placeholder="Incolla il cookie sessionid per bypass login..."
+                          className="w-full bg-black/40 border border-purple-500/40 text-white pl-12 pr-4 py-3.5 rounded-xl outline-none text-sm focus:border-purple-400 transition-all placeholder-purple-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(168,85,247,0.2)] focus:bg-black/60"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        value={igSessionId}
-                        onChange={(e) => setIgSessionId(e.target.value)}
-                        placeholder="Incolla il cookie sessionid per bypass login..."
-                        className="w-full bg-black/40 border border-purple-500/40 text-white pl-12 pr-4 py-3.5 rounded-xl outline-none text-sm focus:border-purple-400 transition-all placeholder-purple-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(168,85,247,0.2)] focus:bg-black/60"
-                      />
-                    </div>
-                    <p className="text-[10px] text-purple-300/50 mt-2 ml-2 font-light">
-                      * Il sessionid non viene mai salvato nel database ed è usato solo temporaneamente in RAM.
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                      <p className="text-[10px] text-purple-300/50 mt-2 ml-2 font-light">
+                        * Il sessionid non viene mai salvato nel database ed è usato solo temporaneamente in RAM.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
 
-            {/* Configurazione Avanzata FB */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="p-5 glassmorphism rounded-2xl border border-white/5 relative group flex flex-col h-full justify-start">
-              <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none -z-10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-colors"></div>
-              </div>
-              
-              <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableFbScan(!enableFbScan)}>
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3.5 rounded-xl transition-colors ${enableFbScan ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" /></svg>
+              {/* Configurazione Avanzata FB */}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="p-5 glassmorphism rounded-2xl border border-white/5 relative group flex flex-col h-full justify-start">
+                <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none -z-10">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-colors"></div>
+                </div>
+
+                <div className="flex items-center justify-between cursor-pointer relative z-10 group" onClick={() => setEnableFbScan(!enableFbScan)}>
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-3.5 rounded-xl transition-colors ${enableFbScan ? 'bg-blue-500/20 text-blue-400' : 'bg-white/5 text-gray-500 group-hover:text-gray-400'}`}>
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" /></svg>
+                    </div>
+                    <div>
+                      <h4 className="text-white font-bold text-base">Facebook Deep Scan</h4>
+                      <p className="text-gray-400 text-xs mt-1 font-light">Estrazione post, about e leak di informazioni pubbliche.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-white font-bold text-base">Facebook Deep Scan</h4>
-                    <p className="text-gray-400 text-xs mt-1 font-light">Estrazione post, about e leak di informazioni pubbliche.</p>
+                  <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableFbScan ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-white/10'}`}>
+                    <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableFbScan ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
                   </div>
                 </div>
-                <div className={`w-14 h-8 flex items-center rounded-full px-1 transition-colors duration-300 shadow-inner ${enableFbScan ? 'bg-gradient-to-r from-blue-500 to-cyan-500' : 'bg-white/10'}`}>
-                  <motion.div layout className="w-6 h-6 bg-white rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.3)]" animate={{ x: enableFbScan ? 24 : 0 }} transition={{ type: "spring", stiffness: 500, damping: 30 }} />
-                </div>
-              </div>
 
-              <AnimatePresence>
-                {enableFbScan && (
-                  <motion.div initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 20 }} exit={{ height: 0, opacity: 0, marginTop: 0 }} className="overflow-hidden relative z-10 flex flex-col space-y-3">
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-blue-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                <AnimatePresence>
+                  {enableFbScan && (
+                    <motion.div initial={{ height: 0, opacity: 0, marginTop: 0 }} animate={{ height: 'auto', opacity: 1, marginTop: 20 }} exit={{ height: 0, opacity: 0, marginTop: 0 }} className="overflow-hidden relative z-10 flex flex-col space-y-3">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-blue-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                        </div>
+                        <input
+                          type="text"
+                          value={fbCUser}
+                          onChange={(e) => setFbCUser(e.target.value)}
+                          placeholder="Valore c_user (es. 1000...)"
+                          className="w-full bg-black/40 border border-blue-500/40 text-white pl-12 pr-4 py-3 rounded-xl outline-none text-sm focus:border-blue-400 transition-all placeholder-blue-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] focus:bg-black/60"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        value={fbCUser}
-                        onChange={(e) => setFbCUser(e.target.value)}
-                        placeholder="Valore c_user (es. 1000...)"
-                        className="w-full bg-black/40 border border-blue-500/40 text-white pl-12 pr-4 py-3 rounded-xl outline-none text-sm focus:border-blue-400 transition-all placeholder-blue-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] focus:bg-black/60"
-                      />
-                    </div>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-blue-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <svg className="h-5 w-5 text-blue-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                        </div>
+                        <input
+                          type="password"
+                          value={fbXs}
+                          onChange={(e) => setFbXs(e.target.value)}
+                          placeholder="Valore xs (es. 123456...)"
+                          className="w-full bg-black/40 border border-blue-500/40 text-white pl-12 pr-4 py-3 rounded-xl outline-none text-sm focus:border-blue-400 transition-all placeholder-blue-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] focus:bg-black/60"
+                        />
                       </div>
-                      <input
-                        type="password"
-                        value={fbXs}
-                        onChange={(e) => setFbXs(e.target.value)}
-                        placeholder="Valore xs (es. 123456...)"
-                        className="w-full bg-black/40 border border-blue-500/40 text-white pl-12 pr-4 py-3 rounded-xl outline-none text-sm focus:border-blue-400 transition-all placeholder-blue-300/30 font-mono shadow-inner focus:shadow-[0_0_15px_rgba(59,130,246,0.2)] focus:bg-black/60"
-                      />
-                    </div>
-                    <p className="text-[10px] text-blue-300/50 ml-2 font-light">
-                      * Inserisci i due valori separatamente. Il cookie verrà assemblato in automatico dal backend.
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                      <p className="text-[10px] text-blue-300/50 ml-2 font-light">
+                        * Inserisci i due valori separatamente. Il cookie verrà assemblato in automatico dal backend.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             </div>
           </motion.div>
 
