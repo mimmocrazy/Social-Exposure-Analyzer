@@ -182,7 +182,8 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
       // Se cambia fase, flusha tutto ciò che era in coda per non rimanere MAI indietro
       setVisibleLogs(prev => {
         if (logQueue.length > 0) {
-           return [...prev, ...logQueue];
+           const timestamped = logQueue.map(l => ({ text: l, time: new Date().toISOString().substring(11, 19) }));
+           return [...prev, ...timestamped];
         }
         return prev;
       });
@@ -221,10 +222,10 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
         newLogs.push("[HOLEHE OSINT] Holehe completato. Verifica databreach in corso...");
       } else if (p.includes("risk engine")) {
         newLogs.push("[ORCHESTRATOR] Risk Engine Payload preparato con successo.");
-        newLogs.push("[RISK ENGINE AI] Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback)...");
-        newLogs.push("[RISK ENGINE AI] Tentativo di generazione report con modello gemini-2.5-flash...");
+        newLogs.push("[RISK ENGINE AI] Avvio analisi Risk Engine tramite GitHub Models (Structured Output con Fallback)...");
+        newLogs.push("[RISK ENGINE AI] Tentativo di generazione report con modello gpt-4o-mini...");
       } else if (p.includes("generazione report")) {
-        newLogs.push("[RISK ENGINE AI] Successo con il modello gemini-2.5-flash!");
+        newLogs.push("[RISK ENGINE AI] Successo con il modello gpt-4o-mini!");
         newLogs.push("[ORCHESTRATOR] Salvataggio risultati nel database...");
       } else {
         // Fase generica non riconosciuta, mostra comunque qualcosa
@@ -237,7 +238,7 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
 
   // 2. Consuma la coda un log alla volta con animazione veloce
   useEffect(() => {
-    if (logQueue.length > 0 && !isCompleted) {
+    if (logQueue.length > 0) {
       const nextLog = logQueue[0];
       
       let delay = Math.random() * 150 + 80;
@@ -246,28 +247,28 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
       else if (nextLog.includes("RISK ENGINE AI") && nextLog.includes("Tentativo")) delay = 350;
       
       const timer = setTimeout(() => {
-        setVisibleLogs(prev => [...prev, nextLog]);
+        setVisibleLogs(prev => [...prev, { text: nextLog, time: new Date().toISOString().substring(11, 19) }]);
         setLogQueue(prev => prev.slice(1));
       }, delay);
       
       return () => clearTimeout(timer);
     }
-  }, [logQueue, isCompleted]);
+  }, [logQueue]);
 
-  // 3. Heartbeat: se il terminale non ha novità per 4s e non è completato, mostra un log di attesa
+  // 3. Heartbeat: se il terminale non riceve update per 8s, mostra log di "keep-alive"
   useEffect(() => {
     if (!isCompleted && logQueue.length === 0) {
       const heartbeat = setInterval(() => {
         const msgs = [
-          "[NETWORK] Connessione attiva. In attesa di risposta dal server AI...",
-          "[SYSTEM] Pipeline in esecuzione. Elaborazione dati in corso...",
-          "[COMPUTE] Thread pool attivo. Attesa risposta modello LLM...",
           "[NETWORK] Keep-alive. Timeout non raggiunto. Attendere prego...",
-          "[SYSTEM] Analisi avanzata in corso. Stima completamento imminente..."
+          "[COMPUTE] Thread pool attivo. Attesa elaborazione modello LLM...",
+          "[SYSTEM] Analisi avanzata in corso. Stima completamento imminente...",
+          "[NETWORK] Connessione attiva. In attesa di risposta dal server AI...",
+          "[SYSTEM] Pipeline in esecuzione. Elaborazione dati background..."
         ];
         const msg = msgs[Math.floor(Math.random() * msgs.length)];
-        setVisibleLogs(prev => [...prev, msg]);
-      }, 4000);
+        setVisibleLogs(prev => [...prev, { text: msg, time: new Date().toISOString().substring(11, 19) }]);
+      }, 8000);
       return () => clearInterval(heartbeat);
     }
   }, [isCompleted, logQueue.length]);
@@ -279,16 +280,20 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
     }
   }, [visibleLogs]);
 
-  // 5. Gestione completamento forzato dal server
+  // 5. Gestione completamento forzato dal server (attende che la coda sia vuota)
   useEffect(() => {
-    if (isCompleted) {
-      setVisibleLogs(prev => [...prev, "[RISK ENGINE AI] Successo con il modello gemini-2.5-flash!", "[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso.", "[SYSTEM] Elaborazione completata. Generazione UI in corso..."]);
+    if (isCompleted && logQueue.length === 0) {
+      const t = new Date().toISOString().substring(11, 19);
+      setVisibleLogs(prev => [...prev, 
+        { text: "[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso.", time: t }, 
+        { text: "[SYSTEM] Elaborazione completata. Booting della UI in corso...", time: t }
+      ]);
       const timer = setTimeout(() => {
         if (onFinish) onFinish();
-      }, 800);
+      }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [isCompleted, onFinish]);
+  }, [isCompleted, logQueue.length, onFinish]);
 
   return (
     <div className="flex flex-col items-center justify-center py-10 w-full px-4 relative">
@@ -308,8 +313,9 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
           </div>
         </div>
         <div className="p-6 h-[400px] overflow-y-auto bg-[#0a0a0f] space-y-1 md:space-y-2 font-mono text-[13px]">
-          {visibleLogs.map((log, i) => {
-            const timeStr = new Date(Date.now() - (visibleLogs.length - i) * 1000).toISOString().substring(11, 19);
+          {visibleLogs.map((logItem, i) => {
+            const timeStr = logItem.time;
+            const log = logItem.text;
             
             const match = log.match(/^(\[[^\]]+\])(.*)$/);
             let tag = "";
@@ -368,6 +374,7 @@ const TerminalLoading = ({ isCompleted, currentPhase, onFinish }) => {
 function Dashboard({ analysisId }) {
     const [showDashboard, setShowDashboard] = useState(false);
     const [showContextualPii, setShowContextualPii] = useState(false);
+    const [osintModal, setOsintModal] = useState(null);
 
     // Reset showDashboard if a new analysis starts
     useEffect(() => {
@@ -418,6 +425,37 @@ function Dashboard({ analysisId }) {
     const holehe = data.raw_data_dump?.holehe_results || [];
     const ocrResults = data.raw_data_dump?.ocr_results || [];
     const metadata = data.raw_data_dump?.metadata || {};
+
+    const getSherlockHits = () => {
+      if (data.raw_data_dump?.sherlock_hits && data.raw_data_dump.sherlock_hits.length > 0) {
+        return data.raw_data_dump.sherlock_hits.map(url => ({ url }));
+      }
+      
+      const hits = [];
+      const targetUsername = metadata?.target || data.target_url;
+      scrapers.forEach(s => {
+        if (s.source === 'Sherlock Username Scan') {
+          hits.push({ url: s.url });
+        } else if (metadata.sherlock_attempted !== false && s.source === 'Web Scraping') {
+          hits.push({ url: s.url });
+        } else if (metadata.sherlock_attempted !== false && s.source === 'Instagram Deep Scan API') {
+          hits.push({ url: `https://instagram.com/${targetUsername}` });
+        } else if (metadata.sherlock_attempted !== false && s.source === 'Facebook Deep Scan API') {
+          hits.push({ url: s.url });
+        }
+      });
+      
+      const uniqueUrls = [];
+      const seen = new Set();
+      hits.forEach(h => {
+        if (h.url && !seen.has(h.url)) {
+          seen.add(h.url);
+          uniqueUrls.push(h);
+        }
+      });
+      return uniqueUrls;
+    };
+    const sherlockHits = getSherlockHits();
 
     const isSherlockActive = metadata.sherlock_attempted !== false;
 
@@ -597,7 +635,7 @@ function Dashboard({ analysisId }) {
                   <span className="text-white font-extrabold text-base">{data.llm_report?.sub_scores?.routine_exposure || 0}%</span>
                 </div>
                 <div className="w-full bg-white/5 rounded-full h-5 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-emerald-400 h-5 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.9)]"></motion.div>
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${data.llm_report?.sub_scores?.routine_exposure || 0}%` }} transition={{ duration: 1.5, ease: "easeOut" }} className="bg-yellow-400 h-5 rounded-full shadow-[0_0_12px_rgba(250,204,21,0.9)]"></motion.div>
                 </div>
               </div>
             </div>
@@ -668,12 +706,30 @@ function Dashboard({ analysisId }) {
                             >
                               <span className="break-all">{valObj.value}</span>
                               <span
-                                className="relative inline-flex items-center text-white/30 hover:text-white/80 transition-colors cursor-help"
-                                title={`Fonte: ${valObj.source || 'Scansione OSINT'}${valObj.confidence ? `\nConfidenza: ${Math.round(valObj.confidence * 100)}%` : ''}`}
+                                className="relative inline-flex items-center text-white/30 hover:text-white/80 transition-colors cursor-help group/icon"
                               >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
+                                
+                                {/* Custom Premium Tooltip */}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-max max-w-[260px] bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 text-white text-xs p-4 rounded-xl opacity-0 group-hover/icon:opacity-100 group-hover/icon:translate-y-1 pointer-events-none transition-all duration-300 z-50 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex flex-col gap-2">
+                                  <div>
+                                    <span className="font-bold text-cyan-400 uppercase tracking-widest text-[10px] block mb-1">Fonte Dati</span>
+                                    <span className="text-gray-200 font-medium leading-relaxed">{valObj.source || 'Scansione OSINT'}</span>
+                                  </div>
+                                  {valObj.confidence && (
+                                    <>
+                                      <div className="w-full h-px bg-white/10 my-1"></div>
+                                      <div className="flex justify-between items-center w-full gap-4">
+                                        <span className="text-gray-400 uppercase tracking-widest text-[10px]">Confidenza</span>
+                                        <span className="font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded text-[11px]">{Math.round(valObj.confidence * 100)}%</span>
+                                      </div>
+                                    </>
+                                  )}
+                                  {/* Punta della freccia */}
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-[1px] border-solid border-b-[#0a0a0a]/95 border-b-[5px] border-x-transparent border-x-[5px] border-t-0"></div>
+                                </div>
                               </span>
                             </span>
                           ))}
@@ -727,13 +783,21 @@ function Dashboard({ analysisId }) {
               <div className="relative group/carousel">
                 {/* Scroll Buttons */}
                 <button 
-                  onClick={() => document.getElementById('ocr-carousel').scrollBy({ left: -window.innerWidth / 2, behavior: 'smooth' })}
+                  onClick={() => {
+                    const c = document.getElementById('ocr-carousel');
+                    const card = c.firstElementChild;
+                    if(card) c.scrollBy({ left: -(card.clientWidth + 32), behavior: 'smooth' });
+                  }}
                   className="absolute left-2 md:left-4 top-[40%] -translate-y-1/2 z-20 bg-black/60 hover:bg-cyan-500/80 text-white p-3 md:p-4 rounded-full backdrop-blur-md opacity-0 group-hover/carousel:opacity-100 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] border border-white/10"
                 >
                   <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <button 
-                  onClick={() => document.getElementById('ocr-carousel').scrollBy({ left: window.innerWidth / 2, behavior: 'smooth' })}
+                  onClick={() => {
+                    const c = document.getElementById('ocr-carousel');
+                    const card = c.firstElementChild;
+                    if(card) c.scrollBy({ left: (card.clientWidth + 32), behavior: 'smooth' });
+                  }}
                   className="absolute right-2 md:right-4 top-[40%] -translate-y-1/2 z-20 bg-black/60 hover:bg-cyan-500/80 text-white p-3 md:p-4 rounded-full backdrop-blur-md opacity-0 group-hover/carousel:opacity-100 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] border border-white/10"
                 >
                   <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -741,9 +805,9 @@ function Dashboard({ analysisId }) {
 
                 <div id="ocr-carousel" className="flex overflow-x-auto gap-8 pt-4 pb-12 w-full snap-x snap-mandatory scroll-smooth custom-scrollbar">
                   {ocrResults.map((ocr, idx) => (
-                  <div key={idx} className="relative rounded-[2rem] overflow-hidden group/card shadow-[0_15px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex flex-col shrink-0 snap-center w-[85vw] sm:w-[60vw] md:w-[45vw] lg:w-[35vw] xl:w-[28vw]">
-                    <div className="w-full h-72 md:h-80 relative overflow-hidden bg-black">
-                      <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 group-hover/card:scale-105 transition-all duration-700" />
+                  <div key={idx} className="relative rounded-[2rem] overflow-hidden group/card shadow-[0_15px_40px_rgba(0,0,0,0.5)] border border-white/[0.08] flex flex-col shrink-0 snap-center w-[75vw] sm:w-[50vw] md:w-[35vw] lg:w-[28vw] xl:w-[22vw]">
+                    <div className="w-full h-56 md:h-64 relative overflow-hidden bg-black">
+                      <img src={ocr.url} alt="OCR Source" className="w-full h-full object-cover object-top opacity-80 group-hover/card:opacity-100 group-hover/card:scale-105 transition-all duration-700" />
                     </div>
                     
                     <div className="absolute top-4 right-4 glass-pill px-3 py-1.5 text-[9px] font-bold tracking-widest text-white/90 flex items-center space-x-1.5 bg-black/50">
@@ -990,7 +1054,7 @@ function Dashboard({ analysisId }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Sherlock */}
-              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isSherlockActive ? 'bg-green-500/5 border-green-500/20 hover:bg-green-500/10 hover:border-green-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
+              <div onClick={() => isSherlockActive && setOsintModal({ title: 'Sherlock OSINT Hits', data: sherlockHits, type: 'sherlock' })} className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isSherlockActive ? 'cursor-pointer bg-green-500/5 border-green-500/20 hover:bg-green-500/10 hover:border-green-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
                 {isSherlockActive && <div className="absolute -top-10 -right-10 w-24 h-24 bg-green-500/10 rounded-full blur-2xl"></div>}
                 <div className="flex items-center justify-between mb-3 relative z-10">
                   <div className="flex items-center space-x-2">
@@ -1009,7 +1073,7 @@ function Dashboard({ analysisId }) {
                     <div className="flex items-center justify-between bg-black/40 rounded-xl p-2.5 border border-green-500/10">
                       <span className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Hit Trovate</span>
                       <span className="text-green-400 font-mono font-bold text-sm">
-                        {scrapers.filter(s => s.source === 'Sherlock Username Scan').length > 0 ? scrapers.filter(s => s.source === 'Sherlock Username Scan').length : (scrapers.length > 0 ? Math.floor(Math.random() * 5) + 1 : 0)}
+                        {sherlockHits.length}
                       </span>
                     </div>
                   ) : (
@@ -1049,7 +1113,7 @@ function Dashboard({ analysisId }) {
               </div>
 
               {/* DuckDuckGo */}
-              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isDdgActive ? 'bg-cyan-500/5 border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
+              <div onClick={() => isDdgActive && setOsintModal({ title: 'Dork Engine Leaks', data: scrapers.filter(s => s.source === 'DuckDuckGo'), type: 'dork' })} className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isDdgActive ? 'cursor-pointer bg-cyan-500/5 border-cyan-500/20 hover:bg-cyan-500/10 hover:border-cyan-500/30' : 'bg-gray-500/5 border-gray-500/20'}`}>
                 {isDdgActive && <div className="absolute -top-10 -right-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl"></div>}
                 <div className="flex items-center justify-between mb-3 relative z-10">
                   <div className="flex items-center space-x-2">
@@ -1076,7 +1140,7 @@ function Dashboard({ analysisId }) {
               </div>
 
               {/* Holehe */}
-              <div className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isHoleheSuccess ? 'bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10 hover:border-rose-500/30' : isHoleheAttempted ? 'bg-orange-500/5 border-orange-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
+              <div onClick={() => isHoleheAttempted && holehe.length > 0 && setOsintModal({ title: 'Holehe Account Check', data: holehe, type: 'holehe' })} className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 group/card ${isHoleheSuccess ? 'cursor-pointer bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10 hover:border-rose-500/30' : isHoleheAttempted ? 'bg-orange-500/5 border-orange-500/20' : 'bg-gray-500/5 border-gray-500/20'}`}>
                 {isHoleheSuccess && <div className="absolute -top-10 -right-10 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl"></div>}
                 <div className="flex items-center justify-between mb-3 relative z-10">
                   <div className="flex items-center space-x-2">
@@ -1137,8 +1201,44 @@ function Dashboard({ analysisId }) {
           </div>
         </div>
 
-
-        
+        {osintModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setOsintModal(null)}></div>
+            <div className="relative w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl p-6 overflow-hidden flex flex-col max-h-[80vh]">
+              <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-4">
+                <h3 className="text-xl font-bold text-white">{osintModal.title}</h3>
+                <button onClick={() => setOsintModal(null)} className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="overflow-y-auto custom-scrollbar flex-1 pr-2">
+                {osintModal.type === 'sherlock' && osintModal.data.map((item, i) => (
+                  <div key={i} className="mb-3 p-3 bg-white/5 border border-green-500/20 rounded-xl">
+                    <p className="text-green-400 font-mono text-sm break-all">
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="hover:underline">{item.url}</a>
+                    </p>
+                  </div>
+                ))}
+                {osintModal.type === 'dork' && osintModal.data.map((item, i) => (
+                  <div key={i} className="mb-3 p-3 bg-white/5 border border-cyan-500/20 rounded-xl">
+                    <p className="text-cyan-400 font-mono text-xs break-all mb-2">{item.url}</p>
+                    <p className="text-gray-300 text-sm italic border-l-2 border-cyan-500/50 pl-3 py-1 bg-black/20">{item.bio}</p>
+                  </div>
+                ))}
+                {osintModal.type === 'holehe' && osintModal.data.map((item, i) => (
+                  <div key={i} className="mb-4 bg-white/5 p-4 rounded-xl border border-orange-500/20">
+                    <h4 className="text-orange-400 font-bold mb-3 border-b border-white/5 pb-2">Leak Account: {item.email}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {item.registered_sites?.map((site, j) => (
+                        <span key={j} className="px-2.5 py-1.5 bg-black/40 border border-white/10 rounded-md text-xs font-mono text-gray-300 shadow-sm">{site}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
               </div>
     );
