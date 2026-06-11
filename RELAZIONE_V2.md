@@ -104,6 +104,7 @@
   - [2.2 Orchestrazione Backend e Compute (Azure App Service)](#22-orchestrazione-backend-e-compute-azure-app-service)
   - [2.3 Containerizzazione e Continuous Deployment (Azure Container Registry)](#23-containerizzazione-e-continuous-deployment-azure-container-registry)
   - [2.4 Persistenza Relazionale (Azure Database for PostgreSQL Flexible Server)](#24-persistenza-relazionale-azure-database-for-postgresql-flexible-server)
+  - [2.5 Struttura delle Directory e Moduli di Progetto](#25-struttura-delle-directory-e-moduli-di-progetto)
 - [3. Backend, Sincronia e Architettura Asincrona](#3-backend-sincronia-e-architettura-asincrona)
   - [3.1 Esecuzione Disaccoppiata (Pattern Produttore-Consumatore)](#31-esecuzione-disaccoppiata-pattern-produttore-consumatore)
   - [3.2 Moduli di Scraping e Meccanismi Anti-Bot](#32-moduli-di-scraping-e-meccanismi-anti-bot)
@@ -117,6 +118,7 @@
   - [6.1 Sicurezza Architetturale e Hardening (Cybersecurity)](#61-sicurezza-architetturale-e-hardening-cybersecurity)
   - [6.2 Transitorietà e Rispetto Legale del GDPR](#62-transitorietà-e-rispetto-legale-del-gdpr)
   - [6.3 Verifica e Testing Automatico](#63-verifica-e-testing-automatico)
+  - [6.4 Utilizzo di Identità Sintetiche (Testing Etico)](#64-utilizzo-di-identita-sintetiche-testing-etico)
 - [7. Appendice: Utilizzo di AI Generativa nello Sviluppo](#7-appendice-utilizzo-di-ai-generativa-nello-sviluppo)
 
 <div style="page-break-after: always;"></div>
@@ -187,6 +189,20 @@ L'architettura *Flexible Server* si distacca dai vecchi modelli rigidi per via d
 **Vantaggi Architetturali:**
 - **Prossimità di Rete (VNet Integration):** Azure posiziona il cluster del database all'interno di una Virtual Network (VNet) dedicata, ovvero una rete virtuale privata isolata da internet, comunicante nativamente con l'App Service. Questo minimizza drasticamente i colli di bottiglia legati al *TCP Handshake* (il processo di sincronizzazione a tre vie necessario per stabilire una connessione internet sicura), offrendo prestazioni da rete locale (LAN).
 - **Automazione Amministrativa:** Essendo una risorsa completamente gestita, il database si occupa autonomamente di routine di manutenzione critica quali l'*Auto-Vacuuming* (il recupero automatico dello spazio fisico sul disco lasciato vuoto a seguito di cancellazioni di record) e di generare backup incrementali automatizzati per consentire ripristini temporali (Point-in-Time recovery).
+
+### 2.5 Struttura delle Directory e Moduli di Progetto
+Per garantire la manutenibilità e favorire uno sviluppo modulare, il repository del progetto segue una struttura chiara e ordinata:
+
+- **`backend/`**: Contiene la logica applicativa server-side sviluppata in FastAPI.
+  - **`api/routers/`**: Accoglie i file di routing degli endpoint API (es. `analyze.py` per l'orchestrazione OSINT, `auth.py` per l'autenticazione).
+  - **`services/`**: Raccoglie i moduli specifici di integrazione (es. `risk_engine.py` per la cascata LLM e il calcolo dei punteggi, `scraper.py` per le pipeline anti-bot di FB/IG, `discovery.py` per Sherlock, `holehe_adapter.py` per la ricerca leaks).
+  - **`core/`**: File di configurazione di sistema e filtri log (`logger.py`).
+  - **`models/`**: Definizioni dei modelli dati SQLModel (es. `risk.py` per i report di rischio, `user.py` per l'anagrafica utente).
+- **`frontend/`**: Contiene la Single Page Application React configurata con bundler Vite e libreria Tremor per il rendering grafico della dashboard.
+  - **`src/`**: File di codice sorgente React, tra cui `App.jsx` per lo stato e il controllo dei widget del pannello di controllo, e `index.css` per lo stile.
+- **`images/`**: Directory centralizzata per la memorizzazione di grafici, diagrammi ed immagini dell'applicativo.
+- **`tests/`**: Suite di testing automatico (`pytest`) per la verifica isolata dei moduli critici.
+- **`alembic/`**: Script di migrazione del database PostgreSQL.
 
 ## 3. Backend, Sincronia e Architettura Asincrona
 L'applicazione backend è costruita su **FastAPI**, un moderno framework web per la costruzione di API (Application Programming Interface). La sfida primaria posta dall'integrazione di processi di spionaggio OSINT era la gestione di task **I/O bound** e task **CPU bound**. 
@@ -443,6 +459,11 @@ tests/test_scraper.py::test_duckduckgo_success PASSED                    [100%]
 
 ============================== 31 passed in 17.41s ============================
 ```
+
+### 6.4 Utilizzo di Identità Sintetiche (Testing Etico)
+Al fine di condurre test funzionali ed end-to-end sul corretto comportamento dell'applicazione in condizioni reali, e nel pieno rispetto delle norme sul trattamento dei dati personali stabilite dal GDPR, per le sessioni di test è stata creata e impiegata un'identità digitale sintetica e fittizia: il target **"Marco Rossi"** (username di test `marco_rossi_sec_99`).
+
+Questo profilo artificiale è stato appositamente configurato con dati ed immagini contenenti vulnerabilità simulabili (es. post geolocalizzati fittizi, immagini contenenti dettagli PII fittizi), consentendo di validare le capacità di recupero dell'OCR, l'accuratezza del Risk Engine e la reattività della dashboard in totale sicurezza, senza raccogliere né manipolare informazioni reali riferibili a soggetti fisici esistenti.
 
 ## 7. Appendice: Utilizzo di AI Generativa nello Sviluppo
 Come previsto esplicitamente dalla traccia valutativa di progetto, la natura del codice sorgente è stata il prodotto di una stretta collaborazione ingegneristica con interfacce LLM adottando l'ormai radicato paradigma di sviluppo moderno noto come *Pair-Programming e Agentic Coding*.
