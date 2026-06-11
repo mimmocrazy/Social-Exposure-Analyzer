@@ -115,3 +115,6 @@ scratch/
 
 # Thinking files
 docs/thinking.txt
+
+# Private/personal documents
+docs/mydocs/
