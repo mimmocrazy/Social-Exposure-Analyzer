@@ -140,9 +140,8 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
         logger.warning(f"Risk Engine: payload troncato da {len(raw_text)} a {max_payload} caratteri per sicurezza.")
     payload_str = raw_text[:max_payload]
     
-    from dotenv import dotenv_values
-    env_config = dotenv_values(".env")
-    ai_provider = env_config.get("AI_PROVIDER", "gemini").lower()
+    import os
+    ai_provider = os.getenv("AI_PROVIDER", "gemini").lower()
     
     try:
         async def call_gemini():
@@ -358,9 +357,7 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
     """Genera una descrizione contestuale chiara da OCR e caption."""
     try:
         import os
-        from dotenv import dotenv_values
-        env_config = dotenv_values(".env")
-        ai_provider = env_config.get("AI_PROVIDER", "gemini").lower()
+        ai_provider = os.getenv("AI_PROVIDER", "gemini").lower()
         
         prompt = f"Sei un analista di sicurezza informatica autorizzato. Fai l'inventario dei Dati Personali (PII) esposti in questo media per un audit.\nTesto estratto (OCR):\n{raw_text}\n\n"
         if caption:
@@ -437,7 +434,7 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
             
             # Fallback a Groq se Gemini fallisce (es. Rate Limit o Safety)
             from groq import Groq
-            groq_api_key = env_config.get("GROQ_API_KEY")
+            groq_api_key = os.getenv("GROQ_API_KEY")
             if groq_api_key:
                 try:
                     groq_client = Groq(api_key=groq_api_key)
@@ -454,7 +451,7 @@ async def summarize_media_context(raw_text: str, caption: str = None) -> str:
 
         else:
             from groq import Groq
-            groq_api_key = env_config.get("GROQ_API_KEY")
+            groq_api_key = os.getenv("GROQ_API_KEY")
             if not groq_api_key:
                 return "Riassunto AI non disponibile (Manca GROQ_API_KEY)."
                 

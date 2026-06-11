@@ -69,10 +69,19 @@ Prima di testare il software in produzione, verifica e riattiva questi component
    - Anche l'App Service potrebbe essere stato fermato. Se risulta fermo, premi **Start**.
    - Assicurati nel pannello *Environment variables* che i Token AI e la stringa di connessione al Database siano ancora aggiornati.
 
-3. **Azure Container Registry (ACR)**
-   - Il registro immagini non prevede il concetto di "Pausa", è sempre attivo. Se hai fatto modifiche recenti al backend locale, ricordati di fare il build e push della nuova immagine Docker; l'App Service si aggiornerà automaticamente tramite Continuous Deployment.
+3. **Azure Container Registry (ACR) e GitHub Actions**
+   - Il registro immagini non prevede il concetto di "Pausa", è sempre attivo. Avendo configurato una pipeline di CI/CD, qualsiasi modifica locale al codice del backend verrà automaticamente testata, compilata in Docker e caricata sull'ACR non appena farai un `git push` sul branch `main`. L'App Service percepirà l'aggiornamento e si riavvierà da solo.
 
 4. **Azure Storage Account (Frontend Static Web App)**
    - Similmente all'ACR, lo Storage rimane attivo e i file del sito statico React sono nel container `$web`. Qualora apportassi modifiche al frontend, esegui una nuova build locale (`npm run build`) e sovrascrivi i file nella cartella di Azure.
+
+### 🔗 Come Trovare l'Indirizzo Pubblico (URL) del Sito
+Una volta che tutto è attivo e funzionante, potrai visitare il tuo sito tramite i seguenti link forniti da Azure:
+
+- **L'URL del Sito Web (Frontend):** 
+  Vai nella pagina del tuo **Storage Account** sul portale Azure. Nel menu a sinistra clicca su **Static website**. Troverai un campo chiamato **Primary endpoint** (sarà simile a `https://<nome>.z6.web.core.windows.net/`). Clicca su questo link per accedere all'interfaccia utente.
+- **L'URL del Backend (API):**
+  Vai nella pagina del tuo **App Service**. Nella schermata principale (Overview), troverai la voce **Default domain** (es. `https://<nome>.azurewebsites.net`). 
+  *(Ricorda: Se il frontend in cloud non riesce a connettersi al backend, assicurati che il codice React sia configurato per effettuare le chiamate API verso questo dominio "Default domain" anziché verso `localhost`).*
 
 *Non appena Database e App Service saranno riportati nello stato "Running", l'intera infrastruttura cloud tornerà operativa al 100%!*
