@@ -252,7 +252,7 @@ Se il backend avesse adottato un approccio sincrono tradizionale, l'esecuzione d
 ### 3.1 Esecuzione Disaccoppiata (Pattern Produttore-Consumatore)
 Per risolvere questo limite strutturale, si è implementato un pattern software chiamato *Fire and Forget* (Spara e Dimentica), che disaccoppia l'interfaccia HTTP che riceve l'input dall'esecuzione materiale del lavoro.
 
-*Codice 3.1: Endpoint di avvio analisi*
+#### *Codice 3.1: Endpoint di avvio analisi*
 ```python
 @app.post("/api/v1/analyze", status_code=status.HTTP_202_ACCEPTED)
 async def analyze_target(request: AnalysisRequest, background_tasks: BackgroundTasks):
@@ -277,7 +277,7 @@ I sistemi di difesa Meta (Instagram e Facebook) bloccano ferocemente la lettura 
 
 Tuttavia, queste API possono accorgersi dell'inganno e attivare controlli anomali restituendo un errore di divieto categorico (`HTTP 403 Forbidden`). Al fine di garantire la continuità operativa del sistema, l'applicativo non esegue mai un "Hard Crash" (arresto anomalo completo).
 
-*Codice 3.2: Logica di Graceful Degradation*
+#### *Codice 3.2: Logica di Graceful Degradation*
 ```python
 try:
     # Tentativo di Scraping Autenticato (Impersonation tramite cookie)
@@ -314,7 +314,7 @@ Affinché il risultato del ragionamento dell'AI sia interfacciabile in un ambien
 I fornitori mondiali di modelli linguistici (API Provider come OpenAI o Google) possono presentare blackout temporanei imprevisti o respingere le chiamate del nostro applicativo per esaurimento del budget orario di rete (il noto Errore `HTTP 429 Resource Exhausted / Too Many Requests`).
 Un'architettura di grado enterprise non può dipendere deterministicamente da un singolo fornitore di terze parti. È stato quindi implementato un pattern architetturale tipico dei sistemi distribuiti noto come **Circuit Breaker** (Interruttore Automatico).
 
-*Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover*
+#### *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover*
 ```python
 async def risk_engine_analysis(payload: str) -> dict:
     import os
@@ -351,7 +351,7 @@ L'interfaccia utente interattiva è sviluppata in **React** e **TailwindCSS**, c
 In assenza di canali web persistenti bidirezionali completi come i *WebSockets* (spesso troppo onerosi da scalare e mantenere aperti per lungo tempo in scenari cloud serverless), si poneva il problema di informare l'utente finale circa lo stato di avanzamento in tempo reale di una transazione di estrazione dati che può richiedere vari minuti.
 La soluzione ingegneristica scelta è nota come **Short Polling intelligente**, gestito a livello client dal modulo `React Query` ed erogato visivamente tramite il componente React simulatore di Terminale Hacker (`TerminalLoading`).
 
-*Codice 5.1: Gestione dell'osservazione asincrona (Polling)*
+#### *Codice 5.1: Gestione dell'osservazione asincrona (Polling)*
 ```javascript
 // La funzione useQuery gestisce internamente caching e re-fetch asincrono
 const { data, isLoading } = useQuery({
