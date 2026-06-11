@@ -147,8 +147,8 @@ Tutte le risorse afferenti al progetto sono isolate logicamente all'interno di u
 
 <div style="page-break-inside: avoid;">
 
-**Schema Architetturale dell'Infrastruttura Cloud:**
 <div class="figure-container">
+**Schema Architetturale dell'Infrastruttura Cloud:**
     <img src="images/mermaid1.png" alt="Azure Infrastructure Diagram" width="800" style="margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 1: Topologia di rete dell'infrastruttura Cloud Azure.</strong> Il diagramma illustra il flusso del dato (1): l'utente interroga la CDN fornita nativamente dallo Storage Account che ospita la Single Page Application React. Il layer di presentazione contatta (2) tramite chiamate asincrone il container Linux dell'App Service. Il ciclo di integrazione continua (3) è garantito dall'Azure Container Registry che inietta le immagini Docker tramite Webhook, mentre la persistenza (4) sfrutta la VNet Integration per interloquire a bassa latenza con il nodo PostgreSQL mascherando i flussi alla rete pubblica Internet.
@@ -202,6 +202,7 @@ A questo punto, l'App Service, che è nativamente agganciato all'ACR tramite **W
     </div>
 </div>
 ### 2.4 Persistenza Relazionale (Azure Database for PostgreSQL Flexible Server)
+
 La conservazione a lungo termine degli audit generati e delle configurazioni utente è demandata ad **Azure Database for PostgreSQL Flexible Server** (`social-exposure-db`).
 L'architettura *Flexible Server* si distacca dai vecchi modelli rigidi per via della sua architettura a zone ad alta affidabilità. 
 
@@ -312,8 +313,7 @@ Affinché il risultato del ragionamento dell'AI sia interfacciabile in un ambien
 I fornitori mondiali di modelli linguistici (API Provider come OpenAI o Google) possono presentare blackout temporanei imprevisti o respingere le chiamate del nostro applicativo per esaurimento del budget orario di rete (il noto Errore `HTTP 429 Resource Exhausted / Too Many Requests`).
 Un'architettura di grado enterprise non può dipendere deterministicamente da un singolo fornitore di terze parti. È stato quindi implementato un pattern architetturale tipico dei sistemi distribuiti noto come **Circuit Breaker** (Interruttore Automatico).
 
-<div style="page-break-inside: avoid;">
-
+<div class="figure-container" style="text-align: left;">
 *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover*
 ```python
 async def risk_engine_analysis(payload: str) -> dict:
