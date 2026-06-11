@@ -199,7 +199,7 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
             raise Exception("Chiamata Gemini fallita.")
 
         async def call_github():
-            logger.info("Avvio analisi Risk Engine tramite GitHub Models (Azure AI)...")
+            logger.info("Avvio analisi Risk Engine tramite GitHub Models...")
             import openai
             github_token = os.getenv("GITHUB_TOKEN")
             if not github_token or github_token == "INSERISCI_QUI_IL_TUO_GITHUB_PAT":
