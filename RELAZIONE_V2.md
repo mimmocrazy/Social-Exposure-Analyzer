@@ -121,10 +121,6 @@
   - [6.4 Utilizzo di Identità Sintetiche (Testing Etico)](#64-utilizzo-di-identita-sintetiche-testing-etico)
 - [7. Appendice: Utilizzo di AI Generativa nello Sviluppo](#7-appendice-utilizzo-di-ai-generativa-nello-sviluppo)
 
-<div style="page-break-after: always;"></div>
-
----
-
 ## 1. Intento e Analisi dei Requisiti
 La presente relazione tecnica descrive le specifiche funzionali e le scelte ingegneristiche alla base dell'applicativo "Social Exposure Analyzer". 
 Il sistema si prefigge l'obiettivo di automatizzare la raccolta, l'analisi e la validazione di dati provenienti da fonti aperte (**OSINT - Open Source Intelligence**, ovvero l'intelligence basata su dati accessibili pubblicamente su internet) al fine di quantificare l'esposizione al rischio di ingegneria sociale (Social Engineering) di uno specifico bersaglio.
