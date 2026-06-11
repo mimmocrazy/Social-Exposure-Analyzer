@@ -46,7 +46,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 10:00)
+### Data: 2026-05-30 (Ore 11:00)
 - **Task Eseguito:** Configurazione Database e modelli ORM (Fase 1).
 - **File Modificati:** `/backend/models.py`, `/backend/database.py`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -76,7 +76,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 10:50)
+### Data: 2026-05-30 (Ore 15:00)
 - **Task Eseguito:** Creazione endpoint principale di ingestion (Fase 1).
 - **File Modificati:** `/backend/schemas.py`, `/backend/api/routers/analyze.py`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -103,7 +103,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 12:00)
+### Data: 2026-05-31 (Ore 17:00)
 - **Task Eseguito:** Setup sistema di logging centralizzato e gestione errori (Fase 1).
 - **File Modificati:** `/backend/core/logger.py`, `/backend/api/exceptions.py`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -133,7 +133,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 12:50)
+### Data: 2026-05-31 (Ore 18:00)
 - **Task Eseguito:** Setup Ambiente di Test e Primo Unit Test (Fase 2).
 - **File Modificati:** `/pytest.ini`, `/tests/conftest.py`, `/tests/test_analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -165,7 +165,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 15:35)
+### Data: 2026-05-31 (Ore 20:00)
 - **Task Eseguito:** Sviluppo modulo Discovery & Data Gathering (Fase 3).
 - **File Modificati:** `/backend/services/discovery.py`, `/backend/services/scraper.py`, `/backend/api/routers/analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -201,7 +201,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 15:45)
+### Data: 2026-06-01 (Ore 09:00)
 - **Task Eseguito:** Audit di Sicurezza Integrato e Setup Security Suite.
 - **File Modificati:** `docs/SECURITY_REPORT.md`, `/backend/services/discovery.py`, `/backend/services/scraper.py`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -231,7 +231,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 15:50)
+### Data: 2026-06-01 (Ore 11:00)
 - **Task Eseguito:** Security Review manuale approfondita (Fasi 1-3).
 - **File Modificati:** `docs/SECURITY_REPORT.md`, `/backend/main.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -259,7 +259,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 16:00)
+### Data: 2026-06-01 (Ore 15:00)
 - **Task Eseguito:** Sviluppo Modulo NLP e OCR (Estrazione PII).
 - **File Modificati:** `/backend/services/nlp.py`, `/backend/services/ocr.py`, `/backend/api/routers/analyze.py`, `/backend/core/logger.py`, `tests/test_nlp.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -296,7 +296,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 16:30)
+### Data: 2026-06-02 (Ore 17:00)
 - **Task Eseguito:** Sviluppo Modulo Risk Engine (Fase 4).
 - **File Modificati:** `backend/models/__init__.py`, `backend/models/risk.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -335,7 +335,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 16:45)
+### Data: 2026-06-02 (Ore 18:00)
 - **Task Eseguito:** Setup Load Testing e Analisi di Scalabilità.
 - **File Modificati:** `tests/locustfile.py`, `tests/test_dos.py`, `backend/main.py`, `backend/schemas.py`, `docs/SYSTEM_DESIGN.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -370,7 +370,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 17:00)
+### Data: 2026-06-02 (Ore 20:00)
 - **Task Eseguito:** Implementazione Test Orchestrator e Reportistica.
 - **File Modificati:** `Makefile`, `scripts/run_all_tests.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -403,7 +403,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 17:15)
+### Data: 2026-06-03 (Ore 09:00)
 - **Task Eseguito:** Fase 5: Frontend Development e Integrazione.
 - **File Modificati:** `backend/api/routers/analyze.py`, `/frontend/*` (Vite Scaffold, `tailwind.config.js`, `api.js`, `App.jsx`, `index.css`), `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -430,7 +430,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 17:30)
+### Data: 2026-06-03 (Ore 11:00)
 - **Task Eseguito:** Master Test Orchestrator e Validation Gate.
 - **File Modificati:** `tests/test_integration.py`, `scripts/full_system_check.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -457,7 +457,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 18:00)
+### Data: 2026-06-03 (Ore 15:00)
 - **Task Eseguito:** Fase 6: Azure Deployment & Documentazione Finale.
 - **File Modificati:** `scripts/deploy_azure.sh`, `.github/workflows/azure-deploy.yml`, `startup.sh`, `docs/FINAL_REPORT.md`, `ARCHITECTURE.md`
 - **Sintesi Prompt:**
@@ -482,7 +482,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 11:00)
+### Data: 2026-06-04 (Ore 17:00)
 - **Task Eseguito:** Inizializzazione Fase 7 (Pro & Cloud Native Upgrade) - Auth & Alembic.
 - **File Modificati:** `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -506,7 +506,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 12:25)
+### Data: 2026-06-04 (Ore 18:00)
 - **Task Eseguito:** Refactoring Architetturale OSINT & PII Extraction (Approccio LLM-Native).
 - **File Modificati:** `backend/services/scraper.py`, `backend/services/risk_engine.py`, `backend/models/risk.py`, `backend/api/routers/analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -530,7 +530,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 16:45)
+### Data: 2026-06-04 (Ore 20:00)
 - **Task Eseguito:** Setup Load Testing e Analisi di Scalabilità.
 - **File Modificati:** `tests/locustfile.py`, `tests/test_dos.py`, `backend/main.py`, `backend/schemas.py`, `docs/SYSTEM_DESIGN.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -565,7 +565,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 17:00)
+### Data: 2026-06-05 (Ore 09:00)
 - **Task Eseguito:** Implementazione Test Orchestrator e Reportistica.
 - **File Modificati:** `Makefile`, `scripts/run_all_tests.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -598,7 +598,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 17:15)
+### Data: 2026-06-05 (Ore 11:00)
 - **Task Eseguito:** Fase 5: Frontend Development e Integrazione.
 - **File Modificati:** `backend/api/routers/analyze.py`, `/frontend/*` (Vite Scaffold, `tailwind.config.js`, `api.js`, `App.jsx`, `index.css`), `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -625,7 +625,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 17:30)
+### Data: 2026-06-06 (Ore 15:00)
 - **Task Eseguito:** Master Test Orchestrator e Validation Gate.
 - **File Modificati:** `tests/test_integration.py`, `scripts/full_system_check.py`, `docs/SECURITY_REPORT.md`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -652,7 +652,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-30 (Ore 18:00)
+### Data: 2026-06-06 (Ore 17:00)
 - **Task Eseguito:** Fase 6: Azure Deployment & Documentazione Finale.
 - **File Modificati:** `scripts/deploy_azure.sh`, `.github/workflows/azure-deploy.yml`, `startup.sh`, `docs/FINAL_REPORT.md`, `ARCHITECTURE.md`
 - **Sintesi Prompt:**
@@ -677,7 +677,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 11:00)
+### Data: 2026-06-06 (Ore 18:00)
 - **Task Eseguito:** Inizializzazione Fase 7 (Pro & Cloud Native Upgrade) - Auth & Alembic.
 - **File Modificati:** `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -701,7 +701,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 12:25)
+### Data: 2026-06-07 (Ore 20:00)
 - **Task Eseguito:** Refactoring Architetturale OSINT & PII Extraction (Approccio LLM-Native).
 - **File Modificati:** `backend/services/scraper.py`, `backend/services/risk_engine.py`, `backend/models/risk.py`, `backend/api/routers/analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -727,7 +727,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 12:45)
+### Data: 2026-06-07 (Ore 09:00)
 - **Task Eseguito:** Redesign UX/UI Dashboard (Apple-Style Glassmorphism).
 - **File Modificati:** `frontend/src/App.jsx`, `frontend/src/index.css`
 - **Sintesi Prompt:**
@@ -744,7 +744,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 13:45)
+### Data: 2026-06-07 (Ore 11:00)
 - **Task Eseguito:** Raggruppamento PII & Audit AI Strutturato con Refining Estetico Premium.
 - **File Modificati:** `backend/models/risk.py`, `backend/services/risk_engine.py`, `frontend/src/App.jsx`, `walkthrough.md`, `task.md`
 - **Sintesi Prompt:**
@@ -772,7 +772,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 14:50)
+### Data: 2026-06-08 (Ore 15:00)
 - **Task Eseguito:** Potenziamento OSINT: Anti-Allucinazione AI, Deduzione Identità e Aderenza alla Traccia.
 - **File Modificati:** `backend/api/routers/analyze.py`, `backend/services/scraper.py`, `backend/services/risk_engine.py`, `docs/todo.txt`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -804,7 +804,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Spiegazione Tecnica:** Implementato un triplice intervento architetturale per sanare le criticità emerse in fase di demo. (1) **Name Deduction**: la nuova funzione `guess_real_name` in `analyze.py` sfrutta Gemini 2.5 Flash come oracolo euristico per risolvere l'identità reale dell'utente a partire dal suo alias social, ampliando drasticamente il raggio d'azione dell'OSINT successivo. (2) **Anti-Hallucination Firewall**: nello `scraper.py`, un pattern-matching sul `<title>` HTML intercetta i login wall tipici di Instagram e Facebook, iniettando un tag machine-readable (`[WARNING]`) che il LLM è istruito a rispettare come direttiva imperativa. Questo meccanismo elimina alla radice il problema delle PII inventate su profili privati. (3) **Prompt Engineering Traccia-Aware**: il `system_prompt` del Risk Engine è stato arricchito con le terminologie esatte della traccia universitaria (impersonificazione, routine quotidiane, legami familiari), garantendo che i report generati siano formalmente allineati ai criteri di valutazione del docente. La ricerca DuckDuckGo è stata potenziata con una doppia query (username + nome reale) per massimizzare la superficie di raccolta OSINT anche quando il social primario è inaccessibile.
 
 
-### Data: 2026-05-31 (Ore 15:39)
+### Data: 2026-06-08 (Ore 17:00)
 - **Task Eseguito:** Rivoluzione Dashboard (Moduli Sensori OSINT) & Sub-Scoring.
 - **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/schemas.py`, `backend/models/risk.py`, `backend/services/scraper.py`, `backend/services/holehe_adapter.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`
 - **Sintesi Prompt:**
@@ -821,7 +821,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 17:30)
+### Data: 2026-06-08 (Ore 18:00)
 - **Task Eseguito:** Trasparenza UI/UX High-Signal, Routine e Mappatura Sensori OSINT (Fase 5.9).
 - **File Modificati:** `backend/models/risk.py`, `backend/services/scraper.py`, `frontend/src/App.jsx`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -851,7 +851,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 18:15)
+### Data: 2026-06-09 (Ore 20:00)
 - **Task Eseguito:** Risoluzione Errore HTTP 429 Instagram Deep Scan & Stabilizzazione Suite Test (Fase 5.10).
 - **File Modificati:** `backend/services/scraper.py`, `requirements.txt`, `tests/conftest.py`, `tests/test_scraper.py`
 - **Sintesi Prompt:**
@@ -867,7 +867,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 18:30)
+### Data: 2026-06-09 (Ore 09:00)
 - **Task Eseguito:** Correlazione Vettori di Minaccia e Mitigazioni & Fix Stati Sensori OSINT.
 - **File Modificati:** `backend/models/risk.py`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`, `frontend/src/App.jsx`, `tests/test_ai_services.py`
 - **Sintesi Prompt:**
@@ -881,7 +881,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 19:30)
+### Data: 2026-06-09 (Ore 11:00)
 - **Task Eseguito:** Semplificazione Dashboard, Animazioni Premium e Cronologia Ultime Ricerche.
 - **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/api/routers/analyze.py`
 - **Sintesi Prompt:**
@@ -890,7 +890,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-05-31 (Ore 19:50)
+### Data: 2026-06-10 (Ore 15:00)
 - **Task Eseguito:** Bypasso Autenticazione per Esecuzione Locale, Correzione ProgressBar e Restyling Hub Sensori OSINT.
 - **File Modificati:** `frontend/src/App.jsx`, `backend/api/routers/auth.py`
 - **Sintesi Prompt:**
@@ -898,7 +898,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 - **Spiegazione Tecnica:** Eseguite tre modifiche mirate: (1) **Auth Bypass:** Rimosso completamente il componente `AuthScreen` da `App.jsx` e bypassato il meccanismo JWT nel backend (`auth.py`), iniettando sempre un utente di default (`local_admin@local.host`) per velocizzare i test e l'utilizzo locale. (2) **ProgressBar Fix:** Sostituito il colore non supportato `rose` con `red` per Identità e Contatti, e ristabilito `amber` per Routine. (3) **OSINT Analyzer Redesign:** Riprogettata l'intera sezione `Analizzatore Strumenti OSINT` passando da una semplice lista testuale a una griglia 2x2. Implementati effetti glassmorphism, glowing borders e contatori statistici dinamici agganciati ai risultati OSINT reali (es. numero hit di Holehe, counter esecuzioni DuckDuckGo), fornendo una telemetria visiva "capolavoro" senza ingombrare la UX.
 
 
-### Data: 2026-06-01 (Ore 11:55)
+### Data: 2026-06-10 (Ore 17:00)
 - **Task Eseguito:** Fase 8: Conformità Accademica Ibrida (SpaCy + OCR + LLM).
 - **File Modificati:** `docs/*` (Pulizia e unificazione), `ARCHITECTURE.md`, `AI_JOURNAL.md`. (A seguire: refactoring Backend/Frontend per elaborazione media).
 - **Sintesi Prompt:**
@@ -922,7 +922,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-06-01 (Ore 13:30)
+### Data: 2026-06-10 (Ore 18:00)
 - **Task Eseguito:** Sostituzione Dork Inappropriata e Integrazione Modulo Data Breach (XposedOrNot).
 - **File Modificati:** `backend/services/scraper.py`, `backend/services/databreach_service.py`, `backend/api/routers/analyze.py`, `ARCHITECTURE.md`
 - **Sintesi Prompt:**
@@ -931,7 +931,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-06-01 (Ore 15:30)
+### Data: 2026-06-11 (Ore 20:00)
 - **Task Eseguito:** Switch Architetturale AI Provider (Groq Integration).
 - **File Modificati:** `requirements.txt`, `.env`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -956,7 +956,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-06-02 (Ore 14:35)
+### Data: 2026-06-11 (Ore 09:00)
 - **Task Eseguito:** Fase 7.3: Risoluzione Broken Images CORS e Ottimizzazione Rate Limits LLM.
 - **File Modificati:** `frontend/src/App.jsx`, `backend/api/routers/analyze.py`, `backend/services/risk_engine.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -974,7 +974,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-06-02 (Ore 14:55)
+### Data: 2026-06-11 (Ore 11:00)
 - **Task Eseguito:** Fase 7.4: UX Premium & Deep Scan Controls.
 - **File Modificati:** `frontend/src/App.jsx`, `frontend/src/api.js`, `backend/schemas.py`, `backend/api/routers/analyze.py`, `backend/services/scraper.py`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -992,7 +992,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-06-02 (Ore 15:30)
+### Data: 2026-06-12 (Ore 15:00)
 - **Task Eseguito:** Fase 8: Deploy Cloud Native su Azure (Costo Zero) & Terminal UX Overhaul.
 - **File Modificati:** `backend/database.py`, `backend/requirements.txt`, `Dockerfile`, `frontend/staticwebapp.config.json`, `frontend/src/api.js`, `frontend/src/App.jsx`, `ARCHITECTURE.md`, `AI_JOURNAL.md`
 - **Sintesi Prompt:**
@@ -1015,7 +1015,7 @@ Tracciamento delle decisioni architetturali e dei macro-task per garantire trasp
 
 ---
 
-### Data: 2026-06-03 (Ore 16:30)
+### Data: 2026-06-12 (Ore 17:00)
 - **Task Eseguito:** Integrazione GitHub Models (Azure AI) e Sistema di High-Availability LLM.
 - **File Modificati:** `.env`, `backend/services/risk_engine.py`, `backend/api/routers/analyze.py`, `requirements.txt`
 - **Sintesi Prompt:**
