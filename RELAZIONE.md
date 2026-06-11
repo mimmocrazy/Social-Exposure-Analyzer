@@ -317,24 +317,30 @@ Un'architettura di grado enterprise non può dipendere deterministicamente da un
 *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover*
 ```python
 async def risk_engine_analysis(payload: str) -> dict:
+    import os
+    # Lettura dinamica del provider primario dalle Environment Variables del Cloud
+    primary_ai = os.getenv("AI_PROVIDER", "gemini").lower()
+    
     # Array di fornitori esterni (Nodi AI) a scalare
     providers = [
-        ("GitHub Models (Azure AI)", query_github_models_api),
-        ("Google Gemini", query_gemini_api),
-        ("Groq Llama Vision", query_groq_api)
+        ("GitHub Models", call_github),
+        ("Groq Vision", call_groq),
+        ("Google Gemini", call_gemini)
     ]
+    
+    # Riordino logico della matrice per posizionare il nodo primario in testa
+    providers.sort(key=lambda x: 0 if primary_ai in x[0].lower() else 1)
     
     for provider_name, provider_function in providers:
         try:
-            # Tenta la chiamata di rete al provider corrente
-            logger.info(f"Interrogazione LLM tramite nodo primario: {provider_name}")
+            logger.info(f"Interrogazione LLM tramite nodo: {provider_name}")
             return await provider_function(payload)
         except Exception as e:
             # In caso di Service Unavailable (503) o Rate Limit (429) il sistema intercetta
             logger.error(f"Fallimento di rete sul nodo {provider_name}. Switch al provider di Fallback in corso...")
             
     # Se la matrice di High Availability è interamente collassata
-    raise BackendExhaustionError("Alta disponibilità esaurita: tutti i nodi AI mondiali in down. Impossibile completare l'audit.")
+    raise BackendExhaustionError("Alta disponibilità esaurita: tutti i nodi AI mondiali in down.")
 ```
 </div>
 Questo meccanismo di failover sequenziale rende l'infrastruttura estremamente resiliente: il traffico interroga il nodo prioritario Azure; se questo fallisce, l'eccezione viene soppressa e il carico viene deviato istantaneamente su Google Gemini, per poi passare a Groq. Si assicura in tal modo la generazione ininterrotta del report verso il frontend.
@@ -416,6 +422,7 @@ Per scongiurare il potenziale abuso di un framework di raccolta dati aperto vers
 - **Prevenzione SSRF (Server-Side Request Forgery):** L'applicativo accetta indirizzi URL esterni direttamente dal browser dell'utente (ad esempio il link al profilo che si vuole spiare). Un attaccante informatico potrebbe alterare la richiesta inserendo un indirizzo IP speciale, costringendo il server web ad interrogare la propria rete cloud interna (comportandosi da Proxy). È implementato un filtraggio a priori all'interno del dispatcher HTTP che nega risolutamente la richiesta verso classi IP di loopback locali (es. la subnet `127.0.0.1/8` o il canonico `169.254.169.254` usato per esfiltrare credenziali temporanee nelle macchine virtuali su cloud provider).
 - **Protezione da Denial of Service e Denial of Wallet (DoS / DoW):** L'inserimento malevolo in input di un profilo social mastodontico (contenente, ad esempio, centinaia di migliaia di commenti) causerebbe un'esplosione esponenziale della quantità di testo inviata alle API a pagamento per l'Intelligenza Artificiale, prosciugando le quote di fatturazione o mandando la risorsa Cloud in blocco computazionale permanente (*Out-Of-Memory*). Si è optato per l'implementazione algoritmica di un truncatore dinamico hardware (`cap_limit = 100000`) che taglia preventivamente in modo chirurgico i token in eccedenza.
 - **PII Masking e Prevenzione Log Poisoning:** Nelle operazioni di monitoraggio da parte di tecnici e sviluppatori (DevOps), depositare file diagnostici (Log) contenenti passaporti, email e numeri di telefono su server remoti, espone l'azienda a gravissime falle di sicurezza collaterali in caso di attacco esfiltrativo dell'infrastruttura stessa. Il sistema fa affidamento su un gestore di log specializzato che incorpora a monte funzioni di filtri basati su pattern matematici. Ogni qualvolta una sequenza alfabetica è identificabile come numero telefonico o casella di posta, viene bloccata dalla stesura e rimpiazzata attivamente e irreversibilmente col tag placeholder `[EMAIL-MASKED]`.
+- **OS-Level Secrets Injection (No `.env` in Cloud):** I segreti crittografici (es. le API Key di Groq, Gemini o il Token PostgreSQL) non sono mai salvati a livello di file testuale fisico in produzione. Mentre in sviluppo locale il codice si appoggia comodamente al file `.env`, l'infrastruttura di produzione su Azure è stata reingegnerizzata per acquisire dinamicamente tali stringhe direttamente dal Kernel della macchina virtuale tramite il comando universale `os.getenv()`. Le chiavi sono custodite in via esclusiva nei vault virtuali sicuri di *Azure App Service*, neutralizzando totalmente la letale vulnerabilità del furto dei file di configurazione (`.env leakage`).
 
 <div style="page-break-before: always;"></div>
 
@@ -503,7 +510,7 @@ Questo profilo artificiale è stato appositamente configurato con dati ed immagi
 ## 7. Utilizzo di AI Generativa nello Sviluppo
 Come previsto esplicitamente dalla traccia valutativa di progetto, la natura del codice sorgente è stata il prodotto di una stretta collaborazione ingegneristica con interfacce LLM adottando l'ormai radicato paradigma di sviluppo moderno noto come *Pair-Programming e Agentic Coding*.
 
-A garanzia di totale trasparenza e riproducibilità del processo decisionale, l'intera genesi del progetto è stata minuziosamente documentata all'interno del file **`docs/archive/AI_JOURNAL.md`**. Questo registro adotta un pattern di formattazione rigoroso e standardizzato per ogni singola interazione architetturale, strutturato secondo i seguenti campi:
+A garanzia di totale trasparenza e riproducibilità del processo decisionale, l'intera genesi del progetto è stata minuziosamente documentata all'interno del file **`AI_JOURNAL.md`** nella cartella principale del progetto. Questo registro adotta un pattern di formattazione rigoroso e standardizzato per ogni singola interazione architetturale, strutturato secondo i seguenti campi:
 1. **Data e Ora:** Timestamp cronologico dell'intervento.
 2. **Task Eseguito:** Titolo del macro-task o della feature implementata.
 3. **File Modificati:** Elenco esplicito dei moduli sorgente intaccati.
@@ -514,18 +521,12 @@ A garanzia di totale trasparenza e riproducibilità del processo decisionale, l'
 - **Antigravity IDE (Gemini 3.1 Pro / Claude Opus 4.6):** È stato l'epicentro operativo adoperato integralmente nello sviluppo di micro-servizi asincroni tramite framework FastAPI, impiegato altresì a livello analitico e procedurale per identificare le corrette logiche comportamentali nel gestire le collisioni delle dipendenze di pacchetto.
 - **Google Gemini (Gemini 1.5 Pro / Flash):** Supporto esterno accademico utilizzato nello studio isolato delle documentazioni obsolete o criptiche sulle interfacce strutturali e gli schemi ad albero del file system utilizzato per orchestrare React SPA in ambiente di compilazione Vite e Docker.
 
-**Evidenze Pratiche e Prompt Analitici Impiegati:**
-1. *Deployment e DevOps Cloud:* "Redigi un `Dockerfile` strutturato nativamente sulla base minima Linux di Python (`python:3.12-slim`). Implementa un design multistage effettuando inizialmente la copia puramente selettiva di `requirements.txt` isolata dal codice sorgente, al mero scopo di forzare la conservazione delle librerie in cache e non installarle a ogni rigenerazione. Poi redigi un semplice script PowerShell per inviare e avviare la medesima immagine sull'Azure App Service sottoscritto."
-2. *Architettura Non Bloccante:* "Progetta in Python/FastAPI il *router layer* dedicato a ricevere una struttura POST HTTP per incamerare URL dei social network ed avviare lo spidering. Essendo noto che l'azione OSINT prenderà due minuti interi per ultimarsi e intaserebbe a dismisura le pipe web di rete, codifica il *router* agganciando le librerie `BackgroundTasks` native ereditate da Starlette: la pipeline deve liberare contestualmente un *UUID* univoco HTTP 202 di accettazione al client mentre un processo gemello secondario analizza autonomamente in remoto il pacchetto stringhe."
-3. *Ottimizzazioni Hook React JS:* "Utilizza esplicitamente la logica offerta dall'ecosistema di cache e fetch `React Query` all'interno della view della dashboard terminale. Implementa rigorosamente un ciclo in short-polling sfruttando il property hook denominato `refetchInterval`. Deve emettere una singola request ogni scatto fisso di 800ms per sorvegliare lo stato PENDING di una coda; non appena la variabile muterà a COMPLETED a esecuzione finita spegnendo la chiamata condizionale."
-4. *Gestione Resilienza High-Availability:* "Sei un ingegnere software Senior. Genera una funzione modulare `assess_social_risk`. Al suo interno applica formalmente e in logica robusta il paradigma *Circuit Breaker*. Mappa un Array a tre nodi per la generazione LLM dei report di intelligence. Assicurati rigorosamente che qualora la chiamata di rete al *Main Node GitHub Models API* fallisca o si schianti per errore logico `HTTP 429` emesso dai Rate-Limiter Microsoft, il programma continui con successo silenziando l'output standard e ripiegando trasparentemente ai successivi array configurati."
-
 <div style="page-break-before: always;"></div>
 
 ## 8. Conclusioni e Sviluppi Futuri
 Il lavoro svolto ha permesso di progettare e implementare con successo una piattaforma completa e resiliente per la valutazione quantitativa dell'esposizione al rischio di ingegneria sociale. L'adozione del framework FastAPI per il backend, unita a un pattern produttore-consumatore basato su task asincroni in background, ha dimostrato come sia possibile orchestrare pipeline OSINT complesse ed esecuzioni computazionalmente onerose (come OCR ed NLP) senza compromettere la reattività e la stabilità delle interfacce utente.
 
-La migrazione architetturale verso un ecosistema cloud interamente PaaS su Microsoft Azure (App Service, Storage Account per static web hosting e Flexible Server PostgreSQL) ha concretizzato i benefici fondamentali del cloud-native computing: scalabilità verticale e orizzontale semplificata, continuità operativa grazie ai webhook CI/CD con Azure Container Registry, e prossimità di rete tramite integrazione in VNet privata per la sicurezza dei canali di persistenza. Inoltre, l'implementazione del Circuit Breaker multilivello per i servizi AI garantisce un'elevata affidabilità applicativa, svincolando il sistema da blackout improvvisi dei singoli provider AI.
+La migrazione architetturale verso un ecosistema cloud interamente PaaS su Microsoft Azure (App Service, Storage Account per static web hosting e Flexible Server PostgreSQL) ha concretizzato i benefici fondamentali del cloud-native computing: scalabilità verticale e orizzontale semplificata, continuità operativa grazie all'automazione totale delle pipeline CI/CD governate da **GitHub Actions**, e prossimità di rete tramite integrazione in VNet privata per la sicurezza dei canali di persistenza. Inoltre, l'implementazione del Circuit Breaker multilivello per i servizi AI garantisce un'elevata affidabilità applicativa, svincolando il sistema da blackout improvvisi dei singoli provider AI.
 
 Come sviluppi futuri, l'infrastruttura si presta a diverse ottimizzazioni incrementali:
 1. **Canale Bidirezionale WebSocket:** Sostituire lo Short Polling lato client con una comunicazione persistente full-duplex basata su WebSockets, riducendo ulteriormente il volume delle richieste HTTP verso il backend e migliorando l'immediatezza della telemetria dei task in esecuzione.
