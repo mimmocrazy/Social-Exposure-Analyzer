@@ -187,9 +187,20 @@ Per evitare la fastidiosa problematica del "sul mio computer locale funzionava",
 
 L'artefatto compilato non viene esposto su registri pubblici, ma inviato in modo sicuro all'**Azure Container Registry (ACR)** (`socialexposureregistry`), un registro privato per la memorizzazione di immagini Docker offerto da Microsoft per ambiti aziendali.
 
-**Integrazione CI/CD (Continuous Integration / Continuous Deployment):**
-Questa pratica automatizza i rilasci del software. L'App Service è nativamente agganciato all'ACR tramite **Webhook** (una notifica HTTP inviata automaticamente quando si verifica un evento). Ad ogni *push* (caricamento) di una nuova immagine aggiornata nel registro, l'App Service riceve la notifica, avvia il *pull* (scaricamento) della nuova immagine, istanzia un nuovo container e, solo quando quest'ultimo è pienamente operativo (Zero-Downtime Deployment), inizia a indirizzarvi il traffico spegnendo il container obsoleto senza causare interruzioni agli utenti connessi.
+**Integrazione CI/CD e Automazione GitHub Actions:**
+Questa pratica automatizza in toto i rilasci del software. Al netto della configurazione iniziale (eseguita tramite file YAML nella cartella `.github/workflows`), lo sviluppatore è del tutto sollevato dal lancio manuale di build Docker o caricamenti di file. 
+È sufficiente inviare il nuovo codice al repository tramite un banale `git push`. Questa singola azione agisce da "trigger" (grilletto) innescando dei server virtuali offerti da GitHub che:
+1. Compilano il frontend React e lo iniettano nell'Azure Storage Account.
+2. Costruiscono l'immagine Docker del backend e la inviano all'ACR.
 
+A questo punto, l'App Service, che è nativamente agganciato all'ACR tramite **Webhook** (una notifica HTTP inviata al variare di un evento), riceve l'immagine, istanzia un nuovo container e, solo quando quest'ultimo è pienamente operativo (Zero-Downtime Deployment), inizia a indirizzarvi il traffico spegnendo l'istanza obsoleta senza causare interruzioni agli utenti.
+
+<div class="figure-container">
+    <img src="images/github_actions.png" alt="GitHub Actions Pipeline" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <div class="caption">
+        <strong>Automazione GitHub Actions:</strong> La schermata certifica l'avvenuta esecuzione automatica e parallela dei workflow di "Build and Deploy" sia per il frontend che per il backend sul cloud Azure, attivati istantaneamente e in modo trasparente dal comando di push.
+    </div>
+</div>
 ### 2.4 Persistenza Relazionale (Azure Database for PostgreSQL Flexible Server)
 La conservazione a lungo termine degli audit generati e delle configurazioni utente è demandata ad **Azure Database for PostgreSQL Flexible Server** (`social-exposure-db`).
 L'architettura *Flexible Server* si distacca dai vecchi modelli rigidi per via della sua architettura a zone ad alta affidabilità. 
