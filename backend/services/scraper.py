@@ -62,9 +62,9 @@ async def gather_profile_metadata(
                         
                         # Fallback: Se la timeline è vuota ma abbiamo usato un sessionid, 
                         # Instagram potrebbe aver bloccato i media per le richieste autenticate.
-                        # Riproviamo senza sessionid per i profili pubblici.
+                        # Riproviamo in modalità anonima (senza sessionid) per i profili pubblici.
                         if not timeline and ig_sessionid:
-                            logger.info("Timeline vuota con sessionid. Tento fallback senza sessionid (profilo pubblico)...")
+                            logger.info("Timeline non accessibile con la sessione attuale. Tento fallback Deep Scan in modalità anonima...")
                             fallback_headers = ig_headers.copy()
                             if "Cookie" in fallback_headers:
                                 del fallback_headers["Cookie"]
@@ -74,6 +74,8 @@ async def gather_profile_metadata(
                                 user_data_fb = ig_resp_fallback.json().get("data", {}).get("user", {})
                                 if user_data_fb:
                                     timeline = user_data_fb.get("edge_owner_to_timeline_media", {}).get("edges", [])
+                                    if timeline:
+                                        logger.info("Fallback anonimo riuscito! Profilo pubblico rilevato, media estratti con successo.")
                                     
                         recent_locations = []
                         recent_captions = []
@@ -135,7 +137,7 @@ async def gather_profile_metadata(
             parsed = urllib.parse.urlparse(url)
             is_instagram = "instagram.com" in (parsed.hostname or "")
             if is_instagram and has_deep_scan:
-                logger.info(f"Skipping standard scraping per {url} in quanto il Deep Scan è andato a buon fine.")
+                logger.info(f"Salto il Web Scraping classico per {url}: i dati sono già stati catturati tramite Deep Scan.")
                 continue
 
             profile_data = {

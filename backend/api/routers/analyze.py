@@ -247,6 +247,12 @@ async def run_scraping_task(
                     except Exception as e:
                         logger.warning(f"Errore download ocr o riassunto immagine {idx}: {e}")
 
+        # Rinomina la sorgente per i risultati di Sherlock standard
+        if sherlock_attempted:
+            for item in raw_data:
+                if item.get("source") == "Web Scraping":
+                    item["source"] = "Sherlock Username Scan"
+
         # NLP Pipeline classica (SpaCy) come da requisiti universitari
         from backend.services.nlp import extract_pii
         combined_text = " ".join([p.get("bio", "") for p in raw_data if p.get("bio")])
@@ -265,6 +271,7 @@ async def run_scraping_task(
             "databreach_results": [],
             "ocr_results": ocr_results_payload,
             "spacy_entities": spacy_payload,
+            "sherlock_hits": urls_to_scrape if sherlock_attempted else [],
             "metadata": {
                 "target": target,
                 "real_name_deduced": real_name_deduced,

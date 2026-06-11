@@ -3,7 +3,8 @@ import json
 import time
 from google import genai
 from google.genai import types
-from backend.models.risk import RiskReport
+from backend.models.risk import RiskReport, ScoreBreakdown
+from backend.models import RiskLevel
 from backend.core.logger import logger
 
 import re
@@ -107,14 +108,13 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
     
     Il campo `value` deve contenere SOLO il dato puro e sintetico (es. "+39 333 1234567" oppure "AB 123 CD" oppure "TechCorp"). Niente preamboli o descrizioni.
 
-    ### 3. CALCOLO DEL RISCHIO MATEMATICO
-    Non generare punteggi arbitrari. Costruisci il punteggio globale (`score`, 0-100) come SOMMA MATEMATICA ESATTA degli elementi in `score_breakdown`.
-    Esempio di valutazione (adatta proporzionalmente):
-    - Email esposte, Data Breach o Password: fino a +30
-    - Numeri di telefono o indirizzi di domicilio esposti: fino a +25
-    - Documenti fisici (badge, carte d'imbarco, targhe, biglietti): fino a +25
-    - Relazioni familiari o colleghi identificati: fino a +15
-    - Luoghi o Routine identificati: fino a +10
+    ### 3. VALUTAZIONE DELLA CRITICITÀ
+    NON generare tu un punteggio `score` o `sub_scores` globale, questi campi verranno calcolati matematicamente a valle dal sistema centrale. Per conformità allo schema JSON, imposta pure a 0 quei valori.
+    Concentrati sull'attribuire una `criticality` ESTREMAMENTE precisa (CRITICA, ALTA, MEDIA, BASSA) ad ogni singola vulnerabilità individuata in `mitigation_sections`. Sii spietato.
+    - Dati CRITICI: Email esposte, Data Breach, Password, Badge.
+    - Dati ALTI: Numeri di telefono, indirizzi, documenti fisici di viaggio, targhe.
+    - Dati MEDI: Relazioni familiari o colleghi identificati.
+    - Dati BASSI: Luoghi o Routine generiche identificate.
 
     ### 4. OUTPUT E MITIGAZIONE (RELAZIONE FOTO-VULNERABILITÀ)
     Se non ci sono dati validi, imposta `insufficient_data=True` e termina.
@@ -129,6 +129,12 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
     """
     global _gemini_is_down
     
+    if isinstance(raw_text, (dict, list)):
+        import json
+        raw_text = json.dumps(raw_text)
+    else:
+        raw_text = str(raw_text)
+        
     max_payload = 100000
     if len(raw_text) > max_payload:
         logger.warning(f"Risk Engine: payload troncato da {len(raw_text)} a {max_payload} caratteri per sicurezza.")
@@ -139,100 +145,26 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
     ai_provider = env_config.get("AI_PROVIDER", "gemini").lower()
     
     try:
-        if ai_provider == "github":
-            logger.info("Avvio analisi Risk Engine tramite GitHub Models (Azure AI)...")
-            import openai
-            github_token = os.getenv("GITHUB_TOKEN")
-            
-            if not github_token or github_token == "INSERISCI_QUI_IL_TUO_GITHUB_PAT":
-                logger.warning("GITHUB_TOKEN non configurato nel .env. Fallback a provider alternativo...")
-                ai_provider = "gemini" # Fallback a Gemini
-            else:
-                client = openai.OpenAI(
-                    base_url="https://models.inference.ai.azure.com",
-                    api_key=github_token,
-                )
+        async def call_gemini():
+            logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Strutturato con Fallback/Rotazione)...")
+            gemini_available = any(_is_model_available(m) for m in ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest'])
+            if not gemini_available or _gemini_is_down:
+                raise Exception("Tutti i modelli Gemini sono down o in timeout.")
                 
-                schema_instructions = f"\n\nRispondi RIGOROSAMENTE con un oggetto JSON che rispetti questo schema:\n{RiskReport.model_json_schema()}"
-                
-                try:
-                    completion = client.chat.completions.create(
-                        messages=[
-                            {"role": "system", "content": system_prompt + schema_instructions},
-                            {"role": "user", "content": payload_str}
-                        ],
-                        model="gpt-4o-mini",
-                        temperature=0.2,
-                        response_format={"type": "json_object"}
-                    )
-                    report = RiskReport.model_validate_json(completion.choices[0].message.content)
-                    logger.info("Successo con GitHub Models (gpt-4o-mini)!")
-                    return report
-                except Exception as e:
-                    logger.warning(f"Errore con gpt-4o-mini su GitHub Models: {e}. Fallback a gpt-4o...")
-                    try:
-                        completion = client.chat.completions.create(
-                            messages=[
-                                {"role": "system", "content": system_prompt + schema_instructions},
-                                {"role": "user", "content": payload_str}
-                            ],
-                            model="gpt-4o",
-                            temperature=0.2,
-                            response_format={"type": "json_object"}
-                        )
-                        report = RiskReport.model_validate_json(completion.choices[0].message.content)
-                        logger.info("Successo con GitHub Models (gpt-4o)!")
-                        return report
-                    except Exception as e2:
-                        logger.warning(f"Errore con gpt-4o su GitHub Models: {e2}. Fallback a Gemini/Groq...")
-                        ai_provider = "gemini" # Trigger fallback
-        
-        elif ai_provider == "groq":
-            logger.info("Avvio analisi Risk Engine tramite Groq (Llama 3.3 70B)...")
-            from groq import Groq
-            groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-            
-            # Llama3 requires the schema instructions clearly in the prompt when using JSON mode
-            schema_instructions = f"\n\nRispondi RIGOROSAMENTE con un oggetto JSON che rispetti questo schema:\n{RiskReport.model_json_schema()}"
-            
-            completion = groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": system_prompt + schema_instructions},
-                    {"role": "user", "content": payload_str}
-                ],
-                temperature=0.2,
-                response_format={"type": "json_object"}
-            )
-            
-            report = RiskReport.model_validate_json(completion.choices[0].message.content)
-            logger.info("Successo con Groq!")
-            return report
-            
-        gemini_available = any(_is_model_available(m) for m in ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest'])
-        if ai_provider == "gemini" and gemini_available and not _gemini_is_down:
-            logger.info("Avvio analisi Risk Engine tramite Gemini Pro (Structured Output con Fallback e Rotazione Chiavi)...")
             models_to_try = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-pro-latest']
-            
             keys_tried = 0
             max_keys = max(1, len(_gemini_keys_pool))
             
             while keys_tried < max_keys:
                 client = get_client()
-                
-                # Filtra i modelli disabilitati temporaneamente
                 active_models = [m for m in models_to_try if _is_model_available(m)]
-                
-                # Se tutti sono stati disabilitati, forziamo il riprovare tutti (magari è passato il timeout o siamo disperati)
                 if not active_models:
                     active_models = models_to_try
-                    
-                response = None
-                last_err = None
                 
+                response = None
                 for model_name in active_models:
                     try:
-                        logger.info(f"Tentativo di generazione report con modello {model_name}...")
+                        logger.info(f"Tentativo con Gemini {model_name}...")
                         def _call_gemini_risk(mod):
                             return client.models.generate_content(
                                 model=mod,
@@ -249,63 +181,170 @@ async def calculate_risk(raw_text: str, target: str = "Sconosciuto", real_name: 
                             asyncio.to_thread(_call_gemini_risk, model_name),
                             timeout=25.0
                         )
-                        logger.info(f"Successo con il modello {model_name}!")
+                        logger.info(f"Successo con Gemini {model_name}!")
                         break
                     except asyncio.TimeoutError:
-                        logger.warning(f"Timeout (25s) raggiunto per {model_name}. Passo al prossimo...")
                         _mark_model_failed(model_name, asyncio.TimeoutError())
-                        last_err = Exception(f"Timeout (25s) su {model_name}")
                     except Exception as e:
-                        err_str = str(e)
-                        short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
-                        logger.warning(f"Errore con il modello {model_name}: {short_err}. Provo il prossimo modello di fallback...")
                         _mark_model_failed(model_name, e)
-                        last_err = e
                         
                 if response is not None:
-                    report = RiskReport.model_validate_json(response.text)
-                    return report
-                
+                    return RiskReport.model_validate_json(response.text)
+                    
                 keys_tried += 1
-                # Se non abbiamo ancora provato tutte le chiavi, ruotiamo.
                 if keys_tried < max_keys:
                     rotate_gemini_key()
-                    continue 
                 else:
-                    logger.warning("Tutte le chiavi Gemini e i modelli hanno fallito. Fallback a Groq...")
-                    _gemini_is_down = True
-                    break # Esce dal while e va al fallback Groq
+                    raise Exception("Tutte le chiavi Gemini hanno fallito in rotazione.")
+            raise Exception("Chiamata Gemini fallita.")
 
-        # Fallback a Groq Llama3 per il Risk Engine
-        if _gemini_is_down or ai_provider == "groq":
-            logger.info("Avvio analisi Risk Engine tramite Groq Llama3...")
-            from groq import Groq
-            groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        async def call_github():
+            logger.info("Avvio analisi Risk Engine tramite GitHub Models (Azure AI)...")
+            import openai
+            github_token = os.getenv("GITHUB_TOKEN")
+            if not github_token or github_token == "INSERISCI_QUI_IL_TUO_GITHUB_PAT":
+                raise Exception("GITHUB_TOKEN non configurato o vuoto.")
+                
+            client = openai.OpenAI(base_url="https://models.inference.ai.azure.com", api_key=github_token)
+            schema_instructions = f"\n\nRispondi RIGOROSAMENTE con un oggetto JSON che rispetti questo schema:\n{RiskReport.model_json_schema()}"
             
+            try:
+                completion = client.chat.completions.create(
+                    messages=[{"role": "system", "content": system_prompt + schema_instructions}, {"role": "user", "content": payload_str}],
+                    model="gpt-4o-mini", temperature=0.2, response_format={"type": "json_object"}
+                )
+                return RiskReport.model_validate_json(completion.choices[0].message.content)
+            except Exception as e:
+                logger.warning(f"Errore gpt-4o-mini: {e}. Fallback interno a gpt-4o...")
+                completion = client.chat.completions.create(
+                    messages=[{"role": "system", "content": system_prompt + schema_instructions}, {"role": "user", "content": payload_str}],
+                    model="gpt-4o", temperature=0.2, response_format={"type": "json_object"}
+                )
+                return RiskReport.model_validate_json(completion.choices[0].message.content)
+
+        async def call_groq():
+            logger.info("Avvio analisi Risk Engine tramite Groq (Llama 3.3 70B)...")
+            from groq import Groq
+            groq_api_key = os.getenv("GROQ_API_KEY")
+            if not groq_api_key:
+                raise Exception("GROQ_API_KEY non configurata.")
+            groq_client = Groq(api_key=groq_api_key)
             schema_json = json.dumps(RiskReport.model_json_schema())
             groq_sys_prompt = system_prompt + f"\nRESTITUISCI ESATTAMENTE UN OGGETTO JSON CON LA SEGUENTE STRUTTURA: {schema_json}\nNon aggiungere NESSUN ALTRO TESTO."
             
             def _call_groq_risk():
                 return groq_client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
-                    messages=[
-                        {"role": "system", "content": groq_sys_prompt},
-                        {"role": "user", "content": payload_str}
-                    ],
-                    temperature=0.2,
-                    response_format={"type": "json_object"}
+                    messages=[{"role": "system", "content": groq_sys_prompt}, {"role": "user", "content": payload_str}],
+                    temperature=0.2, response_format={"type": "json_object"}
                 )
-                
             import asyncio
-            completion = await asyncio.wait_for(
-                asyncio.to_thread(_call_groq_risk),
-                timeout=30.0
-            )
+            completion = await asyncio.wait_for(asyncio.to_thread(_call_groq_risk), timeout=30.0)
+            return RiskReport.model_validate_json(completion.choices[0].message.content)
+
+        # Matrice di Fallback basata su AI_PROVIDER
+        providers = [
+            ("Gemini Pro", call_gemini),
+            ("GitHub Models", call_github),
+            ("Groq", call_groq)
+        ]
+        
+        if ai_provider == "github":
+            providers = [("GitHub Models", call_github), ("Groq", call_groq), ("Gemini Pro", call_gemini)]
+        elif ai_provider == "groq":
+            providers = [("Groq", call_groq), ("GitHub Models", call_github), ("Gemini Pro", call_gemini)]
+
+        report = None
+        for name, func in providers:
+            try:
+                report = await func()
+                if report:
+                    break
+            except Exception as e:
+                err_str = str(e).split('. {')[0] if '. {' in str(e) else str(e)[:150]
+                logger.warning(f"Rete non disponibile sul nodo {name} ({err_str}). Switch al provider di Fallback in corso...")
+                if name == "Gemini Pro":
+                    global _gemini_is_down
+                    _gemini_is_down = True
+                
+        if not report:
+            raise RuntimeError("Alta disponibilità esaurita: tutti i nodi AI mondiali (Gemini, GitHub, Groq) sono irraggiungibili.")
+
+        # --- Calcolo Deterministico dello Score ---
+        def calculate_deterministic_risk(rep: RiskReport) -> RiskReport:
+            total_score = 0
+            breakdown = []
+            sub_identity = 0
+            sub_network = 0
+            sub_routine = 0
             
-            content = completion.choices[0].message.content
-            report = RiskReport.model_validate_json(content)
-            return report
+            for section in rep.mitigation_sections:
+                crit = section.criticality.upper()
+                points = 0
+                if "CRITICA" in crit:
+                    points = 25
+                elif "ALTA" in crit:
+                    points = 15
+                elif "MEDIA" in crit:
+                    points = 5
+                elif "BASSA" in crit:
+                    points = 2
+                
+                if points > 0:
+                    total_score += points
+                    breakdown.append(ScoreBreakdown(
+                        reason=f"[{section.criticality}] {section.title}",
+                        points_added=points
+                    ))
+                
+                # Euristiche per smistare i punti nelle 3 categorie (Identity, Network, Routine)
+                tv = (section.threat_vector + " " + section.title).lower()
+                if "routine" in tv or "luog" in tv or "track" in tv or "fisic" in tv or "viaggi" in tv or "targa" in tv:
+                    sub_routine += points
+                elif "relazion" in tv or "social" in tv or "famigl" in tv or "network" in tv or "colleg" in tv or "amici" in tv:
+                    sub_network += points
+                else:
+                    sub_identity += points
             
+            # Applica un cap a 100
+            rep.score = min(100, max(0, total_score))
+            rep.score_breakdown = breakdown
+            
+            # Popola i threat vectors estratti in modo che il frontend li legga
+            extracted_threats = []
+            for section in rep.mitigation_sections:
+                if section.threat_vector and section.threat_vector not in extracted_threats:
+                    extracted_threats.append(section.threat_vector)
+            
+            if not rep.threat_vectors:
+                rep.threat_vectors = extracted_threats
+            else:
+                for t in extracted_threats:
+                    if t not in rep.threat_vectors:
+                        rep.threat_vectors.append(t)
+            
+            # Sub-scores calcolati matematicamente (moltiplicati per avere un peso visivo sulla progress bar, max 100)
+            if rep.sub_scores:
+                rep.sub_scores.identity_exposure = min(100, int(sub_identity * 2.0))
+                rep.sub_scores.network_exposure = min(100, int(sub_network * 2.0))
+                rep.sub_scores.routine_exposure = min(100, int(sub_routine * 2.0))
+            
+            # Sincronizza il RiskLevel con lo score matematico
+            if rep.score >= 75:
+                rep.level = RiskLevel.CRITICAL
+            elif rep.score >= 50:
+                rep.level = RiskLevel.HIGH
+            elif rep.score >= 25:
+                rep.level = RiskLevel.MEDIUM
+            else:
+                rep.level = RiskLevel.LOW
+            
+            logger.info(f"Punteggio di rischio deterministico calcolato: {rep.score}/100")
+            return rep
+
+        report = calculate_deterministic_risk(report)
+        return report
+
     except Exception as e:
         err_str = str(e)
         short_err = err_str.split('. {')[0] if '. {' in err_str else (err_str[:150] + "..." if len(err_str) > 150 else err_str)
