@@ -314,9 +314,11 @@ Affinché il risultato del ragionamento dell'AI sia interfacciabile in un ambien
 I fornitori mondiali di modelli linguistici (API Provider come OpenAI o Google) possono presentare blackout temporanei imprevisti o respingere le chiamate del nostro applicativo per esaurimento del budget orario di rete (il noto Errore `HTTP 429 Resource Exhausted / Too Many Requests`).
 Un'architettura di grado enterprise non può dipendere deterministicamente da un singolo fornitore di terze parti. È stato quindi implementato un pattern architetturale tipico dei sistemi distribuiti noto come **Circuit Breaker** (Interruttore Automatico).
 
-<div style="page-break-inside: avoid; margin-bottom: 15px;">
-    <div style="font-style: italic; margin-bottom: 10px; font-weight: bold;">Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover</div>
-<pre><code class="language-python">async def risk_engine_analysis(payload: str) -&gt; dict:
+<div style="page-break-before: always;"></div>
+
+#### *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover*
+```python
+async def risk_engine_analysis(payload: str) -> dict:
     import os
     # Lettura dinamica del provider primario dalle Environment Variables del Cloud
     primary_ai = os.getenv("AI_PROVIDER", "gemini").lower()
@@ -340,8 +342,8 @@ Un'architettura di grado enterprise non può dipendere deterministicamente da un
             logger.error(f"Fallimento di rete sul nodo {provider_name}. Switch al provider di Fallback in corso...")
             
     # Se la matrice di High Availability è interamente collassata
-    raise BackendExhaustionError("Alta disponibilità esaurita: tutti i nodi AI mondiali in down.")</code></pre>
-</div>
+    raise BackendExhaustionError("Alta disponibilità esaurita: tutti i nodi AI mondiali in down.")
+```
 Questo meccanismo di failover sequenziale rende l'infrastruttura estremamente resiliente: il traffico interroga il nodo prioritario Azure; se questo fallisce, l'eccezione viene soppressa e il carico viene deviato istantaneamente su Google Gemini, per poi passare a Groq. Si assicura in tal modo la generazione ininterrotta del report verso il frontend.
 
 ## 5. Frontend e Layer di Presentazione (React)
