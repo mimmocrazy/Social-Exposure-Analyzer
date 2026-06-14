@@ -256,7 +256,7 @@ Se il backend avesse adottato un approccio sincrono tradizionale, l'esecuzione d
 ### 3.1 Esecuzione Disaccoppiata (Pattern Produttore-Consumatore)
 Per risolvere questo limite strutturale, si è implementato un pattern software chiamato *Fire and Forget* (Spara e Dimentica), che disaccoppia l'interfaccia HTTP che riceve l'input dall'esecuzione materiale del lavoro.
 
-#### *Codice 3.1: Endpoint di avvio analisi (Riferimento a Figura 4)*
+#### *Codice 3.1: Endpoint di avvio analisi (Riferimento a [Figura 4](#figura-4))* <a id="codice-3-1"></a>
 ```python
 @app.post("/api/v1/analyze", status_code=status.HTTP_202_ACCEPTED)
 async def analyze_target(request: AnalysisRequest, background_tasks: BackgroundTasks):
@@ -276,12 +276,15 @@ L'Orchestratore esegue in background diverse pipeline parallele:
 - **Holehe OSINT:** Conduce un attacco enumerativo laterale (Side-Channel) per verificare la validità degli indirizzi email. Invia false richieste di recupero password a oltre 120 domini. L'assenza di un controllo stringente anti-abuso su molti portali terzi permette a questo modulo di evincere a quali piattaforme è iscritta la mail (e di conseguenza, il soggetto spiato).
 - **Sherlock Discovery:** Analizza dinamicamente migliaia di link web per tracciare lo username associato in diverse reti periferiche.
 
+**Concorrenza e Parallelismo Network (Asyncio):**
+Per scongiurare il blocco dei processi durante le lunghe interrogazioni di rete, l'intero layer OSINT non opera in modalità sequenziale (un dominio dopo l'altro) bensì in logica **concorrente**. L'infrastruttura fa un uso massiccio della libreria nativa `asyncio` per implementare il *Cooperative Multitasking* (I/O non bloccante). In particolare, l'interrogazione simultanea su centinaia di target (es. per Holehe o l'analisi di molteplici account email) viene parallelizzata sfruttando il costrutto `asyncio.gather(...)`. Questo comando raggruppa coroutine multiple, le "spara" in rete contemporaneamente e attende un'unica sincronizzazione al rientro, abbattendo drasticamente i tempi morti di latenza di rete e rendendo il discovery quasi istantaneo.
+
 **Scraping Meta e Impersonation (Graceful Degradation):**
 I sistemi di difesa Meta (Instagram e Facebook) bloccano ferocemente la lettura meccanica dei dati tramite rigidi "Login Wall" e controlli anti-bot basati sull'intelligenza artificiale. L'architettura aggira l'ostacolo eseguendo richieste di *Impersonation* (Impersonificazione). Tramite il payload del frontend, il sistema inietta chiavi crittografate di sessione autenticata (es. i cookie `sessionid`, `c_user`, `xs`) all'interno degli Header delle richieste HTTP generate in Python. Meta crede di dialogare con un browser umano autenticato e spalanca le porte, permettendo al bot di estrarre la cronologia privata dei post, le geolocalizzazioni e l'albero nascosto delle amicizie.
 
 Tuttavia, queste API possono accorgersi dell'inganno e attivare controlli anomali restituendo un errore di divieto categorico (`HTTP 403 Forbidden`). Al fine di garantire la continuità operativa del sistema, l'applicativo non esegue mai un "Hard Crash" (arresto anomalo completo).
 
-#### *Codice 3.2: Logica di Graceful Degradation*
+#### *Codice 3.2: Logica di Graceful Degradation* <a id="codice-3-2"></a>
 ```python
 try:
     # Tentativo di Scraping Autenticato (Impersonation tramite cookie)
@@ -299,7 +302,7 @@ Ottenuti enormi volumi di dati testuali grezzi (caption, commenti), è imperativ
 
 La soluzione impiega l'engine di **NLP (Natural Language Processing - Elaborazione del Linguaggio Naturale)** denominato **SpaCy**. SpaCy non utilizza semplici regole matematiche per cercare le parole (le espressioni regolari o Regex), ma modella l'analisi tramite reti neurali pre-addestrate sul linguaggio umano. Quando analizza una frase complessa come *"Ieri a Milano con Luca"*, SpaCy genera dei *token* analitici, attribuendo l'etichetta `GPE` (Geopolitical Entity) a "Milano" e `PERSON` a "Luca". Queste entità estratte matematicamente diventano i PII che andranno a formare l'audit di rischio.
 
-#### *Codice 3.3: Estrazione Entità (NER) con SpaCy (Riferimento a Figura 7)*
+#### *Codice 3.3: Estrazione Entità (NER) con SpaCy (Riferimento a [Figura 7](#figura-7))* <a id="codice-3-3"></a>
 ```python
 import spacy
 
@@ -342,7 +345,7 @@ Un'architettura di grado enterprise non può dipendere deterministicamente da un
 
 <div style="page-break-before: always;"></div>
 
-#### *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover (Riferimento a Figura 9)*
+#### *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover (Riferimento a [Figura 9](#figura-9))* <a id="codice-4-2"></a>
 ```python
 async def risk_engine_analysis(payload: str) -> dict:
     import os
@@ -379,7 +382,7 @@ L'interfaccia utente interattiva è sviluppata in **React** e **TailwindCSS**, c
 In assenza di canali web persistenti bidirezionali completi come i *WebSockets* (spesso troppo onerosi da scalare e mantenere aperti per lungo tempo in scenari cloud serverless), si poneva il problema di informare l'utente finale circa lo stato di avanzamento in tempo reale di una transazione di estrazione dati che può richiedere vari minuti.
 La soluzione ingegneristica scelta è nota come **Short Polling intelligente**, gestito a livello client dal modulo `React Query` ed erogato visivamente tramite il componente React simulatore di Terminale Hacker (`TerminalLoading`).
 
-#### *Codice 5.1: Gestione dell'osservazione asincrona (Polling) (Riferimento a Figura 5)*
+#### *Codice 5.1: Gestione dell'osservazione asincrona (Polling) (Riferimento a [Figura 5](#figura-5))* <a id="codice-5-1"></a>
 ```javascript
 // La funzione useQuery gestisce internamente caching e re-fetch asincrono
 const { data, isLoading } = useQuery({
@@ -399,45 +402,45 @@ Tramite questa istruzione, il frontend bersaglia la via di fuga API `GET /api/v1
 
 Nel frattempo, un costrutto nativo React (l'hook `useEffect`) monitora ossessivamente i cambiamenti della proprietà `data.current_phase` esposta dal worker cloud. Al suo mutare, innesca stringhe e log testuali animati ("*OSINT Scraping in corso su IG...*"), inserendoli nella coda della UI, regalando l'illusione di una connessione zero-latency persistente.
 
-<div class="figure-container">
+<div id="figura-4" class="figure-container">
     <img src="images/home.png" alt="Homepage e Input Target" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
-        <strong>Figura 4: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi. L'invio del modulo innesca l'endpoint asincrono descritto nel <strong>Codice 3.1</strong>.
+        <strong>Figura 4: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi. L'invio del modulo innesca l'endpoint asincrono descritto nel <strong><a href="#codice-3-1">Codice 3.1</a></strong>.
     </div>
 </div>
 
-<div class="figure-container">
+<div id="figura-5" class="figure-container">
     <img src="images/loading.png" alt="Terminale Interattivo di Scansione" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
-        <strong>Figura 5: Terminale simulato e Feedback in tempo reale.</strong> Durante il processo OSINT, il frontend interroga il backend tramite polling asincrono (logica dettagliata nel <strong>Codice 5.1</strong>) per restituire all'utente un output visuale istantaneo del processo d'indagine in corso (discovery, estrazione media, analisi NLP).
+        <strong>Figura 5: Terminale simulato e Feedback in tempo reale.</strong> Durante il processo OSINT, il frontend interroga il backend tramite polling asincrono (logica dettagliata nel <strong><a href="#codice-5-1">Codice 5.1</a></strong>) per restituire all'utente un output visuale istantaneo del processo d'indagine in corso (discovery, estrazione media, analisi NLP).
     </div>
 </div>
 
-<div class="figure-container">
+<div id="figura-6" class="figure-container">
     <img src="images/score.png" alt="Indice di Rischio e Punteggi" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 6: Sezione Indice di Rischio e Breakdown Matematico.</strong> Il widget illustra lo Score di Rischio complessivo, le barre di esposizione per aree tematiche (Identità, Network, Routine) e il breakdown analitico dei punti assegnati deterministicamente in base alle vulnerabilità riscontrate.
     </div>
 </div>
 
-<div class="figure-container">
+<div id="figura-7" class="figure-container">
     <img src="images/dati_sensibili.png" alt="Dati Sensibili Estrapolati" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
-        <strong>Figura 7: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP (meccanismo illustrato nel <strong>Codice 3.3</strong>) e OCR, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.
+        <strong>Figura 7: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP (meccanismo illustrato nel <strong><a href="#codice-3-3">Codice 3.3</a></strong>) e OCR, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.
     </div>
 </div>
 
-<div class="figure-container">
+<div id="figura-8" class="figure-container">
     <img src="images/post_analysis.png" alt="Dashboard Principale post analisi" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 8: Dashboard Globale dell'Audit OSINT completato.</strong> La vista d'insieme raccoglie gli indici aggregati di esposizione, la telemetria di esecuzione dei singoli moduli OSINT (Sherlock, Holehe, Dork Engine) e il feed dell'OCR con carosello interattivo.
     </div>
 </div>
 
-<div class="figure-container">
+<div id="figura-9" class="figure-container">
     <img src="images/audit_ai.png" alt="Rapporto AI e Piani di Mitigazione" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
-        <strong>Figura 9: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco, supportata dal meccanismo di tolleranza ai guasti mostrato nel <strong>Codice 4.2</strong>.
+        <strong>Figura 9: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco, supportata dal meccanismo di tolleranza ai guasti mostrato nel <strong><a href="#codice-4-2">Codice 4.2</a></strong>.
     </div>
 </div>
 
