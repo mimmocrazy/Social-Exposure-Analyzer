@@ -128,6 +128,7 @@
 - [4. Intelligenza Artificiale Generativa e Risk Engine Multilivello](#4-intelligenza-artificiale-generativa-e-risk-engine-multilivello)
   - [4.1 Ingegneria dei Prompt e Controllo JSON (Dati Strutturati)](#41-ingegneria-dei-prompt-e-controllo-json-dati-strutturati)
   - [4.2 High-Availability e Circuit Breaker (Pattern Fallback)](#42-high-availability-e-circuit-breaker-pattern-fallback)
+  - [4.3 Calcolo Deterministico del Rischio (Algoritmo Matematico)](#43-calcolo-deterministico-del-rischio-algoritmo-matematico)
 - [5. Frontend e Layer di Presentazione (React)](#5-frontend-e-layer-di-presentazione-react)
   - [5.1 Sincronizzazione Client-Server (Short Polling)](#51-sincronizzazione-client-server-short-polling)
 - [6. Sicurezza, Privacy e Conformità](#6-sicurezza-privacy-e-conformità)
@@ -374,6 +375,12 @@ async def risk_engine_analysis(payload: str) -> dict:
     raise BackendExhaustionError("Alta disponibilità esaurita: tutti i nodi AI mondiali in down.")
 ```
 Questo meccanismo di failover sequenziale rende l'infrastruttura estremamente resiliente: il traffico interroga il nodo prioritario Azure; se questo fallisce, l'eccezione viene soppressa e il carico viene deviato istantaneamente su Google Gemini, per poi passare a Groq. Si assicura in tal modo la generazione ininterrotta del report verso il frontend.
+
+### 4.3 Calcolo Deterministico del Rischio (Algoritmo Matematico)
+Demandare il calcolo di un punteggio numerico di rischio direttamente a un LLM introdurrebbe un pericoloso elemento di non-determinismo (chiamate identiche produrrebbero punteggi casuali e fluttuanti). L'architettura separa quindi la valutazione *qualitativa* da quella *quantitativa*.
+L'Intelligenza Artificiale Generativa si limita a classificare le vulnerabilità con un'etichetta qualitativa di gravità testuale (`CRITICA`, `ALTA`, `MEDIA`, `BASSA`). 
+Successivamente, un algoritmo Python totalmente hard-coded analizza queste etichette testuali e assegna un peso matematico invariabile e rigoroso: `Critica = 25pt`, `Alta = 15pt`, `Media = 5pt`, `Bassa = 2pt`. 
+Questi punti vengono poi smistati nelle tre macro-aree di esposizione visibili in dashboard (*Identity*, *Network*, *Routine*) in base a un'analisi euristica delle parole chiave del vettore d'attacco. Infine, la somma complessiva viene normalizzata tramite una funzione di "cap" massimo a `100`, restituendo un indice di rischio solido, testabile unitariamente e sempre riproducibile (come illustrato visivamente in **[Figura 6](#figura-6)**).
 
 ## 5. Frontend e Layer di Presentazione (React)
 L'interfaccia utente interattiva è sviluppata in **React** e **TailwindCSS**, con l'integrazione di componenti analitici derivati dal framework **Tremor**, specifici per il tracciamento di metriche, drawing in formato SVG (Scalable Vector Graphics) e la generazione di dashboard di calcolo.
