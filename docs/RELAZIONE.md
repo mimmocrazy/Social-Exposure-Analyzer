@@ -230,12 +230,11 @@ Per garantire la manutenibilità e favorire uno sviluppo modulare, il repository
 - **`docs/images/`**: Directory adibita esclusivamente al contenimento di foto, diagrammi e screenshot utilizzati per la stesura della presente relazione tecnica.
 - **`tests/`**: Suite di testing automatico (`pytest`) per la verifica isolata dei moduli critici.
 - **`alembic/`**: Script di migrazione del database PostgreSQL.
-- **`docs/`**: Contiene la documentazione metodologica, i report di sicurezza ed i file di tracciamento.
-  - `BUG_REPORT.md` e `SECURITY_REPORT.md`: Analisi delle vulnerabilità riscontrate e delle strategie di hardening.
-  - `TEST_ENVIRONMENT_BUGS.md`: Tracciamento degli edge-case riscontrati in ambiente di test.
-- **File Principali nella Root**:
+- **`docs/`**: Contiene la documentazione metodologica formale e tecnica del progetto.
+  - `BUG_REPORT.md` e `SECURITY_REPORT.md`: Analisi delle vulnerabilità riscontrate, edge-case di testing e strategie di hardening.
   - `ARCHITECTURE.md`: Specifica tecnica dettagliata sui pattern di comunicazione sincrona/asincrona ed il flusso dati del backend.
   - `AI_JOURNAL.md`: Registro cronologico dello sviluppo guidato da intelligenza artificiale (Pair-Programming con LLM).
+  - `RELAZIONE.md`: Il presente documento tecnico e architetturale formale.
 
 ## 3. Backend, Sincronia e Architettura Asincrona
 L'applicazione backend è costruita su **FastAPI**, un moderno framework web per la costruzione di API (Application Programming Interface). La sfida primaria posta dall'integrazione di processi di spionaggio OSINT era la gestione di task **I/O bound** e task **CPU bound**. 
@@ -517,7 +516,7 @@ Questo profilo artificiale è stato appositamente configurato con dati ed immagi
 ## 7. Utilizzo di AI Generativa nello Sviluppo
 Come previsto esplicitamente dalla traccia valutativa di progetto, la natura del codice sorgente è stata il prodotto di una stretta collaborazione ingegneristica con interfacce LLM adottando l'ormai radicato paradigma di sviluppo moderno noto come *Pair-Programming e Agentic Coding*.
 
-A garanzia di totale trasparenza e riproducibilità del processo decisionale, l'intera genesi del progetto è stata minuziosamente documentata all'interno del file **`AI_JOURNAL.md`** nella cartella principale del progetto. Questo registro adotta un pattern di formattazione rigoroso e standardizzato per ogni singola interazione architetturale, strutturato secondo i seguenti campi:
+A garanzia di totale trasparenza e riproducibilità del processo decisionale, l'intera genesi del progetto è stata minuziosamente documentata all'interno del file **`AI_JOURNAL.md`** ospitato anch'esso nella cartella `docs/`. Questo registro adotta un pattern di formattazione rigoroso e standardizzato per ogni singola interazione architetturale, strutturato secondo i seguenti campi:
 1. **Data e Ora:** Timestamp cronologico dell'intervento.
 2. **Task Eseguito:** Titolo del macro-task o della feature implementata.
 3. **File Modificati:** Elenco esplicito dei moduli sorgente intaccati.

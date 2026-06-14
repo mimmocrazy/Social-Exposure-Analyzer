@@ -1,3 +1,5 @@
+# Per il deploy locale:
+
 .PHONY: install setup test backend b frontend f
 
 install: setup
