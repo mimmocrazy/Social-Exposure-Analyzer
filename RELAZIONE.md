@@ -91,7 +91,7 @@
 </style>
 
 <div style="text-align: center; margin-top: 15px;">
-    <img src="images/logo_unical.png" alt="Logo Unical" width="300" style="margin: 0 auto; display: block;" />
+    <img src="docs/images/logo_unical.png" alt="Logo Unical" width="300" style="margin: 0 auto; display: block;" />
     <br><br>
     <div style="font-size: 34px; font-weight: bold; color: #111; line-height: 1.3; margin-bottom: 10px;">
         Relazione Progetto Sistemi Distribuiti & Cloud Computing
@@ -99,7 +99,7 @@
     <div style="font-size: 24px; font-weight: 500; color: #444; margin-bottom: 25px;">
         "Social Exposure Analyzer"
     </div>
-    <img src="images/logo.png" alt="Logo App" width="500" style="filter: invert(1) hue-rotate(180deg); border-radius: 10px; margin: 0 auto; display: block;" />
+    <img src="docs/images/logo.png" alt="Logo App" width="500" style="filter: invert(1) hue-rotate(180deg); border-radius: 10px; margin: 0 auto; display: block;" />
     <br><br>
     <div style="font-size: 18px; color: #111; line-height: 1.5;">
         <strong>Studente:</strong><br>
@@ -155,7 +155,7 @@ Tutte le risorse afferenti al progetto sono isolate logicamente all'interno di u
 
 <div class="figure-container">
     <div style="font-weight: bold; text-align: left; margin-bottom: 10px; font-size: 1.1em;">Schema Architetturale dell'Infrastruttura Cloud:</div>
-    <img src="images/mermaid1.png" alt="Azure Infrastructure Diagram" width="800" style="margin: 0 auto; display: block;" />
+    <img src="docs/images/mermaid1.png" alt="Azure Infrastructure Diagram" width="800" style="margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 1: Topologia di rete dell'infrastruttura Cloud Azure.</strong> Il diagramma illustra il flusso del dato (1): l'utente interroga la CDN fornita nativamente dallo Storage Account che ospita la Single Page Application React. Il layer di presentazione contatta (2) tramite chiamate asincrone il container Linux dell'App Service. Il ciclo di integrazione continua (3) è garantito dall'Azure Container Registry che inietta le immagini Docker tramite Webhook, mentre la persistenza (4) sfrutta la VNet Integration per interloquire a bassa latenza con il nodo PostgreSQL mascherando i flussi alla rete pubblica Internet.
     </div>
@@ -163,7 +163,7 @@ Tutte le risorse afferenti al progetto sono isolate logicamente all'interno di u
 </div>
 
 <div class="figure-container">
-    <img src="images/azure.png" alt="Azure Resource Group" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <img src="docs/images/azure.png" alt="Azure Resource Group" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 2: Portale Microsoft Azure - Resource Group del Progetto.</strong> La schermata mostra la raccolta logica delle risorse allocate nel cloud Azure per l'applicativo, inclusi l'App Service, l'App Service Plan, lo Storage Account e il Flexible PostgreSQL Server.
     </div>
@@ -202,7 +202,7 @@ Questa pratica automatizza in toto i rilasci del software. Al netto della config
 A questo punto, l'App Service, che è nativamente agganciato all'ACR tramite **Webhook** (una notifica HTTP inviata al variare di un evento), riceve l'immagine, istanzia un nuovo container e, solo quando quest'ultimo è pienamente operativo (Zero-Downtime Deployment), inizia a indirizzarvi il traffico spegnendo l'istanza obsoleta senza causare interruzioni agli utenti.
 
 <div class="figure-container">
-    <img src="images/github_actions.png" alt="GitHub Actions Pipeline" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <img src="docs/images/github_actions.png" alt="GitHub Actions Pipeline" width="800" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Automazione GitHub Actions:</strong> La schermata certifica l'avvenuta esecuzione automatica e parallela dei workflow di "Build and Deploy" sia per il frontend che per il backend sul cloud Azure, attivati istantaneamente e in modo trasparente dal comando di push.
     </div>
@@ -227,7 +227,7 @@ Per garantire la manutenibilità e favorire uno sviluppo modulare, il repository
   - **`models/`**: Definizioni dei modelli dati SQLModel (es. `risk.py` per i report di rischio, `user.py` per l'anagrafica utente).
 - **`frontend/`**: Contiene la Single Page Application React configurata con bundler Vite e libreria Tremor per il rendering grafico della dashboard.
   - **`src/`**: File di codice sorgente React, tra cui `App.jsx` per lo stato e il controllo dei widget del pannello di controllo, e `index.css` per lo stile.
-- **`images/`**: Directory centralizzata per la memorizzazione di grafici, diagrammi ed immagini dell'applicativo.
+- **`docs/images/`**: Directory adibita esclusivamente al contenimento di foto, diagrammi e screenshot utilizzati per la stesura della presente relazione tecnica.
 - **`tests/`**: Suite di testing automatico (`pytest`) per la verifica isolata dei moduli critici.
 - **`alembic/`**: Script di migrazione del database PostgreSQL.
 - **`docs/`**: Contiene la documentazione metodologica, i report di sicurezza ed i file di tracciamento.
@@ -249,7 +249,7 @@ Se il backend avesse adottato un approccio sincrono tradizionale, l'esecuzione d
 
 **Sequence Diagram dell'Orchestrazione Asincrona:**
 <div class="figure-container">
-    <img src="images/mermaid2.png" alt="Asynchronous Sequence Diagram" width="800" style="margin: 0 auto; display: block;" />
+    <img src="docs/images/mermaid2.png" alt="Asynchronous Sequence Diagram" width="800" style="margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 3: Diagramma di sequenza del pattern Produttore-Consumatore.</strong> Lo schema modella la risoluzione del collo di bottiglia tipico dei task bloccanti. Il router FastAPI delega l'onere elaborativo a un Worker interno svincolando il client con un <code>HTTP 202 Accepted</code> (step 1-3). Il client esegue un loop non invasivo (<code>Short Polling</code>) per monitorare l'avanzamento (step 4-5). Nel frattempo, il Worker esegue i rami OSINT in parallelo all'interno di coroutine concorrenti, finalizzando l'estrazione PII prima di notificare al client la conclusione del ciclo vitale e rilasciare i dati generati (<code>COMPLETED</code>, step 12-13).
     </div>
@@ -380,42 +380,42 @@ Tramite questa istruzione, il frontend bersaglia la via di fuga API `GET /api/v1
 Nel frattempo, un costrutto nativo React (l'hook `useEffect`) monitora ossessivamente i cambiamenti della proprietà `data.current_phase` esposta dal worker cloud. Al suo mutare, innesca stringhe e log testuali animati ("*OSINT Scraping in corso su IG...*"), inserendoli nella coda della UI, regalando l'illusione di una connessione zero-latency persistente.
 
 <div class="figure-container">
-    <img src="images/home.png" alt="Homepage e Input Target" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <img src="docs/images/home.png" alt="Homepage e Input Target" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 4: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi.
     </div>
 </div>
 
 <div class="figure-container">
-    <img src="images/loading.png" alt="Terminale Interattivo di Scansione" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <img src="docs/images/loading.png" alt="Terminale Interattivo di Scansione" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 5: Terminale simulato e Feedback in tempo reale.</strong> Durante il processo OSINT, il frontend interroga il backend tramite polling asincrono per restituire all'utente un output visuale istantaneo del processo d'indagine in corso (discovery, estrazione media, analisi NLP).
     </div>
 </div>
 
 <div class="figure-container">
-    <img src="images/score.png" alt="Indice di Rischio e Punteggi" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <img src="docs/images/score.png" alt="Indice di Rischio e Punteggi" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 6: Sezione Indice di Rischio e Breakdown Matematico.</strong> Il widget illustra lo Score di Rischio complessivo, le barre di esposizione per aree tematiche (Identità, Network, Routine) e il breakdown analitico dei punti assegnati deterministicamente in base alle vulnerabilità riscontrate.
     </div>
 </div>
 
 <div class="figure-container">
-    <img src="images/dati_sensibili.png" alt="Dati Sensibili Estrapolati" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <img src="docs/images/dati_sensibili.png" alt="Dati Sensibili Estrapolati" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 7: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP e OCR, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.
     </div>
 </div>
 
 <div class="figure-container">
-    <img src="images/post_analysis.png" alt="Dashboard Principale post analisi" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <img src="docs/images/post_analysis.png" alt="Dashboard Principale post analisi" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 8: Dashboard Globale dell'Audit OSINT completato.</strong> La vista d'insieme raccoglie gli indici aggregati di esposizione, la telemetria di esecuzione dei singoli moduli OSINT (Sherlock, Holehe, Dork Engine) e il feed dell'OCR con carosello interattivo.
     </div>
 </div>
 
 <div class="figure-container">
-    <img src="images/audit_ai.png" alt="Rapporto AI e Piani di Mitigazione" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
+    <img src="docs/images/audit_ai.png" alt="Rapporto AI e Piani di Mitigazione" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
         <strong>Figura 9: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco.
     </div>
@@ -536,7 +536,7 @@ Il lavoro svolto ha permesso di progettare e implementare con successo una piatt
 La migrazione architetturale verso un ecosistema cloud interamente PaaS su Microsoft Azure (App Service, Storage Account per static web hosting e Flexible Server PostgreSQL) ha concretizzato i benefici fondamentali del cloud-native computing: scalabilità verticale e orizzontale semplificata, continuità operativa grazie all'automazione totale delle pipeline CI/CD governate da **GitHub Actions**, e prossimità di rete tramite integrazione in VNet privata per la sicurezza dei canali di persistenza. Inoltre, l'implementazione del Circuit Breaker multilivello per i servizi AI garantisce un'elevata affidabilità applicativa, svincolando il sistema da blackout improvvisi dei singoli provider AI.
 
 Come sviluppi futuri, l'infrastruttura si presta a diverse ottimizzazioni incrementali:
-1. **Attivazione dell'Interfaccia di Autenticazione (SaaS):** Il sistema è stato ingegnerizzato fin dal primo giorno secondo il paradigma *API-First* e *Privacy by Design*. Nonostante l'attuale interfaccia React operi volutamente in modalità "Demo Pubblica" per agevolare le fasi di testing accademico senza frizioni di registrazione (tramite un *mocking* temporaneo del login), il database e il backend FastAPI possiedono già un'infrastruttura di sicurezza dormiente ma completamente funzionante (crittografia Bcrypt, JWT Token, segregazione dei record tramite Foreign Key `user_id`). Questa scelta architetturale è stata ponderata: aggiungere la struttura a utenti a valle avrebbe comportato migrazioni distruttive del database. Grazie a questa predisposizione "Enterprise-Ready", lo sviluppo futuro richiederà unicamente l'accensione di un form di Login lato frontend per trasformare il prototipo in un prodotto commerciale in grado di supportare limitazioni anti-abuso del budget API e Audit Trail legali per il GDPR.
+1. **Attivazione dell'Interfaccia di Autenticazione:** Il sistema è stato ingegnerizzato fin dal primo giorno secondo il paradigma *API-First* e *Privacy by Design*. Nonostante l'attuale interfaccia React operi volutamente in modalità "Demo Pubblica" per agevolare le fasi di testing accademico senza frizioni di registrazione (tramite un *mocking* temporaneo del login), il database e il backend FastAPI possiedono già un'infrastruttura di sicurezza dormiente ma completamente funzionante (crittografia Bcrypt, JWT Token, segregazione dei record tramite Foreign Key `user_id`). Questa scelta architetturale è stata ponderata: aggiungere la struttura a utenti a valle avrebbe comportato migrazioni distruttive del database. Grazie a questa predisposizione "Enterprise-Ready", lo sviluppo futuro richiederà unicamente l'accensione di un form di Login lato frontend per trasformare il prototipo in un prodotto commerciale in grado di supportare limitazioni anti-abuso del budget API e Audit Trail legali per il GDPR.
 2. **Caching Distribuito (Azure Cache for Redis):** Integrare un layer di memorizzazione temporanea in-memory per registrare gli esiti degli scanning ricorrenti di Sherlock e Holehe, ottimizzando i tempi di risposta e aggirando preventivamente i limiti di rate-limiting imposti dai domini interrogati.
 3. **Task Queue Distribuita (Celery / Azure Queue Storage):** Estrarre l'esecuzione delle pipeline OSINT dal ThreadPool del container di backend per demandarla a nodi worker dedicati e scalabili autonomamente (serverless worker o Azure Functions), consentendo la gestione parallela di centinaia di scansioni simultanee senza impattare le risorse della macchina principale.
 4. **Espansione del Raggio OSINT:** Integrare pipeline specifiche per il controllo di data-leak storici tramite API dedicate (es. *Have I Been Pwned* o similari) per fornire un quadro di vulnerabilità ancora più approfondito e granulare.
