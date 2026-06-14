@@ -106,14 +106,15 @@ Inoltre, il progetto implementa pattern tipici del calcolo distribuito per gover
 ---
 
 ## 9. FAQ: Difesa del codice "morto" (Autenticazione senza Login)
-**Se un professore chiede:** *"Perché hai programmato Bcrypt, JWT e modelli User nel database se poi il sito web non ha una pagina di Login?"*
+**Se un professore chiede:** *"Perché hai programmato Bcrypt, JWT e database degli utenti se poi il sito web non ha una pagina di Login?"*
 
 **Cosa rispondere per fare un figurone:**
-"Ho strutturato il backend seguendo i principi dell'**API-First** e della **Privacy by Design**. 
-Anche se attualmente la Dashboard React è in modalità *Demo Pubblica* (e quindi il backend usa un *Mocking* simulando un utente `local_admin` per non bloccare i test), l'infrastruttura è nativamente **Multi-Tenant**.
-In uno strumento OSINT reale e commerciale, gestire l'autenticazione è un vincolo inderogabile per 3 motivi:
-1. **Monetizzazione e Limiti:** Servono rate-limiting per evitare che bot abusino delle API a pagamento (come Gemini o Groq) svuotando il budget.
-2. **Audit Trail Legale (GDPR):** Se un utente abusa del sistema per stalking, l'amministratore deve poter ricollegare l'analisi a un'identità verificata.
-3. **Segregazione dei dati:** L'Utente A non deve poter accedere allo storico delle analisi dell'Utente B.
+"Ho strutturato il backend per essere pronto fin dal primo giorno per un contesto reale aziendale. 
+Anche se attualmente l'interfaccia è una semplice Demo Pubblica senza registrazione (e quindi il backend finge in automatico la presenza di un utente per farci testare l'app), l'infrastruttura sottostante è già predisposta per gestire utenti reali e separati.
 
-Aver ingegnerizzato il Database con chiavi esterne legate all'Utente fin dal giorno 1, significa che il sistema è già *Enterprise-Ready*. Se lo avessi fatto in un secondo momento, avrei dovuto fare pericolosissime migrazioni distruttive sui dati."
+In uno strumento di Cyber-Intelligence commerciale, gestire il Login è un vincolo inderogabile per 3 motivi pratici:
+1. **Protezione del Budget:** Le chiamate all'Intelligenza Artificiale costano. Senza un login che limita le scansioni giornaliere (es. massimo 3 gratuite a utente), i bot malevoli esaurirebbero il budget a pagamento del server in poche ore.
+2. **Tutela Legale:** Se un utente abusa dello strumento per fare stalking a una persona, il gestore del sito deve poter risalire immediatamente a chi ha lanciato la ricerca per rispondere alle autorità.
+3. **Cronologia Privata:** Un analista non vuole assolutamente che le sue ricerche segrete appaiano nella cronologia pubblica di altri utenti. Ogni utente deve avere un'area separata e inviolabile.
+
+Aver progettato il Database fin dal primo giorno associando le analisi agli utenti, significa che il sistema è già pronto per essere venduto o pubblicato. Se avessi tentato di aggiungere gli utenti in un secondo momento, avrei dovuto stravolgere del tutto le fondamenta del database col rischio di perdere tutti i dati pregressi."
