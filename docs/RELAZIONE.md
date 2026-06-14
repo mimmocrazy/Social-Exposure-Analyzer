@@ -227,7 +227,6 @@ Per garantire la manutenibilità e favorire uno sviluppo modulare, il repository
   - **`models/`**: Definizioni dei modelli dati SQLModel (es. `risk.py` per i report di rischio, `user.py` per l'anagrafica utente).
 - **`frontend/`**: Contiene la Single Page Application React configurata con bundler Vite e libreria Tremor per il rendering grafico della dashboard.
   - **`src/`**: File di codice sorgente React, tra cui `App.jsx` per lo stato e il controllo dei widget del pannello di controllo, e `index.css` per lo stile.
-- **`images/`**: Directory adibita esclusivamente al contenimento di foto, diagrammi e screenshot utilizzati per la stesura della presente relazione tecnica.
 - **`tests/`**: Suite di testing automatico (`pytest`) per la verifica isolata dei moduli critici.
 - **`alembic/`**: Script di migrazione del database PostgreSQL.
 - **`docs/`**: Contiene la documentazione metodologica formale e tecnica del progetto.
@@ -257,7 +256,7 @@ Se il backend avesse adottato un approccio sincrono tradizionale, l'esecuzione d
 ### 3.1 Esecuzione Disaccoppiata (Pattern Produttore-Consumatore)
 Per risolvere questo limite strutturale, si è implementato un pattern software chiamato *Fire and Forget* (Spara e Dimentica), che disaccoppia l'interfaccia HTTP che riceve l'input dall'esecuzione materiale del lavoro.
 
-#### *Codice 3.1: Endpoint di avvio analisi*
+#### *Codice 3.1: Endpoint di avvio analisi (Riferimento a Figura 4)*
 ```python
 @app.post("/api/v1/analyze", status_code=status.HTTP_202_ACCEPTED)
 async def analyze_target(request: AnalysisRequest, background_tasks: BackgroundTasks):
@@ -300,6 +299,28 @@ Ottenuti enormi volumi di dati testuali grezzi (caption, commenti), è imperativ
 
 La soluzione impiega l'engine di **NLP (Natural Language Processing - Elaborazione del Linguaggio Naturale)** denominato **SpaCy**. SpaCy non utilizza semplici regole matematiche per cercare le parole (le espressioni regolari o Regex), ma modella l'analisi tramite reti neurali pre-addestrate sul linguaggio umano. Quando analizza una frase complessa come *"Ieri a Milano con Luca"*, SpaCy genera dei *token* analitici, attribuendo l'etichetta `GPE` (Geopolitical Entity) a "Milano" e `PERSON` a "Luca". Queste entità estratte matematicamente diventano i PII che andranno a formare l'audit di rischio.
 
+#### *Codice 3.3: Estrazione Entità (NER) con SpaCy (Riferimento a Figura 7)*
+```python
+import spacy
+
+# Caricamento del modello linguistico neurale ottimizzato
+nlp_engine = spacy.load("it_core_news_md")
+
+def extract_pii(text_payload: str) -> dict:
+    # Processamento del testo tramite la rete neurale
+    document = nlp_engine(text_payload)
+    
+    extracted_entities = {"PERSON": [], "LOC": [], "ORG": []}
+    
+    # Mappatura delle entità riconosciute matematicamente
+    for entity in document.ents:
+        if entity.label_ in extracted_entities:
+            extracted_entities[entity.label_].append(entity.text)
+            
+    return extracted_entities
+```
+Questo modulo isola e categorizza nomi propri, luoghi e organizzazioni. I dati in uscita da questa funzione popolano dinamicamente l'interfaccia grafica dei *Dati Sensibili Estrapolati* visibile in **Figura 7**.
+
 Contestualmente, se i crawler di scraping rinvengono immagini e fotografie (ad esempio un utente che fotografa sbadatamente il proprio biglietto aereo o il badge aziendale), l'infrastruttura sfrutta algoritmi di visione artificiale tramite la libreria **EasyOCR**. Questa rete neurale ricerca "*Bounding Box*" (riquadri geometrici nell'immagine) contenenti pattern di pixel simili a lettere dell'alfabeto e sfrutta l'**OCR (Optical Character Recognition - Riconoscimento Ottico dei Caratteri)** per trasformarli in vero testo digitale. Il testo decodificato passa nuovamente sotto la lente dello stack NLP di SpaCy, colmando un grave vettore di vulnerabilità sociale altrimenti totalmente invisibile alle ispezioni convenzionali basate solo sul testo scritto.
 
 ## 4. Intelligenza Artificiale Generativa e Risk Engine Multilivello
@@ -321,7 +342,7 @@ Un'architettura di grado enterprise non può dipendere deterministicamente da un
 
 <div style="page-break-before: always;"></div>
 
-#### *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover*
+#### *Codice 4.2: Circuit Breaker Sequenziale e Gestione del Failover (Riferimento a Figura 9)*
 ```python
 async def risk_engine_analysis(payload: str) -> dict:
     import os
@@ -358,7 +379,7 @@ L'interfaccia utente interattiva è sviluppata in **React** e **TailwindCSS**, c
 In assenza di canali web persistenti bidirezionali completi come i *WebSockets* (spesso troppo onerosi da scalare e mantenere aperti per lungo tempo in scenari cloud serverless), si poneva il problema di informare l'utente finale circa lo stato di avanzamento in tempo reale di una transazione di estrazione dati che può richiedere vari minuti.
 La soluzione ingegneristica scelta è nota come **Short Polling intelligente**, gestito a livello client dal modulo `React Query` ed erogato visivamente tramite il componente React simulatore di Terminale Hacker (`TerminalLoading`).
 
-#### *Codice 5.1: Gestione dell'osservazione asincrona (Polling)*
+#### *Codice 5.1: Gestione dell'osservazione asincrona (Polling) (Riferimento a Figura 5)*
 ```javascript
 // La funzione useQuery gestisce internamente caching e re-fetch asincrono
 const { data, isLoading } = useQuery({
@@ -381,14 +402,14 @@ Nel frattempo, un costrutto nativo React (l'hook `useEffect`) monitora ossessiva
 <div class="figure-container">
     <img src="images/home.png" alt="Homepage e Input Target" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
-        <strong>Figura 4: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi.
+        <strong>Figura 4: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi. L'invio del modulo innesca l'endpoint asincrono descritto nel <strong>Codice 3.1</strong>.
     </div>
 </div>
 
 <div class="figure-container">
     <img src="images/loading.png" alt="Terminale Interattivo di Scansione" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
-        <strong>Figura 5: Terminale simulato e Feedback in tempo reale.</strong> Durante il processo OSINT, il frontend interroga il backend tramite polling asincrono per restituire all'utente un output visuale istantaneo del processo d'indagine in corso (discovery, estrazione media, analisi NLP).
+        <strong>Figura 5: Terminale simulato e Feedback in tempo reale.</strong> Durante il processo OSINT, il frontend interroga il backend tramite polling asincrono (logica dettagliata nel <strong>Codice 5.1</strong>) per restituire all'utente un output visuale istantaneo del processo d'indagine in corso (discovery, estrazione media, analisi NLP).
     </div>
 </div>
 
@@ -402,7 +423,7 @@ Nel frattempo, un costrutto nativo React (l'hook `useEffect`) monitora ossessiva
 <div class="figure-container">
     <img src="images/dati_sensibili.png" alt="Dati Sensibili Estrapolati" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
-        <strong>Figura 7: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP e OCR, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.
+        <strong>Figura 7: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP (meccanismo illustrato nel <strong>Codice 3.3</strong>) e OCR, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.
     </div>
 </div>
 
@@ -416,7 +437,7 @@ Nel frattempo, un costrutto nativo React (l'hook `useEffect`) monitora ossessiva
 <div class="figure-container">
     <img src="images/audit_ai.png" alt="Rapporto AI e Piani di Mitigazione" width="600" style="border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); margin: 0 auto; display: block;" />
     <div class="caption">
-        <strong>Figura 9: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco.
+        <strong>Figura 9: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco, supportata dal meccanismo di tolleranza ai guasti mostrato nel <strong>Codice 4.2</strong>.
     </div>
 </div>
 
