@@ -124,7 +124,7 @@
 - [3. Backend, Sincronia e Architettura Asincrona](#3-backend-sincronia-e-architettura-asincrona)
   - [3.1 Esecuzione Disaccoppiata (Pattern Produttore-Consumatore)](#31-esecuzione-disaccoppiata-pattern-produttore-consumatore)
   - [3.2 Moduli di Scraping e Meccanismi Anti-Bot](#32-moduli-di-scraping-e-meccanismi-anti-bot)
-  - [3.3 Natural Language Processing (NLP) e Optical Character Recognition (OCR)](#33-natural-language-processing-nlp-e-optical-character-recognition-ocr)
+  - [3.3 Estrazione Semantica: NLP, OCR e Vision AI](#33-estrazione-semantica-nlp-ocr-e-vision-ai)
 - [4. Intelligenza Artificiale Generativa e Risk Engine Multilivello](#4-intelligenza-artificiale-generativa-e-risk-engine-multilivello)
   - [4.1 Ingegneria dei Prompt e Controllo JSON (Dati Strutturati)](#41-ingegneria-dei-prompt-e-controllo-json-dati-strutturati)
   - [4.2 High-Availability e Circuit Breaker (Pattern Fallback)](#42-high-availability-e-circuit-breaker-pattern-fallback)
@@ -274,7 +274,9 @@ All'invocazione dell'endpoint, il sistema genera un identificativo univoco unive
 
 ### 3.2 Moduli di Scraping e Meccanismi Anti-Bot
 L'Orchestratore esegue in background diverse pipeline parallele:
-- **Holehe OSINT:** Conduce un attacco enumerativo laterale (Side-Channel) per verificare la validità degli indirizzi email. Invia false richieste di recupero password a oltre 120 domini. L'assenza di un controllo stringente anti-abuso su molti portali terzi permette a questo modulo di evincere a quali piattaforme è iscritta la mail (e di conseguenza, il soggetto spiato).
+- **OSINT Target Deduction (LLM Assistito):** Qualora l'analista inserisca un semplice nickname criptico (es. `mario.rossi89`), prima di avviare il processo di scraping interviene una funzione LLM asincrona (`guess_real_name`) che deduce probabilisticamente il nome reale del target. L'Intelligenza Artificiale restituisce il potenziale nome anagrafico e lo inietta "di nascosto" nei motori di ricerca e nel blocco NLP, potenziando drasticamente l'accuratezza delle ispezioni.
+- **Holehe OSINT:** Conduce un attacco enumerativo laterale (Side-Channel) per verificare la validità degli indirizzi email inviando false richieste di recupero password. Per evitare che l'esecuzione di questo binario di sistema esterno (CLI) blocchi il server web, l'applicativo lo confina in un subprocesso asincrono isolato (`asyncio.create_subprocess_exec`), leggendone il flusso standard di output (PIPE) in modo non bloccante.
+- **Data Breach OSINT (XposedOrNot):** Durante la scansione automatizzata dei canali social, qualora un'espressione regolare intercetti l'esistenza di un'email in testo chiaro, l'Orchestratore innesca a cascata una sub-chiamata asincrona all'API pubblica di `XposedOrNot`. In tempo reale viene accertato se l'email rilevata risulta compromessa in incidenti di sicurezza o fughe di dati (Data Breach) internazionali, inglobando il rischio nel report finale.
 - **Sherlock Discovery:** Analizza dinamicamente migliaia di link web per tracciare lo username associato in diverse reti periferiche.
 
 **Concorrenza e Parallelismo Network (Asyncio):**
@@ -298,7 +300,7 @@ except InstagramForbiddenError as e:  # Intercetta il divieto HTTP 403 Forbidden
 ```
 Questo paradigma di *Graceful Degradation* (Degrado Controllato del servizio) permette al sistema di "gettare via i cookie in tempo reale" all'atto della scoperta e ripetere un disperato tentativo in modalità "Ospite Pubblico Non Autenticato". Si garantisce così l'estrazione quantomeno parziale di alcuni dati base (es. Biografia e Post Recenti per profili settati come pubblici) senza compromettere la stabilità dell'intera pipeline e il report finale.
 
-### 3.3 Natural Language Processing (NLP) e Optical Character Recognition (OCR)
+### 3.3 Estrazione Semantica: NLP, OCR e Vision AI
 Ottenuti enormi volumi di dati testuali grezzi (caption, commenti), è imperativo mappare la semantica delle stringhe per individuare le informazioni che rappresentano un vero rischio: i **PII (Personally Identifiable Information)**, ovvero tutti quei dati personali che permettono di identificare un soggetto fisico (indirizzi fisici, aziende, date, parentele).
 
 La soluzione impiega l'engine di **NLP (Natural Language Processing - Elaborazione del Linguaggio Naturale)** denominato **SpaCy**. SpaCy non utilizza semplici regole matematiche per cercare le parole (le espressioni regolari o Regex), ma modella l'analisi tramite reti neurali pre-addestrate sul linguaggio umano. Quando analizza una frase complessa come *"Ieri a Milano con Luca"*, SpaCy genera dei *token* analitici, attribuendo l'etichetta `GPE` (Geopolitical Entity) a "Milano" e `PERSON` a "Luca". Queste entità estratte matematicamente diventano i PII che andranno a formare l'audit di rischio.
@@ -326,6 +328,13 @@ def extract_pii(text_payload: str) -> dict:
 Questo modulo isola e categorizza nomi propri, luoghi e organizzazioni. I dati in uscita da questa funzione popolano dinamicamente l'interfaccia grafica dei *Dati Sensibili Estrapolati* visibile in **Figura 7**.
 
 Contestualmente, se i crawler di scraping rinvengono immagini e fotografie (ad esempio un utente che fotografa sbadatamente il proprio biglietto aereo o il badge aziendale), l'infrastruttura sfrutta algoritmi di visione artificiale tramite la libreria **EasyOCR**. Questa rete neurale ricerca "*Bounding Box*" (riquadri geometrici nell'immagine) contenenti pattern di pixel simili a lettere dell'alfabeto e sfrutta l'**OCR (Optical Character Recognition - Riconoscimento Ottico dei Caratteri)** per trasformarli in vero testo digitale. Il testo decodificato passa nuovamente sotto la lente dello stack NLP di SpaCy, colmando un grave vettore di vulnerabilità sociale altrimenti totalmente invisibile alle ispezioni convenzionali basate solo sul testo scritto.
+
+**Deduzione Dinamica delle Relazioni (Vision AI):**
+L'elaborazione delle immagini non si ferma alla traduzione letterale dei pixel in testo. L'output generato dall'OCR, congiuntamente alla didascalia nativa prelevata dal social (Caption), viene trasmesso a un modello LLM Multimodale in background (`summarize_media_context`). L'Intelligenza Artificiale unisce semanticamente le due fonti per dedurre relazioni familiari o lavorative non esplicitamente dichiarate. Ad esempio, se l'algoritmo visivo rileva la scritta "Luisa" su una torta e la didascalia recita *"Festeggiando con mia madre"*, il motore inferenziale genera l'entità sensibile `Madre: Luisa`. Questo paradigma permette l'astrazione di semplici stringhe in complesse strutture relazionali.
+
+**Privacy e Data Stripping (Gestione Efficienza Immagini Base64):**
+Per visualizzare in tempo reale le fotografie intercettate nella dashboard dell'utente senza incorrere in blocchi di sicurezza (divieti CORS e Hotlinking imposti dai server di Meta), il backend scarica il file binario e lo converte in una lunghissima stringa testuale **Base64**. Questa stringa viene inoltrata unicamente al client React, che si occupa di renderizzarla nativamente sul browser.
+Al fine di garantire la totale **tutela della Privacy** dei bersagli e scongiurare sprechi di budget dovuti a *Token Limit* invalicabili, l'applicativo **non invia mai le fotografie fisiche originali, né il loro Base64, ad alcun server cloud di Intelligenza Artificiale esterno**. Prima della compilazione del payload da sottoporre al *Risk Engine*, un algoritmo pre-processore effettua un rigoroso taglio chirurgico (*Data Stripping*) della proprietà codificata, inoltrando all'IA esterna esclusivamente l'informazione estratta in formato "testo puro" senza violare i dati biometrici del bersaglio.
 
 ## 4. Intelligenza Artificiale Generativa e Risk Engine Multilivello
 Il blocco terminale dell'architettura agisce da "Risk Engine" (Motore di Valutazione del Rischio), demandando il ragionamento probabilistico e la generazione del documento sulle vulnerabilità a **LLM (Large Language Models)**, gli stessi modelli alla base di sistemi come ChatGPT.
