@@ -1,11 +1,13 @@
 # Environments
 .env
 .venv
+.venv_win
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -113,8 +115,6 @@ scratch/
 *.htm
 *_files/
 
-# Thinking files
-docs/thinking.txt
-
 # Private/personal documents
 docs/mydocs/
+private/
