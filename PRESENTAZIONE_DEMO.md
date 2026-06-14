@@ -90,3 +90,15 @@ Tutta l'infrastruttura è governata da una pipeline DevOps. Non c'è alcun caric
 Inoltre, per prevenire il 'Log Poisoning' (ovvero il rischio che i file diagnostici si riempiano di password o passaporti finendo nelle mani sbagliate dei DevOps), il sistema implementa un *PII Masking* automatico: oscura mail e numeri di telefono a monte, prima ancora che vengano trascritti su disco.
 
 Vi ringrazio per l'attenzione. Se ci sono domande, sono a vostra disposizione."
+
+---
+
+## 8. FAQ: Difesa del "Sistema Distribuito" (Da tenere a mente)
+**Se un professore chiede:** *"Perché questo è un sistema distribuito e non un semplice sito web caricato online?"*
+
+**Cosa rispondere con sicurezza:**
+"Questo progetto rispetta i tre canoni fondamentali di un sistema distribuito: l'assenza di memoria globale condivisa, la concorrenza e la tolleranza ai fallimenti parziali. 
+Non è un monolite eseguito su una singola macchina, ma un'architettura 3-Tier profondamente disaccoppiata. 
+
+Il client React sul browser dell'utente (Nodo 1), il container FastAPI su App Service (Nodo 2), il Database PostgreSQL isolato in VNet (Nodo 3) e i Nodi di Intelligenza Artificiale esterni (Nodo 4, 5, 6) non condividono la stessa CPU o memoria fisica. Coordinano le loro azioni *esclusivamente* scambiandosi messaggi su reti eterogenee (tramite API REST, Short Polling e chiamate RPC). 
+Inoltre, il progetto implementa pattern tipici del calcolo distribuito per governare l'inaffidabilità della rete, come l'esecuzione asincrona Produttore-Consumatore e il Circuit Breaker per deviare il traffico quando un nodo remoto collassa, garantendo la Fault Tolerance."
