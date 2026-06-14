@@ -102,3 +102,18 @@ Non è un monolite eseguito su una singola macchina, ma un'architettura 3-Tier p
 
 Il client React sul browser dell'utente (Nodo 1), il container FastAPI su App Service (Nodo 2), il Database PostgreSQL isolato in VNet (Nodo 3) e i Nodi di Intelligenza Artificiale esterni (Nodo 4, 5, 6) non condividono la stessa CPU o memoria fisica. Coordinano le loro azioni *esclusivamente* scambiandosi messaggi su reti eterogenee (tramite API REST, Short Polling e chiamate RPC). 
 Inoltre, il progetto implementa pattern tipici del calcolo distribuito per governare l'inaffidabilità della rete, come l'esecuzione asincrona Produttore-Consumatore e il Circuit Breaker per deviare il traffico quando un nodo remoto collassa, garantendo la Fault Tolerance."
+
+---
+
+## 9. FAQ: Difesa del codice "morto" (Autenticazione senza Login)
+**Se un professore chiede:** *"Perché hai programmato Bcrypt, JWT e modelli User nel database se poi il sito web non ha una pagina di Login?"*
+
+**Cosa rispondere per fare un figurone:**
+"Ho strutturato il backend seguendo i principi dell'**API-First** e della **Privacy by Design**. 
+Anche se attualmente la Dashboard React è in modalità *Demo Pubblica* (e quindi il backend usa un *Mocking* simulando un utente `local_admin` per non bloccare i test), l'infrastruttura è nativamente **Multi-Tenant**.
+In uno strumento OSINT reale e commerciale, gestire l'autenticazione è un vincolo inderogabile per 3 motivi:
+1. **Monetizzazione e Limiti:** Servono rate-limiting per evitare che bot abusino delle API a pagamento (come Gemini o Groq) svuotando il budget.
+2. **Audit Trail Legale (GDPR):** Se un utente abusa del sistema per stalking, l'amministratore deve poter ricollegare l'analisi a un'identità verificata.
+3. **Segregazione dei dati:** L'Utente A non deve poter accedere allo storico delle analisi dell'Utente B.
+
+Aver ingegnerizzato il Database con chiavi esterne legate all'Utente fin dal giorno 1, significa che il sistema è già *Enterprise-Ready*. Se lo avessi fatto in un secondo momento, avrei dovuto fare pericolosissime migrazioni distruttive sui dati."
