@@ -117,3 +117,10 @@ scratch/
 
 # Private/personal documents
 private/
+
+# Documentazione accademica da non pubblicare
+docs/AI_JOURNAL.md
+docs/ARCHITECTURE.md
+docs/RELAZIONE.md
+docs/RELAZIONE.pdf
+docs/TRACCIA.pdf

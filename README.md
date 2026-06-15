@@ -87,3 +87,37 @@ L'infrastruttura cloud PaaS su Microsoft Azure **è già interamente configurata
 ### 🔗 Indirizzi Pubblici (Produzione)
 - **Frontend URL:** Nella pagina dello Storage Account > *Static website* > **Primary endpoint**.
 - **Backend URL:** Nella pagina dell'App Service > *Overview* > **Default domain**.
+
+---
+
+## 🖼️ Galleria Applicativo
+
+<div align="center">
+  <img src="docs/images/home.png" alt="Homepage" width="800">
+  <p><em>Figura 4: Interfaccia di Benvenuto e Avvio Scansione. L'invio del modulo innesca l'endpoint asincrono.</em></p>
+</div>
+
+<div align="center">
+  <img src="docs/images/loading.png" alt="Terminale Hacker" width="800">
+  <p><em>Figura 5: Terminale simulato e Feedback in tempo reale (Short Polling asincrono).</em></p>
+</div>
+
+<div align="center">
+  <img src="docs/images/score.png" alt="Score" width="800">
+  <p><em>Figura 6: Indice di Rischio e Breakdown Matematico deterministico basato su vulnerabilità.</em></p>
+</div>
+
+<div align="center">
+  <img src="docs/images/dati_sensibili.png" alt="Dati Sensibili" width="800">
+  <p><em>Figura 7: Grid dei Dati Sensibili Estrapolati (PII) tramite reti neurali NLP e OCR.</em></p>
+</div>
+
+<div align="center">
+  <img src="docs/images/post_analysis.png" alt="Dashboard" width="800">
+  <p><em>Figura 8: Dashboard Globale dell'Audit OSINT completato con feed OCR e telemetria.</em></p>
+</div>
+
+<div align="center">
+  <img src="docs/images/audit_ai.png" alt="Rapporto AI" width="800">
+  <p><em>Figura 9: Valutazione AI qualitativa e Piani di Mitigazione delle Minacce.</em></p>
+</div>
