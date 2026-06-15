@@ -94,30 +94,30 @@ L'infrastruttura cloud PaaS su Microsoft Azure **è già interamente configurata
 
 <div align="center">
   <img src="docs/images/home.png" alt="Homepage" width="800">
-  <p><em>Figura 4: Interfaccia di Benvenuto e Avvio Scansione. L'invio del modulo innesca l'endpoint asincrono.</em></p>
+  <p><em><strong>Figura 1: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi. L'invio del modulo innesca l'orchestrazione asincrona in background.</em></p>
 </div>
 
 <div align="center">
   <img src="docs/images/loading.png" alt="Terminale Hacker" width="800">
-  <p><em>Figura 5: Terminale simulato e Feedback in tempo reale (Short Polling asincrono).</em></p>
+  <p><em><strong>Figura 2: Terminale simulato e Feedback in tempo reale.</strong> Durante il processo OSINT, il frontend interroga il backend tramite polling asincrono per restituire all'utente un output visuale istantaneo del processo d'indagine in corso (discovery, estrazione media, analisi NLP).</em></p>
 </div>
 
 <div align="center">
   <img src="docs/images/score.png" alt="Score" width="800">
-  <p><em>Figura 6: Indice di Rischio e Breakdown Matematico deterministico basato su vulnerabilità.</em></p>
+  <p><em><strong>Figura 3: Sezione Indice di Rischio e Breakdown Matematico.</strong> Il widget illustra lo Score di Rischio complessivo, le barre di esposizione per aree tematiche (Identità, Network, Routine) e il breakdown analitico dei punti assegnati deterministicamente in base alle vulnerabilità riscontrate.</em></p>
 </div>
 
 <div align="center">
   <img src="docs/images/dati_sensibili.png" alt="Dati Sensibili" width="800">
-  <p><em>Figura 7: Grid dei Dati Sensibili Estrapolati (PII) tramite reti neurali NLP e OCR.</em></p>
+  <p><em><strong>Figura 4: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP neurale e OCR visivo, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.</em></p>
 </div>
 
 <div align="center">
   <img src="docs/images/post_analysis.png" alt="Dashboard" width="800">
-  <p><em>Figura 8: Dashboard Globale dell'Audit OSINT completato con feed OCR e telemetria.</em></p>
+  <p><em><strong>Figura 5: Dashboard Globale dell'Audit OSINT completato.</strong> La vista d'insieme raccoglie gli indici aggregati di esposizione, la telemetria di esecuzione dei singoli moduli OSINT (Sherlock, Holehe, Dork Engine) e il feed OCR nativo con carosello interattivo.</em></p>
 </div>
 
 <div align="center">
   <img src="docs/images/audit_ai.png" alt="Rapporto AI" width="800">
-  <p><em>Figura 9: Valutazione AI qualitativa e Piani di Mitigazione delle Minacce.</em></p>
+  <p><em><strong>Figura 6: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco, il tutto processato con un meccanismo di tolleranza ai guasti (Circuit Breaker).</em></p>
 </div>
