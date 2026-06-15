@@ -1,87 +1,89 @@
-# Social Exposure Analyzer
+# 🛡️ Social Exposure Analyzer
 
-## 📖 Descrizione del Progetto
-**Social Exposure Analyzer** è un applicativo progettato per automatizzare la raccolta, l'analisi e la validazione di dati provenienti da fonti aperte (**OSINT - Open Source Intelligence**). L'obiettivo principale è quantificare e valutare l'esposizione al rischio di ingegneria sociale (Social Engineering) di un determinato bersaglio tramite intelligenza artificiale.
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18.0%2B-61DAFB?logo=react&logoColor=white)
+![Azure](https://img.shields.io/badge/Microsoft_Azure-0089D6?logo=microsoft-azure&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 
-L'architettura si basa sul paradigma dei microservizi:
-- **Backend (FastAPI in Python):** Orchestratore asincrono ad alte prestazioni. Disaccoppia la raccolta dati tramite un pattern produttore-consumatore. Integra pipeline OSINT complesse (Sherlock, Holehe, Dork Engine) e moduli di analisi NLP/OCR. Dispone di un "Risk Engine AI" coperto da pattern Circuit Breaker per garantire resilienza intercettando fallimenti tra modelli AI multipli (Azure, Google Gemini, Groq).
-- **Frontend (React SPA):** Layer di presentazione interattivo basato su TailwindCSS e componenti analitici Tremor. Interroga il backend tramite polling per simulare un terminale hacker in tempo reale, per poi mostrare metriche aggregate sui dati sensibili trapelati (PII) e presentare una dashboard quantitativa e qualitativa globale di mitigazione.
+**Social Exposure Analyzer** è un applicativo web progettato per l'Ethical Hacking e la Cyber Intelligence. Automatizza la raccolta, l'analisi e la validazione di dati provenienti da fonti aperte (**OSINT - Open Source Intelligence**), quantificando l'esposizione al rischio di *Social Engineering* di un bersaglio tramite l'uso di Reti Neurali e LLM.
 
 ---
 
-## 🚀 Guida all'installazione locale
+## ✨ Funzionalità Principali (Engineering Highlights)
+- **🧠 OSINT Target Deduction:** Deduce probabilisticamente il nome reale partendo da un nickname prima dello scraping, potenziando le ispezioni.
+- **👁️ Vision AI & OCR:** Traduce immagini (badge, biglietti) in testo tramite EasyOCR e deduce relazioni familiari/lavorative invisibili ("Vision Context") usando modelli LLM multimodali.
+- **⚡ Concorrenza Asincrona:** Sfrutta `asyncio` per lanciare fino a 120 attacchi enumerativi Side-Channel in parallelo (modulo Holehe) e aggirare i Login Wall tramite *Impersonation* e *Graceful Degradation*.
+- **🔐 Data Breach Detection:** Rileva dinamicamente esposizioni password interrogando in tempo reale l'API pubblica di XposedOrNot.
+- **🛡️ Privacy by Design:** L'algoritmo di *Data Stripping* rimuove rigorosamente le foto (Base64) prima di interpellare l'Intelligenza Artificiale in Cloud, massimizzando la privacy e azzerando i colli di bottiglia sui Token.
+
+---
+
+## 🏗️ Architettura di Sistema (3-Tier)
+Il progetto rispetta i paradigmi dei sistemi distribuiti ed è strutturato a microservizi:
+1. **Frontend (React SPA):** Interfaccia interattiva con simulazione "Terminale Hacker" in *Short Polling*. (Ospitata su *Azure Storage Account*).
+2. **Backend (FastAPI):** Orchestratore asincrono basato su pattern Produttore-Consumatore e Circuit Breaker per tolleranza ai guasti. (Containerizzato su *Azure App Service*).
+3. **Database (PostgreSQL):** Persistenza dei dati isolata senza esposizione pubblica. (Deployato in *Virtual Network privata* su Azure Flexible Server).
+
+---
+
+## 🚀 Guida all'Installazione Locale
 
 Il progetto è compatibile nativamente con **Windows**, **Linux** e **macOS**. 
-*(Attenzione: non copiare mai la cartella dell'ambiente virtuale `venv` da un sistema operativo all'altro. Costruiscila sempre da zero sul nuovo sistema come descritto di seguito).*
+
+> [!WARNING]
+> Non copiare mai la cartella dell'ambiente virtuale `venv` da un sistema operativo all'altro. Costruiscila sempre da zero sul nuovo sistema.
 
 ### Prerequisiti
-1. **Python 3.12+** installato e aggiunto al PATH del tuo sistema.
-2. **Node.js (versione 18+)** e `npm` installati (necessari per compilare ed eseguire il frontend).
+- **Python 3.12+** aggiunto al PATH del sistema.
+- **Node.js (versione 18+)** e `npm`.
 
 ### 1. Inizializzazione dell'Ambiente
-Apri il terminale nella cartella principale del progetto ed esegui i seguenti comandi per inizializzare l'applicazione da zero:
-
+Apri il terminale nella root del progetto ed esegui:
 ```bash
-# 1. Crea un nuovo ambiente virtuale isolato (obbligatorio su ogni nuovo OS)
-python -m venv venv     # (Su alcune distro Linux potrebbe essere necessario: python3 -m venv venv)
+# 1. Crea un nuovo ambiente virtuale isolato
+python -m venv venv     
 
 # 2. Attiva l'ambiente virtuale
-# Su Windows:
-venv\Scripts\activate
-# Su Linux/macOS:
-source venv/bin/activate
+venv\Scripts\activate      # Su Windows
+source venv/bin/activate   # Su Linux/macOS
 
-# 3. Scarica e installa tutte le librerie necessarie tramite il comando Make (installa sia pip che npm)
+# 3. Scarica e installa tutte le dipendenze (Backend e Frontend)
 make install
 ```
 
 ### 2. Avvio dei Servizi (Sviluppo Locale)
-L'architettura prevede due macro-servizi (Backend API e Frontend React) che devono essere mantenuti in esecuzione simultaneamente in due finestre di terminale separate.
+Mantieni aperti due terminali separati per avviare i servizi in parallelo.
 
 **Terminale 1 (Backend FastAPI):**
 ```bash
-# Assicurati che l'ambiente virtuale sia attivo (venv)
+# Assicurati che l'ambiente virtuale sia attivo
 make b
 ```
-*Il backend si avvierà in ascolto sulla porta locale http://localhost:8000*
+*In ascolto su: `http://localhost:8000`*
 
 **Terminale 2 (Frontend React):**
 ```bash
 # Qui non serve l'ambiente virtuale Python
 make f
 ```
-*Il tool Vite avvierà l'interfaccia utente web (di default su http://localhost:5173).*
+*In ascolto su: `http://localhost:5173`*
 
 ---
 
 ## ☁️ Checklist Riattivazione Ambiente Microsoft Azure
 
-L'infrastruttura cloud di questo progetto (appoggiata ai servizi PaaS di Microsoft Azure) **è già stata interamente creata e configurata**. Tuttavia, alcune risorse potrebbero essere state **messe in pausa** per ottimizzare e contenere i costi durante i periodi di inattività. 
+L'infrastruttura cloud PaaS su Microsoft Azure **è già interamente configurata e pronta all'uso**. Tuttavia, per contenere i costi, alcune risorse (come i server) potrebbero essere state messe in pausa. Prima di avviare una presentazione, riattiva i seguenti componenti dal portale Azure:
 
-Prima di testare il software in produzione, verifica e riattiva questi componenti dal portale Azure:
+1. **🗄️ Azure Database for PostgreSQL (Flexible Server)**
+   - Cerca il Flexible Server e se lo stato è *Stopped*, clicca su **Start**. *(Attendi ~2 minuti per il ripristino).*
+2. **⚙️ Azure App Service (Backend FastAPI Linux)**
+   - Se l'App Service risulta fermo, assicurati di avviarlo o di fare un Upgrade del piano tariffario (es. *Premium V4*) per massimizzare la velocità RAM/CPU durante i test. 
+3. **📦 Azure Container Registry (ACR) e GitHub Actions**
+   - Sempre attivo. La CI/CD aggiorna automaticamente i container in cloud al comando `git push`.
+4. **🌐 Azure Storage Account (Frontend)**
+   - Sempre attivo. L'interfaccia statica risiede nel container `$web`.
 
-1. **Azure Database for PostgreSQL (Flexible Server)**
-   - Il database è spesso la prima risorsa ad essere spenta. Entra nel portale, cerca il tuo PostgreSQL Flexible Server.
-   - Se lo stato risulta in *Stopped*, clicca su **Start** (Riprendi).
-   - *Nota: Possono volerci un paio di minuti prima che il server torni a rispondere alle query.*
-
-2. **Azure App Service (Backend FastAPI Linux)**
-   - Anche l'App Service potrebbe essere stato fermato. Se risulta fermo, premi **Start**.
-   - Assicurati nel pannello *Environment variables* che i Token AI e la stringa di connessione al Database siano ancora aggiornati.
-
-3. **Azure Container Registry (ACR) e GitHub Actions**
-   - Il registro immagini non prevede il concetto di "Pausa", è sempre attivo. Avendo configurato una pipeline di CI/CD, qualsiasi modifica locale al codice del backend verrà automaticamente testata, compilata in Docker e caricata sull'ACR non appena farai un `git push` sul branch `main`. L'App Service percepirà l'aggiornamento e si riavvierà da solo.
-
-4. **Azure Storage Account (Frontend Static Web App)**
-   - Similmente all'ACR, lo Storage rimane attivo e i file del sito statico React sono nel container `$web`. Qualora apportassi modifiche al frontend, esegui una nuova build locale (`npm run build`) e sovrascrivi i file nella cartella di Azure.
-
-### 🔗 Come Trovare l'Indirizzo Pubblico (URL) del Sito
-Una volta che tutto è attivo e funzionante, potrai visitare il tuo sito tramite i seguenti link forniti da Azure:
-
-- **L'URL del Sito Web (Frontend):** 
-  Vai nella pagina del tuo **Storage Account** sul portale Azure. Nel menu a sinistra clicca su **Static website**. Troverai un campo chiamato **Primary endpoint** (sarà simile a `https://<nome>.z6.web.core.windows.net/`). Clicca su questo link per accedere all'interfaccia utente.
-- **L'URL del Backend (API):**
-  Vai nella pagina del tuo **App Service**. Nella schermata principale (Overview), troverai la voce **Default domain** (es. `https://<nome>.azurewebsites.net`). 
-  *(Ricorda: Se il frontend in cloud non riesce a connettersi al backend, assicurati che il codice React sia configurato per effettuare le chiamate API verso questo dominio "Default domain" anziché verso `localhost`).*
-
-*Non appena Database e App Service saranno riportati nello stato "Running", l'intera infrastruttura cloud tornerà operativa al 100%!*
+### 🔗 Indirizzi Pubblici (Produzione)
+- **Frontend URL:** Nella pagina dello Storage Account > *Static website* > **Primary endpoint**.
+- **Backend URL:** Nella pagina dell'App Service > *Overview* > **Default domain**.
