@@ -143,7 +143,7 @@ async def run_scraping_task(
         update_analysis_phase(analysis_id, "Inizializzazione Sistema")
         
         # --- INIZIO GHOST TRIGGER ---
-        # Imposta a True in locale se vuoi forzare la VERA scansione e aggiornare il mock
+        # Imposta a True in locale se vuoi forzare la VERA scansione e aggiornare la cache offline
         DISABLE_GHOST_TRIGGER = False
         
         try:
@@ -174,7 +174,7 @@ async def run_scraping_task(
                 update_analysis_phase(analysis_id, "OSINT DuckDuckGo")
                 await asyncio.sleep(3)
                 
-                # Calcolo dinamico delle immagini per supportare mock variabili (es. 5 vs 8 post)
+                # Calcolo dinamico delle immagini per supportare profili variabili (es. 5 vs 8 post)
                 m_data = FALLBACK_CACHE[final_cache_key]
                 num_images = 0
                 for r in m_data.get("raw_data_dump", {}).get("scraper_results", []):
