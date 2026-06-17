@@ -211,7 +211,8 @@ const TerminalLoading = ({ isCompleted, currentPhase, target, onFinish }) => {
       logs.push(`[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo per: "${t}" pastebin OR dump OR "data breach"`);
     } else if (p.includes("estrazione contenuto") || p.includes("estrazione ocr")) {
       logs.push(`[ORCHESTRATOR] Fase attiva: Estrazione OCR...`);
-      logs.push("[ORCHESTRATOR] Avvio estrazione OCR e AI context per 5 immagini trovate.");
+      const numImg = analysisDepth === 'standard' ? 8 : 5;
+      logs.push(`[ORCHESTRATOR] Avvio estrazione OCR e AI context per ${numImg} immagini trovate.`);
     } else if (p.includes("analisi media")) {
       logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
       logs.push("[RISK ENGINE AI] Analisi semantica in corso sull'immagine...");
