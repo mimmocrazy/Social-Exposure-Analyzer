@@ -420,7 +420,7 @@ const TerminalLoading = ({ isCompleted, currentPhase, target, analysisDepth, onF
   );
 };
 
-function Dashboard({ analysisId }) {
+function Dashboard({ analysisId, analysisDepth }) {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showContextualPii, setShowContextualPii] = useState(false);
   const [osintModal, setOsintModal] = useState(null);
@@ -1802,7 +1802,7 @@ function MainApp() {
       <AnimatePresence mode="wait">
         {(analysisId || isSubmitting) && (
           <ErrorBoundary key="dashboard">
-            <Dashboard analysisId={analysisId} />
+            <Dashboard analysisId={analysisId} analysisDepth={analysisDepth} />
           </ErrorBoundary>
         )}
       </AnimatePresence>

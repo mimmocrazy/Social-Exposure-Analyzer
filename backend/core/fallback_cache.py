@@ -640,4 +640,6 @@ FALLBACK_CACHE = json.loads(r"""
 # Fix: copia dinamica dei campi mancanti dal mock base per evitare crash nel frontend/backend
 FALLBACK_CACHE['marco_rossi_sec_99_standard']['risk_level'] = FALLBACK_CACHE['marco_rossi_sec_99']['risk_level']
 FALLBACK_CACHE['marco_rossi_sec_99_standard']['llm_report'] = FALLBACK_CACHE['marco_rossi_sec_99']['llm_report']
+FALLBACK_CACHE['marco_rossi_sec_99_standard']['pii_extracted'] = FALLBACK_CACHE['marco_rossi_sec_99']['pii_extracted']
+FALLBACK_CACHE['marco_rossi_sec_99_standard']['risk_score'] = FALLBACK_CACHE['marco_rossi_sec_99']['risk_score']
 
