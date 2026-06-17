@@ -168,7 +168,7 @@ const getOfficialIcon = (iconName, isActive) => {
   }
 };
 
-const TerminalLoading = ({ isCompleted, currentPhase, target, onFinish }) => {
+const TerminalLoading = ({ isCompleted, currentPhase, target, analysisDepth, onFinish }) => {
   const [visibleLogs, setVisibleLogs] = useState([]);
   const [logQueue, setLogQueue] = useState(["[SYSTEM] Booting OSINT kernel v3.2.1...", "[NETWORK] Handshake SSL completato. Connessione cifrata 256-bit stabilita."]);
   const [lastPhase, setLastPhase] = useState(null);
@@ -449,6 +449,7 @@ function Dashboard({ analysisId }) {
         isCompleted={data?.status === 'COMPLETED'}
         currentPhase={data?.current_phase}
         target={data?.target_url || "target_user"}
+        analysisDepth={analysisDepth}
         onFinish={() => setShowDashboard(true)}
       />
     );
