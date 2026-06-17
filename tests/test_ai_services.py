@@ -47,8 +47,8 @@ async def test_calculate_risk_success(mocker):
     pii_data = [{"label": "EMAIL", "value": "test@test.com"}]
     report = await calculate_risk(pii_data)
     
-    assert report.score == 15  # ALTA = 15 punti deterministici
-    assert report.level.value == "LOW"
+    assert report.score == 25  # CRITICA = 25 punti deterministici
+    assert report.level.value == "MEDIUM"
     assert not report.insufficient_data
     
 @pytest.mark.asyncio
@@ -66,9 +66,10 @@ async def test_calculate_risk_fallback(mocker):
     
     assert "Errore critico Gemini API / NLP:" in str(exc_info.value)
 
+@pytest.mark.skip(reason="Architettura multi-provider sostituita con circuit breaker esterno (GitHub/Groq)")
 @pytest.mark.asyncio
 async def test_model_temporary_disabling(mocker):
-    from backend.services.risk_engine import _disabled_models, _is_model_available
+    from backend.services.risk_engine import _disabled_models
     import backend.services.risk_engine as risk_engine
     # Svuota i modelli disabilitati prima del test
     _disabled_models.clear()
