@@ -173,28 +173,31 @@ async def run_scraping_task(
                 await asyncio.sleep(2.5)
                 update_analysis_phase(analysis_id, "OSINT DuckDuckGo")
                 await asyncio.sleep(3)
-                update_analysis_phase(analysis_id, "Analisi Media (1/5)")
-                await asyncio.sleep(5)
-                update_analysis_phase(analysis_id, "Analisi Media (2/5)")
-                await asyncio.sleep(5)
-                update_analysis_phase(analysis_id, "Analisi Media (3/5)")
-                await asyncio.sleep(7)
-                update_analysis_phase(analysis_id, "Analisi Media (4/5)")
-                await asyncio.sleep(2)
-                update_analysis_phase(analysis_id, "Analisi Media (5/5)")
-                await asyncio.sleep(4)
+                
+                # Calcolo dinamico delle immagini per supportare mock variabili (es. 5 vs 8 post)
+                m_data = FALLBACK_CACHE[final_cache_key]
+                num_images = 0
+                for r in m_data.get("raw_data_dump", {}).get("scraper_results", []):
+                    num_images += len(r.get("images", []))
+                if num_images == 0:
+                    num_images = 5
+                
+                for i in range(1, num_images + 1):
+                    update_analysis_phase(analysis_id, f"Analisi Media ({i}/{num_images})")
+                    await asyncio.sleep(3.5)
+                
                 update_analysis_phase(analysis_id, "Controllo Data Breach (Holehe)")
-                await asyncio.sleep(30)
+                await asyncio.sleep(15)
                 update_analysis_phase(analysis_id, "Estrazione OCR e AI context")
-                await asyncio.sleep(6)
+                await asyncio.sleep(4)
                 update_analysis_phase(analysis_id, "Correlazione NLP (SpaCy)")
                 await asyncio.sleep(1)
                 update_analysis_phase(analysis_id, "Holehe SpaCy")
-                await asyncio.sleep(9)
+                await asyncio.sleep(6)
                 update_analysis_phase(analysis_id, "Holehe SpaCy Completato")
                 await asyncio.sleep(0)
                 update_analysis_phase(analysis_id, "Analisi Risk Engine AI")
-                await asyncio.sleep(17)
+                await asyncio.sleep(10)
                 update_analysis_phase(analysis_id, "Generazione Report")
                 
                 with Session(backend.database.engine) as session:
