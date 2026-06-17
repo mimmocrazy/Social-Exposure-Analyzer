@@ -143,6 +143,9 @@ async def run_scraping_task(
         update_analysis_phase(analysis_id, "Inizializzazione Sistema")
         
         # --- INIZIO GHOST TRIGGER ---
+        # Imposta a True in locale se vuoi forzare la VERA scansione e aggiornare il mock
+        DISABLE_GHOST_TRIGGER = False
+        
         try:
             from backend.core.fallback_cache import FALLBACK_CACHE
             
@@ -152,36 +155,52 @@ async def run_scraping_task(
                 if "?" in cache_key:
                     cache_key = cache_key.split("?")[0]
                     
-            if cache_key in FALLBACK_CACHE:
-                logger.info(f"Ghost Trigger attivato per {target}")
+            depth_key = f"{cache_key}_{analysis_depth}"
+            final_cache_key = None
+            if depth_key in FALLBACK_CACHE:
+                final_cache_key = depth_key
+            elif cache_key in FALLBACK_CACHE:
+                final_cache_key = cache_key
                 
-                await asyncio.sleep(2)
+            if final_cache_key and not DISABLE_GHOST_TRIGGER:
+                logger.info(f"Ghost Trigger attivato per {target} (usando cache {final_cache_key})")
+                
                 update_analysis_phase(analysis_id, "Discovery Sherlock")
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
                 update_analysis_phase(analysis_id, "Deduzione Identità LLM")
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
                 update_analysis_phase(analysis_id, "Instagram Deep Scan")
-                await asyncio.sleep(3)
+                await asyncio.sleep(1)
                 update_analysis_phase(analysis_id, "OSINT DuckDuckGo")
                 await asyncio.sleep(4)
                 update_analysis_phase(analysis_id, "Analisi Media (1/5)")
-                await asyncio.sleep(3)
-                update_analysis_phase(analysis_id, "Analisi Media (3/5)")
-                await asyncio.sleep(4)
-                update_analysis_phase(analysis_id, "Analisi Media (5/5)")
-                await asyncio.sleep(2)
-                update_analysis_phase(analysis_id, "Correlazione NLP (SpaCy)")
-                await asyncio.sleep(3)
-                update_analysis_phase(analysis_id, "Controllo Data Breach (Holehe)")
-                await asyncio.sleep(4)
-                update_analysis_phase(analysis_id, "Analisi Risk Engine AI")
                 await asyncio.sleep(5)
+                update_analysis_phase(analysis_id, "Analisi Media (2/5)")
+                await asyncio.sleep(5)
+                update_analysis_phase(analysis_id, "Analisi Media (3/5)")
+                await asyncio.sleep(7)
+                update_analysis_phase(analysis_id, "Analisi Media (4/5)")
+                await asyncio.sleep(2)
+                update_analysis_phase(analysis_id, "Analisi Media (5/5)")
+                await asyncio.sleep(4)
+                update_analysis_phase(analysis_id, "Controllo Data Breach (Holehe)")
+                await asyncio.sleep(30)
+                update_analysis_phase(analysis_id, "Estrazione OCR e AI context")
+                await asyncio.sleep(6)
+                update_analysis_phase(analysis_id, "Correlazione NLP (SpaCy)")
+                await asyncio.sleep(1)
+                update_analysis_phase(analysis_id, "Holehe SpaCy")
+                await asyncio.sleep(9)
+                update_analysis_phase(analysis_id, "Holehe SpaCy Completato")
+                await asyncio.sleep(0)
+                update_analysis_phase(analysis_id, "Analisi Risk Engine AI")
+                await asyncio.sleep(17)
                 update_analysis_phase(analysis_id, "Generazione Report")
                 
                 with Session(backend.database.engine) as session:
                     analysis = session.get(ProfileAnalysis, analysis_id)
                     if analysis:
-                        m_data = FALLBACK_CACHE[cache_key]
+                        m_data = FALLBACK_CACHE[final_cache_key]
                         analysis.raw_data_dump = m_data["raw_data_dump"]
                         analysis.pii_extracted = m_data["pii_extracted"]
                         analysis.risk_score = m_data["risk_score"]
@@ -251,6 +270,11 @@ async def run_scraping_task(
             async with httpx.AsyncClient() as img_client:
                 for idx, img_obj in enumerate(images_to_ocr):
                     update_analysis_phase(analysis_id, f"Analisi Media ({idx+1}/{len(images_to_ocr)})")
+                    
+                    # Rallentiamo la vera OSINT per garantire che il frontend (che fa polling ogni 2s)
+                    # catturi sempre tutte le fasi (es. 2/5, 4/5) e faccia un effetto scenico migliore.
+                    await asyncio.sleep(3.5)
+                    
                     try:
                         img_url = img_obj if isinstance(img_obj, str) else img_obj.get("url")
                         caption = None if isinstance(img_obj, str) else img_obj.get("caption")

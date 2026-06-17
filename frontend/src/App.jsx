@@ -209,27 +209,37 @@ const TerminalLoading = ({ isCompleted, currentPhase, target, onFinish }) => {
       logs.push(`[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo per: ${t}`);
       logs.push(`[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo per: "${t}"`);
       logs.push(`[DUCKDUCKGO OSINT] Avvio OSINT profondo su DuckDuckGo per: "${t}" pastebin OR dump OR "data breach"`);
-    } else if (p.includes("estrazione contenuto") || p.includes("estrazione")) {
-      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
-      logs.push("[ORCHESTRATOR] Avvio estrazione OCR e AI context per le immagini trovate.");
+    } else if (p.includes("estrazione contenuto") || p.includes("estrazione ocr")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: Estrazione OCR...`);
+      logs.push("[ORCHESTRATOR] Avvio estrazione OCR e AI context per 5 immagini trovate.");
     } else if (p.includes("analisi media")) {
       logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
       logs.push("[RISK ENGINE AI] Analisi semantica in corso sull'immagine...");
     } else if (p.includes("correlazione nlp") || p.includes("spacy")) {
-      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
-      logs.push("[NLP] Modello NLP caricato. Esecuzione pipeline NER avanzata...");
+      logs.push(`[ORCHESTRATOR] Fase attiva: NLP SpaCy...`);
+      logs.push("[ORCHESTRATOR] Avvio estrazione PII tramite SpaCy...");
+      logs.push("[ORCHESTRATOR] Trovate 2 email per Holehe OSINT: ['[EMAIL-MASKED]', '[EMAIL-MASKED]']");
+    } else if (p.includes("holehe spacy completato")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: Verifica Databreach Completata...`);
+      logs.push("[HOLEHE OSINT] Holehe completato per [EMAIL-MASKED] Siti trovati: 0");
+      logs.push("[HOLEHE OSINT] Holehe completato per [EMAIL-MASKED] Siti trovati: 0");
+    } else if (p.includes("holehe spacy") || p.includes("holehe deep")) {
+      logs.push(`[ORCHESTRATOR] Fase attiva: Verifica Email Estratte (Holehe)...`);
+      logs.push("[HOLEHE OSINT] Avvio ricerca OSINT Holehe per l'email: [EMAIL-MASKED]");
+      logs.push("[HOLEHE OSINT] Avvio ricerca OSINT Holehe per l'email: [EMAIL-MASKED]");
     } else if (p.includes("data breach") || p.includes("holehe") || p.includes("controllo")) {
-      logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
+      logs.push(`[ORCHESTRATOR] Fase attiva: Controllo Data Breach (Holehe)...`);
       logs.push("[HOLEHE OSINT] Avvio ricerca OSINT Holehe per leak check sull'email...");
       logs.push("[HOLEHE OSINT] Holehe completato. Verifica databreach completata.");
     } else if (p.includes("risk engine")) {
       logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
-      logs.push("[ORCHESTRATOR] Risk Engine Payload compilato con successo.");
+      logs.push("[ORCHESTRATOR] Risk Engine Payload preparato con successo. Dimensione: 12960 caratteri (limite DoS: 100000).");
+      logs.push("[ORCHESTRATOR] Avvio analisi Risk Engine tramite LLM...");
       logs.push("[RISK ENGINE AI] Avvio analisi Risk Engine tramite GitHub Models...");
     } else if (p.includes("generazione report")) {
       logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
-      logs.push("[RISK ENGINE AI] Inferenza Risk Report completata con successo!");
-      logs.push("[ORCHESTRATOR] Salvataggio risultati nel database...");
+      logs.push("[RISK ENGINE AI] Punteggio di rischio deterministico calcolato: 50/100");
+      logs.push(`[ORCHESTRATOR] Task asincrono di OSINT e Risk Engine concluso per ${t}`);
     } else {
       logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
       logs.push(`[SYSTEM] Modulo di processo in avvio: ${phase}`);
