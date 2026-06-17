@@ -150,6 +150,8 @@ async def run_scraping_task(
             from backend.core.fallback_cache import FALLBACK_CACHE
             
             cache_key = target.strip()
+            if cache_key.startswith("@"):
+                cache_key = cache_key[1:]
             if "instagram.com/" in cache_key:
                 cache_key = cache_key.split("instagram.com/")[-1].strip("/")
                 if "?" in cache_key:
