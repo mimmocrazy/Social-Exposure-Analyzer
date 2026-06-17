@@ -215,7 +215,7 @@ const TerminalLoading = ({ isCompleted, currentPhase, target, onFinish }) => {
     } else if (p.includes("analisi media")) {
       logs.push(`[ORCHESTRATOR] Fase attiva: ${phase}...`);
       logs.push("[RISK ENGINE AI] Analisi semantica in corso sull'immagine...");
-    } else if (p.includes("correlazione nlp") || p.includes("spacy")) {
+    } else if (p.includes("correlazione nlp")) {
       logs.push(`[ORCHESTRATOR] Fase attiva: NLP SpaCy...`);
       logs.push("[ORCHESTRATOR] Avvio estrazione PII tramite SpaCy...");
       logs.push("[ORCHESTRATOR] Trovate 2 email per Holehe OSINT: ['[EMAIL-MASKED]', '[EMAIL-MASKED]']");
