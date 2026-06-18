@@ -164,7 +164,7 @@ async def run_scraping_task(
             elif cache_key in FALLBACK_CACHE:
                 final_cache_key = cache_key
                 
-            if final_cache_key and not DISABLE_GHOST_TRIGGER:
+            if final_cache_key and not DISABLE_GHOST_TRIGGER and analysis_depth != "deep":
                 logger.info(f"Ghost Trigger attivato per {target} (usando cache {final_cache_key})")
                 
                 update_analysis_phase(analysis_id, "Discovery Sherlock")
