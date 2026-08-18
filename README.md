@@ -1,123 +1,113 @@
-# 🛡️ Social Exposure Analyzer
+# Social-Exposure-Analyzer
 
-![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?logo=fastapi&logoColor=white)
-![React](https://img.shields.io/badge/React-18.0%2B-61DAFB?logo=react&logoColor=white)
-![Azure](https://img.shields.io/badge/Microsoft_Azure-0089D6?logo=microsoft-azure&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+> Cloud-native OSINT framework & cyber intelligence engine for automated PII extraction and social engineering risk scoring.
 
-**Social Exposure Analyzer** è un applicativo web progettato per l'Ethical Hacking e la Cyber Intelligence. Automatizza la raccolta, l'analisi e la validazione di dati provenienti da fonti aperte (**OSINT - Open Source Intelligence**), quantificando l'esposizione al rischio di *Social Engineering* di un bersaglio tramite l'uso di Reti Neurali e LLM.
+`Social-Exposure-Analyzer` è un applicativo web full-stack progettato per l'Ethical Hacking e la Cyber Intelligence. Automatizza la raccolta, l'analisi e la validazione di dati provenienti da fonti aperte (**OSINT - Open Source Intelligence**), quantificando deterministicamente l'esposizione al rischio di *Social Engineering* di un bersaglio tramite Reti Neurali, OCR e Modelli LLM Multimodali.
 
 ---
 
-## ✨ Funzionalità Principali (Engineering Highlights)
-- **🧠 OSINT Target Deduction:** Deduce probabilisticamente il nome reale partendo da un nickname prima dello scraping, potenziando le ispezioni.
-- **👁️ Vision AI & OCR:** Traduce immagini (badge, biglietti) in testo tramite EasyOCR e deduce relazioni familiari/lavorative invisibili ("Vision Context") usando modelli LLM multimodali.
-- **⚡ Concorrenza Asincrona:** Sfrutta `asyncio` per lanciare fino a 120 attacchi enumerativi Side-Channel in parallelo (modulo Holehe) e aggirare i Login Wall tramite *Impersonation* e *Graceful Degradation*.
-- **🔐 Data Breach Detection:** Rileva dinamicamente esposizioni password interrogando in tempo reale l'API pubblica di XposedOrNot.
-- **🛡️ Privacy by Design:** L'algoritmo di *Data Stripping* rimuove rigorosamente le foto (Base64) prima di interpellare l'Intelligenza Artificiale in Cloud, massimizzando la privacy e azzerando i colli di bottiglia sui Token.
+## Highlights
+
+| Feature | Details |
+| :--- | :--- |
+| **OSINT Target Deduction** | Deduce probabilisticamente il nome reale partendo dal nickname prima dello scraping, potenziando l'ispezione |
+| **Vision AI & Multimodal OCR** | Estrazione testo da immagini (EasyOCR) e deduzione contestuale di relazioni invisibili (*Vision Context*) via LLM multimodali |
+| **Asynchronous Concurrency** | Fino a **120 attacchi enumerativi paralleli** via `asyncio` (modulo Holehe) con bypass Login Wall (*Impersonation* & *Graceful Degradation*) |
+| **Data Breach Detection** | Rilevamento in tempo reale di password ed esposizioni interrogando l'API pubblica di **XposedOrNot** |
+| **Privacy by Design** | Algoritmo di *Data Stripping* che rimuove le immagini (Base64) prima delle chiamate AI in Cloud, azzerando colli di bottiglia sui token |
+| **Fault Tolerance** | Pattern Produttore-Consumatore e **Circuit Breaker** per garantire resilienza operativa e tolleranza ai guasti |
 
 ---
 
-## 🏗️ Architettura di Sistema (3-Tier)
-Il progetto rispetta i paradigmi dei sistemi distribuiti ed è strutturato a microservizi:
-1. **Frontend (React SPA):** Interfaccia interattiva con simulazione "Terminale Hacker" in *Short Polling*. (Ospitata su *Azure Storage Account*).
-2. **Backend (FastAPI):** Orchestratore asincrono basato su pattern Produttore-Consumatore e Circuit Breaker per tolleranza ai guasti. (Containerizzato su *Azure App Service*).
-3. **Database (PostgreSQL):** Persistenza dei dati isolata senza esposizione pubblica. (Deployato in *Virtual Network privata* su Azure Flexible Server).
+## System Architecture
+
+Architettura distribuita a microservizi (3-Tier):
+
+| Tier | Component | Technology & Cloud Deployment |
+| :--- | :--- | :--- |
+| **Frontend** | React SPA (Interfaccia Terminale Hacker in *Short Polling*) | Hostato su **Azure Storage Account** (Static website `$web`) |
+| **Backend** | Orchestratore asincrono & Risk Engine | **FastAPI** containerizzato su **Azure App Service** (Linux) |
+| **Database** | Persistenza isolata (senza esposizione pubblica) | **PostgreSQL Flexible Server** deployato su *Virtual Network privata* |
+| **CI/CD & Registry** | Container Image Management & Delivery | **Azure Container Registry (ACR)** + **GitHub Actions** |
 
 ---
 
-## 🚀 Guida all'Installazione Locale
+## Quick Start
 
-Il progetto è compatibile nativamente con **Windows**, **Linux** e **macOS**. 
+Compatibile nativamente con **Linux**, **macOS** e **Windows** *(Prerequisiti: Python 3.12+, Node.js 18+ e npm)*.
+
+```bash
+# 1. Clone repository
+git clone https://github.com/mimmocrazy/Social-Exposure-Analyzer.git ~/Projects/Social-Exposure-Analyzer
+cd ~/Projects/Social-Exposure-Analyzer
+
+# 2. Setup isolated virtual environment & dependencies
+python3 -m venv venv
+source venv/bin/activate   # Su Windows: venv\Scripts\activate
+make install
+
+# 3. Launch Backend API (Terminal 1 - http://localhost:8000)
+source venv/bin/activate
+make b
+
+# 4. Launch Frontend Web UI (Terminal 2 - http://localhost:5173)
+make f
+```
 
 > [!WARNING]
 > Non copiare mai la cartella dell'ambiente virtuale `venv` da un sistema operativo all'altro. Costruiscila sempre da zero sul nuovo sistema.
 
-### Prerequisiti
-- **Python 3.12+** aggiunto al PATH del sistema.
-- **Node.js (versione 18+)** e `npm`.
+---
 
-### 1. Inizializzazione dell'Ambiente
-Apri il terminale nella root del progetto ed esegui:
-```bash
-# 1. Crea un nuovo ambiente virtuale isolato
-python -m venv venv     
+## Microsoft Azure Deployment
 
-# 2. Attiva l'ambiente virtuale
-venv\Scripts\activate      # Su Windows
-source venv/bin/activate   # Su Linux/macOS
+L'infrastruttura cloud PaaS su Microsoft Azure è interamente configurata e pronta all'uso. Per contenere i costi di esercizio, i servizi possono essere riattivati a richiesta dal portale Azure:
 
-# 3. Scarica e installa tutte le dipendenze (Backend e Frontend)
-make install
-```
+| Resource | Service | Activation / Notes |
+| :--- | :--- | :--- |
+| **PostgreSQL DB** | Azure Database Flexible Server | Portale Azure > Flexible Server > **Start** *(~2 min di ripristino)* |
+| **Backend API** | Azure App Service (FastAPI Linux) | Portale Azure > App Service > **Start** *(Upgrade a piano Premium V4 per benchmark)* |
+| **Container Registry** | Azure Container Registry (ACR) | Sempre attivo; CI/CD automatica su `git push` via GitHub Actions |
+| **Frontend Static** | Azure Storage Account | Sempre attivo; interfaccia statica nel container `$web` |
 
-### 2. Avvio dei Servizi (Sviluppo Locale)
-Mantieni aperti due terminali separati per avviare i servizi in parallelo.
+### Production Endpoints
 
-**Terminale 1 (Backend FastAPI):**
-```bash
-# Assicurati che l'ambiente virtuale sia attivo
-make b
-```
-*In ascolto su: `http://localhost:8000`*
-
-**Terminale 2 (Frontend React):**
-```bash
-# Qui non serve l'ambiente virtuale Python
-make f
-```
-*In ascolto su: `http://localhost:5173`*
+| Endpoint | Location |
+| :--- | :--- |
+| **Frontend URL** | Storage Account > *Static website* > **Primary endpoint** |
+| **Backend URL** | App Service > *Overview* > **Default domain** |
 
 ---
 
-## ☁️ Checklist Riattivazione Ambiente Microsoft Azure
-
-L'infrastruttura cloud PaaS su Microsoft Azure **è già interamente configurata e pronta all'uso**. Tuttavia, per contenere i costi, alcune risorse (come i server) potrebbero essere state messe in pausa. Prima di avviare una presentazione, riattiva i seguenti componenti dal portale Azure:
-
-1. **🗄️ Azure Database for PostgreSQL (Flexible Server)**
-   - Cerca il Flexible Server e se lo stato è *Stopped*, clicca su **Start**. *(Attendi ~2 minuti per il ripristino).*
-2. **⚙️ Azure App Service (Backend FastAPI Linux)**
-   - Se l'App Service risulta fermo, assicurati di avviarlo o di fare un Upgrade del piano tariffario (es. *Premium V4*) per massimizzare la velocità RAM/CPU durante i test. 
-3. **📦 Azure Container Registry (ACR) e GitHub Actions**
-   - Sempre attivo. La CI/CD aggiorna automaticamente i container in cloud al comando `git push`.
-4. **🌐 Azure Storage Account (Frontend)**
-   - Sempre attivo. L'interfaccia statica risiede nel container `$web`.
-
-### 🔗 Indirizzi Pubblici (Produzione)
-- **Frontend URL:** Nella pagina dello Storage Account > *Static website* > **Primary endpoint**.
-- **Backend URL:** Nella pagina dell'App Service > *Overview* > **Default domain**.
-
----
-
-## 🖼️ Galleria Applicativo
+## Gallery
 
 <div align="center">
   <img src="docs/images/home.png" alt="Homepage" width="800">
-  <p><em><strong>Figura 1: Interfaccia di Benvenuto e Avvio Scansione.</strong> La schermata iniziale offre all'utente la possibilità di inserire lo username o l'URL diretto del target, consentendo l'abilitazione selettiva dei moduli di scansione (Dork Engine, Holehe, Facebook Scan) e la scelta della profondità di analisi. L'invio del modulo innesca l'orchestrazione asincrona in background.</em></p>
-</div>
+  <p><em><strong>Figura 1: Interfaccia di Benvenuto e Avvio Scansione.</strong> Inserimento username o URL diretto del target, con abilitazione selettiva dei moduli (Dork Engine, Holehe, Facebook Scan) e profondità di analisi.</em></p>
+  <br/>
 
-<div align="center">
   <img src="docs/images/loading.png" alt="Terminale Hacker" width="800">
-  <p><em><strong>Figura 2: Terminale simulato e Feedback in tempo reale.</strong> Durante il processo OSINT, il frontend interroga il backend tramite polling asincrono per restituire all'utente un output visuale istantaneo del processo d'indagine in corso (discovery, estrazione media, analisi NLP).</em></p>
-</div>
+  <p><em><strong>Figura 2: Terminale Simulato e Feedback in Tempo Reale.</strong> Polling asincrono per monitorare discovery, estrazione media e analisi NLP durante l'esecuzione del processo OSINT.</em></p>
+  <br/>
 
-<div align="center">
   <img src="docs/images/score.png" alt="Score" width="800">
-  <p><em><strong>Figura 3: Sezione Indice di Rischio e Breakdown Matematico.</strong> Il widget illustra lo Score di Rischio complessivo, le barre di esposizione per aree tematiche (Identità, Network, Routine) e il breakdown analitico dei punti assegnati deterministicamente in base alle vulnerabilità riscontrate.</em></p>
-</div>
+  <p><em><strong>Figura 3: Sezione Indice di Rischio e Breakdown Matematico.</strong> Score complessivo, barre di esposizione per aree tematiche (Identità, Network, Routine) e scoring deterministico.</em></p>
+  <br/>
 
-<div align="center">
   <img src="docs/images/dati_sensibili.png" alt="Dati Sensibili" width="800">
-  <p><em><strong>Figura 4: Grid dei Dati Sensibili Estrapolati (PII).</strong> Ciascuna card raggruppa le informazioni anagrafiche, di contatto, geografiche o aziendali identificate tramite NLP neurale e OCR visivo, arricchite con dettagli sulla sorgente del dato e sul livello di confidenza associato.</em></p>
-</div>
+  <p><em><strong>Figura 4: Grid dei Dati Sensibili Estrapolati (PII).</strong> Informazioni anagrafiche, di contatto, geografiche e aziendali identificate da NLP e OCR con sorgente e livello di confidenza.</em></p>
+  <br/>
 
-<div align="center">
   <img src="docs/images/post_analysis.png" alt="Dashboard" width="800">
-  <p><em><strong>Figura 5: Dashboard Globale dell'Audit OSINT completato.</strong> La vista d'insieme raccoglie gli indici aggregati di esposizione, la telemetria di esecuzione dei singoli moduli OSINT (Sherlock, Holehe, Dork Engine) e il feed OCR nativo con carosello interattivo.</em></p>
+  <p><em><strong>Figura 5: Dashboard Globale dell'Audit OSINT completato.</strong> Vista d'insieme degli indici aggregati, telemetria di esecuzione dei moduli OSINT (Sherlock, Holehe, Dork Engine) e carosello OCR nativo.</em></p>
+  <br/>
+
+  <img src="docs/images/audit_ai.png" alt="Rapporto AI" width="800">
+  <p><em><strong>Figura 6: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Analisi qualitativa redatta dal Risk Engine AI ed elenco atomico delle azioni di mitigazione protette da Circuit Breaker.</em></p>
 </div>
 
-<div align="center">
-  <img src="docs/images/audit_ai.png" alt="Rapporto AI" width="800">
-  <p><em><strong>Figura 6: Valutazione AI e Piano di Mitigazione delle Minacce.</strong> Questa sezione raccoglie l'analisi qualitativa discorsiva redatta dal Risk Engine AI e l'elenco atomico dei piani di mitigazione proposti per contenere l'esposizione sui singoli vettori d'attacco, il tutto processato con un meccanismo di tolleranza ai guasti (Circuit Breaker).</em></p>
-</div>
+---
+
+## License
+
+Distributed under the [MIT License](LICENSE). Copyright © 2026 Mimmo.
